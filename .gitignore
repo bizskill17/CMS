@@ -1,0 +1,9 @@
+node_modules/
+dist/
+deploy/
+.env.local
+.vendor/
+api/config/database.php
+*.xlsx
+*.xls
+*.csv

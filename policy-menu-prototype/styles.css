@@ -1,0 +1,243 @@
+:root {
+  --sidebar-bg: #edf2f8;
+  --panel-bg: #ffffff;
+  --blue-card: #4a80e6;
+  --red-card: #e22524;
+  --border-strong: #16212d;
+  --text-dark: #18212f;
+  --text-soft: #536273;
+  --submenu-bg: #dbe6fb;
+  --shadow-card: 0 3px 0 rgba(22, 33, 45, 0.85);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: #dde6f0;
+  color: var(--text-dark);
+}
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 392px;
+  background: var(--sidebar-bg);
+  border-right: 2px solid rgba(22, 33, 45, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-panel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 112px;
+  padding: 22px 26px;
+  background: var(--panel-bg);
+  border-bottom: 2px solid rgba(22, 33, 45, 0.45);
+}
+
+.brand-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: #2d57d7;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.brand-icon svg,
+.menu-icon svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.brand-panel h1 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+}
+
+.menu {
+  padding: 12px 10px 20px;
+  overflow-y: auto;
+}
+
+.menu-group {
+  margin-bottom: 12px;
+}
+
+.menu-card {
+  width: 100%;
+  border: 2px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--blue-card);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+}
+
+.menu-card.is-active {
+  background: var(--red-card);
+}
+
+.menu-card__left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.menu-icon {
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  color: #fff;
+  flex: 0 0 auto;
+}
+
+.menu-card--collapsible {
+  appearance: none;
+}
+
+.chevron {
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+  margin-right: 4px;
+}
+
+.menu-group.is-open .chevron {
+  transform: rotate(225deg);
+  margin-top: 4px;
+}
+
+.submenu {
+  display: none;
+  margin: 8px 10px 0;
+  padding: 8px;
+  background: var(--submenu-bg);
+  border: 2px solid rgba(22, 33, 45, 0.35);
+  border-radius: 8px;
+}
+
+.menu-group.is-open .submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.submenu-item {
+  display: block;
+  padding: 9px 12px;
+  border-radius: 6px;
+  color: var(--text-dark);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.submenu-item:hover {
+  background: rgba(255, 255, 255, 0.75);
+  transform: translateX(2px);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 18px 18px 20px;
+  background: var(--panel-bg);
+  border-top: 1px solid rgba(22, 33, 45, 0.18);
+}
+
+.user-line {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--text-dark);
+}
+
+.logout-button {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  background: #f00610;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 16px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.content-area {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 40px;
+}
+
+.content-placeholder {
+  width: min(560px, 100%);
+  padding: 36px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(22, 33, 45, 0.08);
+  box-shadow: 0 20px 50px rgba(38, 60, 89, 0.08);
+}
+
+.content-placeholder p {
+  margin: 0 0 10px;
+  color: #2d57d7;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.content-placeholder h2 {
+  margin: 0 0 10px;
+  font-size: 32px;
+}
+
+.content-placeholder span {
+  color: var(--text-soft);
+  font-size: 15px;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
+  .content-area {
+    padding: 24px;
+  }
+}

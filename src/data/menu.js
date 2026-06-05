@@ -1,0 +1,64 @@
+export const menuSections = [
+  {
+    label: "Dashboard",
+    path: "/dashboard",
+    standalone: true,
+    icon: "dashboard",
+    items: [{ label: "Overview", path: "/dashboard" }]
+  },
+  {
+    label: "Masters",
+    path: "/masters",
+    icon: "masters",
+    items: [
+      { label: "Customers", path: "/masters/customers" },
+      { label: "Customer Groups", path: "/masters/customer-groups" },
+      { label: "Insurance Companies", path: "/masters/insurance-companies" },
+      { label: "Product Categories", path: "/masters/product-categories" },
+      { label: "Insurance Products", path: "/masters/insurance-products" },
+      { label: "Users", path: "/masters/users" },
+      { label: "Agents", path: "/masters/agents" },
+      { label: "Agent Accounts", path: "/masters/agent-accounts" }
+    ]
+  },
+  {
+    label: "Policies",
+    path: "/policies",
+    icon: "policies",
+    items: [
+      { label: "All Policies", path: "/policies/all" },
+      { label: "Issue Policy", path: "/policies/issue" },
+      { label: "Renew Policy", path: "/policies/renew" },
+      { label: "Research Policy Holder", path: "/policies/research" },
+      { label: "Update Policy Expiry", path: "/policies/update-expiry" },
+      { label: "Inactivate Policy", path: "/policies/inactivate" },
+      { label: "Reactivate Policy", path: "/policies/reactivate" },
+      { label: "Attach Documents", path: "/policies/attach-documents" }
+    ]
+  },
+  {
+    label: "Payments",
+    path: "/payments",
+    icon: "payments",
+    items: [
+      { label: "Pending Payments", path: "/payments/pending" },
+      { label: "Record Client Payment", path: "/payments/record-client-payment" },
+      { label: "Record Cheque Received", path: "/payments/record-cheque" },
+      { label: "Update Cheque Status", path: "/payments/update-cheque-status" },
+      { label: "Payment Follow Ups", path: "/payments/follow-ups" }
+    ]
+  },
+  {
+    label: "Reports",
+    path: "/reports",
+    icon: "reports",
+    items: [
+      { label: "Policies Added", path: "/reports/policies-added" },
+      { label: "Policies This Week", path: "/reports/policies-this-week" },
+      { label: "Policies This Month", path: "/reports/policies-this-month" },
+      { label: "Pending Payments", path: "/reports/pending-payments" },
+      { label: "Pending Document Uploads", path: "/reports/pending-document-uploads" },
+      { label: "Payments Received", path: "/reports/payments-received" }
+    ]
+  }
+];

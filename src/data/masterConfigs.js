@@ -1,0 +1,188 @@
+export const masterConfigs = {
+  customers: {
+    title: "Customers",
+    resource: "customers",
+    tableColumns: [
+      { key: "customer_code", label: "Code" },
+      { key: "full_name", label: "Customer Name" },
+      { key: "group_name", label: "Group" },
+      { key: "mobile", label: "Mobile" },
+      { key: "city", label: "City" },
+      { key: "state", label: "State" },
+      { key: "is_active", label: "Active", type: "boolean" }
+    ],
+    fields: [
+      { name: "customer_code", label: "Customer Code", type: "text", required: true },
+      { name: "group_id", label: "Customer Group", type: "select", optionsFrom: "customer-groups" },
+      { name: "full_name", label: "Customer Name", type: "text", required: true },
+      { name: "mobile", label: "Mobile", type: "text" },
+      { name: "alternate_mobile", label: "Alternate Mobile", type: "text" },
+      { name: "email", label: "Email", type: "email" },
+      { name: "gstin", label: "GSTIN", type: "text" },
+      { name: "city", label: "City", type: "text" },
+      { name: "state", label: "State", type: "text" },
+      { name: "notes", label: "Notes", type: "textarea" },
+      { name: "is_active", label: "Active", type: "checkbox" }
+    ]
+  },
+  "customer-groups": {
+    title: "Customer Groups",
+    resource: "customer-groups",
+    tableColumns: [
+      { key: "group_name", label: "Group Name" },
+      { key: "notes", label: "Notes" }
+    ],
+    fields: [
+      { name: "group_name", label: "Group Name", type: "text", required: true },
+      { name: "notes", label: "Notes", type: "textarea" }
+    ]
+  },
+  "insurance-companies": {
+    title: "Insurance Companies",
+    resource: "insurance-companies",
+    tableColumns: [
+      { key: "company_name", label: "Company Name" },
+      { key: "company_short_name", label: "Short Name" },
+      { key: "company_type", label: "Type" },
+      { key: "is_active", label: "Active", type: "boolean" }
+    ],
+    fields: [
+      { name: "company_name", label: "Company Name", type: "text", required: true },
+      { name: "company_short_name", label: "Short Name", type: "text" },
+      {
+        name: "company_type",
+        label: "Company Type",
+        type: "select",
+        staticOptions: [
+          { value: "", label: "Select Type" },
+          { value: "General", label: "General" },
+          { value: "Life", label: "Life" },
+          { value: "Health", label: "Health" }
+        ]
+      },
+      { name: "is_active", label: "Active", type: "checkbox" }
+    ]
+  },
+  "product-categories": {
+    title: "Product Categories",
+    resource: "product-categories",
+    tableColumns: [
+      { key: "category_name", label: "Category" },
+      { key: "parent_category_name", label: "Parent Category" },
+      { key: "is_active", label: "Active", type: "boolean" }
+    ],
+    fields: [
+      { name: "category_name", label: "Category Name", type: "text", required: true },
+      { name: "parent_category_id", label: "Parent Category", type: "select", optionsFrom: "product-categories" },
+      { name: "is_active", label: "Active", type: "checkbox" }
+    ]
+  },
+  "insurance-products": {
+    title: "Insurance Products",
+    resource: "insurance-products",
+    tableColumns: [
+      { key: "product_name", label: "Product" },
+      { key: "company_name", label: "Company" },
+      { key: "category_name", label: "Category" },
+      { key: "sub_category_name", label: "Sub Category" },
+      { key: "is_active", label: "Active", type: "boolean" }
+    ],
+    fields: [
+      { name: "company_id", label: "Company", type: "select", optionsFrom: "insurance-companies", required: true },
+      { name: "product_name", label: "Product Name", type: "text", required: true },
+      { name: "category_id", label: "Category", type: "select", optionsFrom: "product-categories" },
+      { name: "sub_category_name", label: "Sub Category", type: "text" },
+      { name: "is_active", label: "Active", type: "checkbox" }
+    ]
+  },
+  users: {
+    title: "Users",
+    resource: "users",
+    tableColumns: [
+      { key: "full_name", label: "User Name" },
+      { key: "email", label: "Email" },
+      { key: "mobile", label: "Mobile" },
+      { key: "role_name", label: "Role" },
+      { key: "linked_agent_name", label: "Linked Agent" },
+      { key: "is_active", label: "Active", type: "boolean" }
+    ],
+    fields: [
+      { name: "full_name", label: "Full Name", type: "text", required: true },
+      { name: "email", label: "Email", type: "email", required: true },
+      { name: "mobile", label: "Mobile", type: "text" },
+      {
+        name: "role_name",
+        label: "Role",
+        type: "select",
+        required: true,
+        staticOptions: [
+          { value: "", label: "Select Role" },
+          { value: "Admin", label: "Admin" },
+          { value: "Manager", label: "Manager" },
+          { value: "Executive", label: "Executive" }
+        ]
+      },
+      { name: "linked_agent_id", label: "Linked Agent", type: "select", optionsFrom: "agents" },
+      { name: "notes", label: "Notes", type: "textarea" },
+      { name: "is_active", label: "Active", type: "checkbox" }
+    ]
+  },
+  agents: {
+    title: "Agents",
+    resource: "agents",
+    tableColumns: [
+      { key: "employee_code", label: "Employee Code" },
+      { key: "full_name", label: "Agent Name" },
+      { key: "mobile", label: "Mobile" },
+      { key: "email", label: "Email" },
+      { key: "is_active", label: "Active", type: "boolean" }
+    ],
+    fields: [
+      { name: "employee_code", label: "Employee Code", type: "text", required: true },
+      { name: "full_name", label: "Full Name", type: "text", required: true },
+      { name: "mobile", label: "Mobile", type: "text" },
+      { name: "email", label: "Email", type: "email" },
+      { name: "is_active", label: "Active", type: "checkbox" }
+    ]
+  },
+  "agent-accounts": {
+    title: "Agent Accounts",
+    resource: "agent-accounts",
+    tableColumns: [
+      { key: "agent_name", label: "Agent" },
+      { key: "account_label", label: "Account Label" },
+      { key: "account_type", label: "Account Type" },
+      { key: "bank_name", label: "Bank" },
+      { key: "is_default", label: "Default", type: "boolean" },
+      { key: "is_active", label: "Active", type: "boolean" }
+    ],
+    fields: [
+      { name: "agent_id", label: "Agent", type: "select", optionsFrom: "agents", required: true },
+      { name: "account_label", label: "Account Label", type: "text", required: true },
+      {
+        name: "account_type",
+        label: "Account Type",
+        type: "select",
+        required: true,
+        staticOptions: [
+          { value: "", label: "Select Type" },
+          { value: "bank_account", label: "Bank Account" },
+          { value: "credit_card", label: "Credit Card" },
+          { value: "debit_card", label: "Debit Card" },
+          { value: "upi", label: "UPI" },
+          { value: "wallet", label: "Wallet" },
+          { value: "cash", label: "Cash" }
+        ]
+      },
+      { name: "bank_name", label: "Bank Name", type: "text" },
+      { name: "account_holder_name", label: "Account Holder", type: "text" },
+      { name: "masked_account_number", label: "Masked Account No.", type: "text" },
+      { name: "card_last4", label: "Card Last 4", type: "text" },
+      { name: "upi_id", label: "UPI ID", type: "text" },
+      { name: "branch_name", label: "Branch Name", type: "text" },
+      { name: "notes", label: "Notes", type: "textarea" },
+      { name: "is_default", label: "Default Account", type: "checkbox" },
+      { name: "is_active", label: "Active", type: "checkbox" }
+    ]
+  }
+};
