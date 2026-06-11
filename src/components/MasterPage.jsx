@@ -4,6 +4,7 @@ import { masterConfigs } from "../data/masterConfigs";
 
 async function readApiJson(response) {
   const rawText = await response.text();
+  const contentType = response.headers.get("content-type") || "";
 
   if (!rawText.trim()) {
     throw new Error(
@@ -14,7 +15,18 @@ async function readApiJson(response) {
   try {
     return JSON.parse(rawText);
   } catch (parseError) {
-    throw new Error(`API did not return valid JSON. Response was: ${rawText.slice(0, 300)}`);
+    const looksLikeHtml =
+      contentType.includes("text/html") || /^\s*<!doctype html|^\s*<html/i.test(rawText);
+
+    if (looksLikeHtml) {
+      throw new Error(
+        `API endpoint returned HTML instead of JSON (${response.status} ${response.statusText || "Unknown Status"}). Please check the API URL or server rewrite configuration.`
+      );
+    }
+
+    throw new Error(
+      `API returned an unreadable response (${response.status} ${response.statusText || "Unknown Status"}).`
+    );
   }
 }
 

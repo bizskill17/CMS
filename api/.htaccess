@@ -2,4 +2,4 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^public/(.*)$ public/$1 [L]
-RewriteRule ^api/(.*)$ public/index.php [QSA,L]
+RewriteRule ^ public/index.php [QSA,L]
