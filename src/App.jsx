@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import AllPoliciesPage from "./components/AllPoliciesPage";
+import AttachDocumentsPage from "./components/AttachDocumentsPage";
 import AppLayout from "./components/AppLayout";
 import IssuePolicyPage from "./components/IssuePolicyPage";
 import MasterPage from "./components/MasterPage";
@@ -16,6 +17,8 @@ function buildRoutes(items) {
       element={
         item.path === "/policies/all" ? (
           <AllPoliciesPage />
+        ) : item.path === "/policies/attach-documents" ? (
+          <AttachDocumentsPage />
         ) : item.path === "/policies/issue" ? (
           <IssuePolicyPage />
         ) : item.path === "/policies/renew" ? (

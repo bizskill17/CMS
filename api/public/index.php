@@ -107,6 +107,55 @@ try {
         exit;
     }
 
+    if ($path === '/api/policies/pending-documents' && $method === 'GET') {
+        $pdo = Database::connection();
+        $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
+
+        $statement = $pdo->prepare(
+            'SELECT
+                p.id,
+                p.policy_number,
+                p.policy_type,
+                p.issue_date,
+                p.risk_end_date,
+                c.full_name AS customer_name,
+                cg.group_name AS customer_group_name,
+                ic.company_name,
+                ip.product_name
+             FROM policies p
+             LEFT JOIN customers c ON c.id = p.customer_id
+             LEFT JOIN customer_groups cg ON cg.id = c.group_id
+             LEFT JOIN insurance_companies ic ON ic.id = p.company_id
+             LEFT JOIN insurance_products ip ON ip.id = p.product_id
+             LEFT JOIN documents d
+               ON d.policy_id = p.id
+              AND d.deleted_at IS NULL
+              AND d.is_active = 1
+             GROUP BY
+                p.id,
+                p.policy_number,
+                p.policy_type,
+                p.issue_date,
+                p.risk_end_date,
+                c.full_name,
+                cg.group_name,
+                ic.company_name,
+                ip.product_name
+             HAVING count(d.id) = 0
+             ORDER BY p.updated_at DESC, p.id DESC
+             LIMIT :limit'
+        );
+        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $statement->execute();
+
+        Response::json([
+            'status' => 'ok',
+            'data' => $statement->fetchAll(),
+            'meta' => ['limit' => $limit]
+        ]);
+        exit;
+    }
+
     if ($path === '/api/policies/renew-form' && $method === 'GET') {
         $pdo = Database::connection();
 
