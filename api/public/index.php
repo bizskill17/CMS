@@ -156,6 +156,311 @@ try {
         exit;
     }
 
+    if ($path === '/api/policies/upload-document' && $method === 'POST') {
+        $pdo = Database::connection();
+
+        $policyId = isset($_POST['policy_id']) ? (int) $_POST['policy_id'] : 0;
+        $documentTypeId = isset($_POST['document_type_id']) ? (int) $_POST['document_type_id'] : 0;
+
+        if ($policyId <= 0) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Policy is required.'
+            ], 422);
+            exit;
+        }
+
+        if ($documentTypeId <= 0) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Document type is required.'
+            ], 422);
+            exit;
+        }
+
+        if (!isset($_FILES['file']) || !is_array($_FILES['file']) || (int) $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'A file upload is required.'
+            ], 422);
+            exit;
+        }
+
+        $policyStatement = $pdo->prepare('SELECT id, customer_id FROM policies WHERE id = :id');
+        $policyStatement->bindValue(':id', $policyId, PDO::PARAM_INT);
+        $policyStatement->execute();
+        $policy = $policyStatement->fetch();
+
+        if (!$policy) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Policy not found.'
+            ], 404);
+            exit;
+        }
+
+        $documentTypeStatement = $pdo->prepare('SELECT id FROM document_types WHERE id = :id');
+        $documentTypeStatement->bindValue(':id', $documentTypeId, PDO::PARAM_INT);
+        $documentTypeStatement->execute();
+
+        if (!$documentTypeStatement->fetchColumn()) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Document type not found.'
+            ], 404);
+            exit;
+        }
+
+        $uploadDir = dirname(__DIR__) . '/uploads';
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Unable to prepare upload directory.'
+            ], 500);
+            exit;
+        }
+
+        $originalName = (string) $_FILES['file']['name'];
+        $tmpName = (string) $_FILES['file']['tmp_name'];
+        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+        $storedName = uniqid('doc_', true) . ($extension !== '' ? '.' . $extension : '');
+        $targetPath = $uploadDir . '/' . $storedName;
+
+        if (!move_uploaded_file($tmpName, $targetPath)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Failed to save uploaded file.'
+            ], 500);
+            exit;
+        }
+
+        $mimeType = mime_content_type($targetPath) ?: null;
+        $fileSize = filesize($targetPath) ?: null;
+        $documentNumber = trim((string) ($_POST['document_number'] ?? ''));
+        $documentDate = trim((string) ($_POST['document_date'] ?? ''));
+        $expiryDate = trim((string) ($_POST['expiry_date'] ?? ''));
+        $remarks = trim((string) ($_POST['remarks'] ?? ''));
+
+        $statement = $pdo->prepare(
+            'INSERT INTO documents (
+                document_type_id,
+                customer_id,
+                policy_id,
+                file_name,
+                stored_file_name,
+                file_url,
+                file_extension,
+                mime_type,
+                file_size_bytes,
+                document_number,
+                document_date,
+                expiry_date,
+                remarks,
+                uploaded_at,
+                is_active
+             ) VALUES (
+                :document_type_id,
+                :customer_id,
+                :policy_id,
+                :file_name,
+                :stored_file_name,
+                :file_url,
+                :file_extension,
+                :mime_type,
+                :file_size_bytes,
+                :document_number,
+                :document_date,
+                :expiry_date,
+                :remarks,
+                now(),
+                1
+             )'
+        );
+        $statement->bindValue(':document_type_id', $documentTypeId, PDO::PARAM_INT);
+        $statement->bindValue(':customer_id', (int) $policy['customer_id'], PDO::PARAM_INT);
+        $statement->bindValue(':policy_id', $policyId, PDO::PARAM_INT);
+        $statement->bindValue(':file_name', $originalName);
+        $statement->bindValue(':stored_file_name', $storedName);
+        $statement->bindValue(':file_url', 'uploads/' . $storedName);
+        $statement->bindValue(':file_extension', $extension !== '' ? $extension : null);
+        $statement->bindValue(':mime_type', $mimeType);
+        $statement->bindValue(':file_size_bytes', $fileSize, $fileSize !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+        $statement->bindValue(':document_number', $documentNumber !== '' ? $documentNumber : null);
+        $statement->bindValue(':document_date', $documentDate !== '' ? $documentDate : null);
+        $statement->bindValue(':expiry_date', $expiryDate !== '' ? $expiryDate : null);
+        $statement->bindValue(':remarks', $remarks !== '' ? $remarks : null);
+        $statement->execute();
+
+        Response::json([
+            'status' => 'ok',
+            'message' => 'Document uploaded successfully.'
+        ], 201);
+        exit;
+    }
+
+    if ($path === '/api/payments/pending-client' && $method === 'GET') {
+        $pdo = Database::connection();
+        $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
+
+        $statement = $pdo->prepare(
+            'SELECT
+                p.id,
+                p.policy_number,
+                p.policy_type,
+                p.issue_date,
+                p.paid_by_type,
+                p.net_premium,
+                p.payment_received_amount,
+                p.payment_pending_amount,
+                p.client_payment_status,
+                c.full_name AS customer_name,
+                ic.company_name
+             FROM policies p
+             LEFT JOIN customers c ON c.id = p.customer_id
+             LEFT JOIN insurance_companies ic ON ic.id = p.company_id
+             WHERE p.paid_by_type = "Agent"
+               AND coalesce(p.payment_pending_amount, 0) > 0
+             ORDER BY p.updated_at DESC, p.id DESC
+             LIMIT :limit'
+        );
+        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $statement->execute();
+
+        Response::json([
+            'status' => 'ok',
+            'data' => $statement->fetchAll(),
+            'meta' => ['limit' => $limit]
+        ]);
+        exit;
+    }
+
+    if ($path === '/api/payments/client-payment' && $method === 'POST') {
+        $pdo = Database::connection();
+        $payload = json_decode(file_get_contents('php://input') ?: '[]', true);
+
+        if (!is_array($payload)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Invalid JSON payload'
+            ], 422);
+            exit;
+        }
+
+        foreach (['policy_id', 'payment_date', 'amount', 'payment_mode'] as $requiredField) {
+            if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
+                Response::json([
+                    'status' => 'error',
+                    'message' => sprintf('Field "%s" is required.', $requiredField)
+                ], 422);
+                exit;
+            }
+        }
+
+        $policyId = (int) $payload['policy_id'];
+        $amount = (float) $payload['amount'];
+
+        if ($amount <= 0) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Amount must be greater than zero.'
+            ], 422);
+            exit;
+        }
+
+        $policyStatement = $pdo->prepare(
+            'SELECT id, net_premium, payment_received_amount, payment_pending_amount
+             FROM policies
+             WHERE id = :id'
+        );
+        $policyStatement->bindValue(':id', $policyId, PDO::PARAM_INT);
+        $policyStatement->execute();
+        $policy = $policyStatement->fetch();
+
+        if (!$policy) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Policy not found.'
+            ], 404);
+            exit;
+        }
+
+        $currentReceived = (float) ($policy['payment_received_amount'] ?? 0);
+        $netPremium = (float) ($policy['net_premium'] ?? 0);
+        $newReceived = $currentReceived + $amount;
+        $newPending = max($netPremium - $newReceived, 0);
+        $clientPaymentStatus = $newPending <= 0 ? 'Received' : ($newReceived > 0 ? 'Partial' : 'Pending');
+
+        $pdo->beginTransaction();
+
+        try {
+            $insertStatement = $pdo->prepare(
+                'INSERT INTO client_payments (
+                    policy_id,
+                    payment_date,
+                    amount,
+                    payment_mode,
+                    payment_status,
+                    cheque_number,
+                    cheque_date,
+                    clearing_date,
+                    reference_number,
+                    remarks
+                 ) VALUES (
+                    :policy_id,
+                    :payment_date,
+                    :amount,
+                    :payment_mode,
+                    :payment_status,
+                    :cheque_number,
+                    :cheque_date,
+                    :clearing_date,
+                    :reference_number,
+                    :remarks
+                 )'
+            );
+            $insertStatement->bindValue(':policy_id', $policyId, PDO::PARAM_INT);
+            $insertStatement->bindValue(':payment_date', $payload['payment_date']);
+            $insertStatement->bindValue(':amount', $amount);
+            $insertStatement->bindValue(':payment_mode', $payload['payment_mode']);
+            $insertStatement->bindValue(':payment_status', $payload['payment_status'] !== '' ? $payload['payment_status'] : 'Received');
+            $insertStatement->bindValue(':cheque_number', trim((string) ($payload['cheque_number'] ?? '')) !== '' ? $payload['cheque_number'] : null);
+            $insertStatement->bindValue(':cheque_date', trim((string) ($payload['cheque_date'] ?? '')) !== '' ? $payload['cheque_date'] : null);
+            $insertStatement->bindValue(':clearing_date', trim((string) ($payload['clearing_date'] ?? '')) !== '' ? $payload['clearing_date'] : null);
+            $insertStatement->bindValue(':reference_number', trim((string) ($payload['reference_number'] ?? '')) !== '' ? $payload['reference_number'] : null);
+            $insertStatement->bindValue(':remarks', trim((string) ($payload['remarks'] ?? '')) !== '' ? $payload['remarks'] : null);
+            $insertStatement->execute();
+
+            $updateStatement = $pdo->prepare(
+                'UPDATE policies
+                 SET payment_received_amount = :payment_received_amount,
+                     payment_pending_amount = :payment_pending_amount,
+                     client_payment_status = :client_payment_status
+                 WHERE id = :id'
+            );
+            $updateStatement->bindValue(':payment_received_amount', $newReceived);
+            $updateStatement->bindValue(':payment_pending_amount', $newPending);
+            $updateStatement->bindValue(':client_payment_status', $clientPaymentStatus);
+            $updateStatement->bindValue(':id', $policyId, PDO::PARAM_INT);
+            $updateStatement->execute();
+
+            $pdo->commit();
+
+            Response::json([
+                'status' => 'ok',
+                'message' => 'Client payment updated successfully.',
+                'data' => [
+                    'payment_received_amount' => $newReceived,
+                    'payment_pending_amount' => $newPending,
+                    'client_payment_status' => $clientPaymentStatus,
+                ],
+            ]);
+            exit;
+        } catch (Throwable $throwable) {
+            $pdo->rollBack();
+            throw $throwable;
+        }
+    }
+
     if ($path === '/api/policies/renew-form' && $method === 'GET') {
         $pdo = Database::connection();
 

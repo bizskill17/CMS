@@ -4,6 +4,7 @@ import AttachDocumentsPage from "./components/AttachDocumentsPage";
 import AppLayout from "./components/AppLayout";
 import IssuePolicyPage from "./components/IssuePolicyPage";
 import MasterPage from "./components/MasterPage";
+import PendingPaymentsPage from "./components/PendingPaymentsPage";
 import PagePlaceholder from "./components/PagePlaceholder";
 import RenewPolicyPage from "./components/RenewPolicyPage";
 import { menuSections } from "./data/menu";
@@ -17,6 +18,8 @@ function buildRoutes(items) {
       element={
         item.path === "/policies/all" ? (
           <AllPoliciesPage />
+        ) : item.path === "/payments/pending" ? (
+          <PendingPaymentsPage />
         ) : item.path === "/policies/attach-documents" ? (
           <AttachDocumentsPage />
         ) : item.path === "/policies/issue" ? (

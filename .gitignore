@@ -4,6 +4,8 @@ deploy/
 .env.local
 .vendor/
 api/config/database.php
+api/uploads/*
+!api/uploads/.gitkeep
 *.xlsx
 *.xls
 *.csv
