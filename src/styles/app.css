@@ -362,6 +362,10 @@ button {
   padding: 24px;
 }
 
+.master-modal__panel--wide {
+  width: min(980px, 100%);
+}
+
 .master-modal__body {
   overflow-y: auto;
   max-height: calc(100vh - 180px);

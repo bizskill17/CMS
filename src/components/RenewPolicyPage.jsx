@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { API_BASE } from "../config/api";
-import { formatDateDisplay } from "../utils/formatting";
+import { formatCellValue, formatDateDisplay } from "../utils/formatting";
 
 const initialFormState = {
   customer_group_id: "",
@@ -86,10 +86,10 @@ function buildOldPolicyDetail(policy) {
 export default function RenewPolicyPage() {
   const [formState, setFormState] = useState(initialFormState);
   const [lookupData, setLookupData] = useState({
-    customerGroups: [],
     policies: []
   });
-  const [policyQuery, setPolicyQuery] = useState("");
+  const [selectedPolicy, setSelectedPolicy] = useState(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -109,8 +109,7 @@ export default function RenewPolicyPage() {
         }
 
         setLookupData({
-          customerGroups: sortByLabel(json.data.customerGroups || [], "group_name"),
-          policies: sortByLabel(json.data.policies || [], "policy_number")
+          policies: json.data.policies || []
         });
       } catch (loadError) {
         setError(loadError.message);
@@ -122,66 +121,46 @@ export default function RenewPolicyPage() {
     load();
   }, []);
 
-  const filteredPolicies = useMemo(() => {
-    const query = policyQuery.trim().toLowerCase();
-
-    return lookupData.policies.filter((policy) => {
-      const matchesGroup =
-        !formState.customer_group_id || String(policy.customer_group_id || "") === formState.customer_group_id;
-      const matchesQuery =
-        !query ||
-        String(policy.policy_number || "").toLowerCase().includes(query) ||
-        String(policy.customer_name || "").toLowerCase().includes(query) ||
-        String(policy.registration_no || "").toLowerCase().includes(query);
-
-      return matchesGroup && matchesQuery;
-    });
-  }, [formState.customer_group_id, lookupData.policies, policyQuery]);
-
-  const selectedPolicy = useMemo(
-    () => lookupData.policies.find((policy) => String(policy.id) === formState.previous_policy_id),
-    [formState.previous_policy_id, lookupData.policies]
-  );
-
-  useEffect(() => {
-    if (!selectedPolicy) {
-      return;
-    }
-
-    setPolicyQuery(selectedPolicy.policy_number || "");
+  const handleChange = (name, value) => {
     setFormState((current) => ({
       ...current,
-      customer_group_id: selectedPolicy.customer_group_id ? String(selectedPolicy.customer_group_id) : "",
-      customer_id: selectedPolicy.customer_id ? String(selectedPolicy.customer_id) : "",
-      business_type: "Renewal",
-      policy_type: selectedPolicy.policy_type || "",
-      company_id: selectedPolicy.company_id ? String(selectedPolicy.company_id) : "",
-      product_id: selectedPolicy.product_id ? String(selectedPolicy.product_id) : "",
-      vehicle_make: selectedPolicy.vehicle_make || "",
-      vehicle_model: selectedPolicy.vehicle_model || "",
-      year_of_manufacture: selectedPolicy.year_of_manufacture || "",
-      registration_no: selectedPolicy.registration_no || "",
-      sum_insured: selectedPolicy.sum_insured || ""
+      [name]: value
     }));
-  }, [selectedPolicy]);
+  };
 
-  const handleChange = (name, value) => {
-    setFormState((current) => {
-      const next = { ...current, [name]: value };
-
-      if (name === "customer_group_id" && current.customer_group_id !== value) {
-        next.previous_policy_id = "";
-        next.customer_id = "";
-        setPolicyQuery("");
-      }
-
-      return next;
+  const openRenewForm = (policy) => {
+    setSelectedPolicy(policy);
+    setFormState({
+      customer_group_id: policy.customer_group_id ? String(policy.customer_group_id) : "",
+      previous_policy_id: String(policy.id),
+      customer_id: policy.customer_id ? String(policy.customer_id) : "",
+      new_policy_number: "",
+      gross_premium: "",
+      net_premium: "",
+      issue_date: "",
+      risk_start_date: "",
+      risk_end_date: "",
+      business_type: "Renewal",
+      sum_insured: policy.sum_insured || "",
+      policy_type: policy.policy_type || "",
+      company_id: policy.company_id ? String(policy.company_id) : "",
+      product_id: policy.product_id ? String(policy.product_id) : "",
+      vehicle_make: policy.vehicle_make || "",
+      vehicle_model: policy.vehicle_model || "",
+      year_of_manufacture: policy.year_of_manufacture || "",
+      registration_no: policy.registration_no || "",
+      paid_by_type: "",
+      payment_mode: ""
     });
+    setMessage("");
+    setError("");
+    setIsFormOpen(true);
   };
 
   const resetForm = () => {
     setFormState(initialFormState);
-    setPolicyQuery("");
+    setSelectedPolicy(null);
+    setIsFormOpen(false);
   };
 
   const handleSubmit = async (event) => {
@@ -206,6 +185,14 @@ export default function RenewPolicyPage() {
 
       setMessage(json.message || "Policy renewed successfully.");
       resetForm();
+      const refreshResponse = await fetch(`${API_BASE}/policies/renew-form`);
+      const refreshJson = await readApiJson(refreshResponse);
+      if (!refreshResponse.ok) {
+        throw new Error(refreshJson.message || "Failed to refresh renewal list.");
+      }
+      setLookupData({
+        policies: refreshJson.data.policies || []
+      });
     } catch (saveError) {
       setError(saveError.message);
     } finally {
@@ -223,232 +210,243 @@ export default function RenewPolicyPage() {
 
       <section className="master-card issue-policy-card">
         <div className="master-card__header">
-          <h3>Renew Policy Form</h3>
+          <h3>Policies Ready For Renewal</h3>
+          <span>{lookupData.policies.length} records</span>
         </div>
 
         {loading ? (
-          <div className="table-state">Loading form data...</div>
+          <div className="table-state">Loading renewal policies...</div>
+        ) : error && !isFormOpen ? (
+          <p className="feedback feedback--error">{error}</p>
         ) : (
-          <form className="issue-policy-form" onSubmit={handleSubmit}>
-            <label className="form-field">
-              <span>Group Name</span>
-              <select
-                value={formState.customer_group_id}
-                onChange={(event) => handleChange("customer_group_id", event.target.value)}
-              >
-                <option value="">Select Group Name</option>
-                {lookupData.customerGroups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.group_name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="form-field">
-              <span>Old Policy Details</span>
-              <input
-                list="renew-policy-options"
-                value={policyQuery}
-                required
-                placeholder="Search old policy number, customer, or registration no."
-                onChange={(event) => {
-                  const nextValue = event.target.value;
-                  setPolicyQuery(nextValue);
-                  const match = filteredPolicies.find((policy) => policy.policy_number === nextValue);
-                  setFormState((current) => ({
-                    ...current,
-                    previous_policy_id: match ? String(match.id) : ""
-                  }));
-                }}
-              />
-              <datalist id="renew-policy-options">
-                {filteredPolicies.map((policy) => (
-                  <option key={policy.id} value={policy.policy_number}>
-                    {`${policy.customer_name || ""} ${policy.registration_no || ""}`.trim()}
-                  </option>
-                ))}
-              </datalist>
-            </label>
-
-            <label className="form-field issue-policy-form__wide">
-              <span>Policy Holder Detail</span>
-              <textarea readOnly rows="2" value={buildPolicyHolderDetail(selectedPolicy)} />
-            </label>
-
-            <label className="form-field issue-policy-form__wide">
-              <span>Old Policy Details</span>
-              <textarea readOnly rows="2" value={buildOldPolicyDetail(selectedPolicy)} />
-            </label>
-
-            <label className="form-field">
-              <span>New Policy Number</span>
-              <input
-                type="text"
-                value={formState.new_policy_number}
-                required
-                onChange={(event) => handleChange("new_policy_number", event.target.value)}
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Gross Premium</span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={formState.gross_premium}
-                onChange={(event) => handleChange("gross_premium", event.target.value)}
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Net Premium</span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={formState.net_premium}
-                onChange={(event) => handleChange("net_premium", event.target.value)}
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Policy Issued Date</span>
-              <input
-                type="date"
-                value={formState.issue_date}
-                onChange={(event) => handleChange("issue_date", event.target.value)}
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Risk Inception Date</span>
-              <input
-                type="date"
-                value={formState.risk_start_date}
-                onChange={(event) => handleChange("risk_start_date", event.target.value)}
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Risk Expiry Date</span>
-              <input
-                type="date"
-                value={formState.risk_end_date}
-                onChange={(event) => handleChange("risk_end_date", event.target.value)}
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Business Type</span>
-              <input type="text" readOnly value={formState.business_type} />
-            </label>
-
-            <label className="form-field">
-              <span>Sum Insured</span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={formState.sum_insured}
-                onChange={(event) => handleChange("sum_insured", event.target.value)}
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Policy Type</span>
-              <input type="text" readOnly value={formState.policy_type} />
-            </label>
-
-            <label className="form-field">
-              <span>Company Name</span>
-              <input type="text" readOnly value={selectedPolicy?.company_name || ""} />
-            </label>
-
-            <label className="form-field">
-              <span>Product Name</span>
-              <input type="text" readOnly value={selectedPolicy?.product_name || ""} />
-            </label>
-
-            <label className="form-field">
-              <span>Vehicle Make</span>
-              <input
-                type="text"
-                value={formState.vehicle_make}
-                onChange={(event) => handleChange("vehicle_make", event.target.value)}
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Vehicle Model</span>
-              <input
-                type="text"
-                value={formState.vehicle_model}
-                onChange={(event) => handleChange("vehicle_model", event.target.value)}
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Year of Manufacture</span>
-              <input
-                type="number"
-                min="1900"
-                max="9999"
-                step="1"
-                value={formState.year_of_manufacture}
-                onChange={(event) => handleChange("year_of_manufacture", event.target.value)}
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Registration No.</span>
-              <input
-                type="text"
-                value={formState.registration_no}
-                onChange={(event) => handleChange("registration_no", event.target.value)}
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Payment made by</span>
-              <select
-                value={formState.paid_by_type}
-                onChange={(event) => handleChange("paid_by_type", event.target.value)}
-              >
-                <option value="">Select Payment made by</option>
-                <option value="Client">Client</option>
-                <option value="Agent">Agent</option>
-              </select>
-            </label>
-
-            <label className="form-field">
-              <span>Payment Mode</span>
-              <select
-                value={formState.payment_mode}
-                onChange={(event) => handleChange("payment_mode", event.target.value)}
-              >
-                <option value="">Select Payment Mode</option>
-                <option value="Cheque">Cheque</option>
-                <option value="Online">Online</option>
-                <option value="Cash">Cash</option>
-              </select>
-            </label>
-
-            <div className="form-actions issue-policy-form__actions">
-              <button type="button" className="secondary-button" onClick={resetForm}>
-                Reset
-              </button>
-              <button type="submit" className="primary-button" disabled={saving}>
-                {saving ? "Saving..." : "Save Renewal"}
-              </button>
-            </div>
-          </form>
+          <div className="table-wrap">
+            <table className="master-table">
+              <thead>
+                <tr>
+                  <th>Expiry Date</th>
+                  <th>Policy No.</th>
+                  <th>Group Name</th>
+                  <th>Policy Holder Detail</th>
+                  <th>Company Name</th>
+                  <th>Product Name</th>
+                  <th>Policy Type</th>
+                  <th>Registration No.</th>
+                  <th>Renew</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lookupData.policies.length === 0 ? (
+                  <tr>
+                    <td colSpan="9" className="table-state">
+                      No policies are currently eligible for renewal.
+                    </td>
+                  </tr>
+                ) : (
+                  lookupData.policies.map((policy) => (
+                    <tr key={policy.id}>
+                      <td>{formatCellValue(policy.risk_end_date)}</td>
+                      <td>{formatCellValue(policy.policy_number)}</td>
+                      <td>{formatCellValue(policy.customer_group_name)}</td>
+                      <td>{formatCellValue(buildPolicyHolderDetail(policy))}</td>
+                      <td>{formatCellValue(policy.company_name)}</td>
+                      <td>{formatCellValue(policy.product_name)}</td>
+                      <td>{formatCellValue(policy.policy_type)}</td>
+                      <td>{formatCellValue(policy.registration_no)}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => openRenewForm(policy)}
+                        >
+                          Renew
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {message ? <p className="feedback feedback--success">{message}</p> : null}
-        {error ? <p className="feedback feedback--error">{error}</p> : null}
       </section>
+
+      {isFormOpen ? (
+        <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="renew-policy-title">
+          <div className="master-modal__backdrop" onClick={resetForm} />
+          <section className="master-card master-modal__panel master-modal__panel--wide">
+            <div className="master-card__header">
+              <h3 id="renew-policy-title">Renew Policy Form</h3>
+              <button type="button" className="text-button" onClick={resetForm}>
+                Cancel
+              </button>
+            </div>
+
+            <div className="master-modal__body">
+              <form className="issue-policy-form" onSubmit={handleSubmit}>
+                <label className="form-field">
+                  <span>Group Name</span>
+                  <input type="text" readOnly value={selectedPolicy?.customer_group_name || ""} />
+                </label>
+
+                <label className="form-field issue-policy-form__wide">
+                  <span>Old Policy Details</span>
+                  <textarea readOnly rows="2" value={buildOldPolicyDetail(selectedPolicy)} />
+                </label>
+
+                <label className="form-field issue-policy-form__wide">
+                  <span>Policy Holder Detail</span>
+                  <textarea readOnly rows="2" value={buildPolicyHolderDetail(selectedPolicy)} />
+                </label>
+
+                <label className="form-field">
+                  <span>New Policy Number</span>
+                  <input
+                    type="text"
+                    value={formState.new_policy_number}
+                    required
+                    onChange={(event) => handleChange("new_policy_number", event.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Gross Premium</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formState.gross_premium}
+                    onChange={(event) => handleChange("gross_premium", event.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Net Premium</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formState.net_premium}
+                    onChange={(event) => handleChange("net_premium", event.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Policy Issued Date</span>
+                  <input
+                    type="date"
+                    value={formState.issue_date}
+                    onChange={(event) => handleChange("issue_date", event.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Risk Inception Date</span>
+                  <input
+                    type="date"
+                    value={formState.risk_start_date}
+                    onChange={(event) => handleChange("risk_start_date", event.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Risk Expiry Date</span>
+                  <input
+                    type="date"
+                    value={formState.risk_end_date}
+                    onChange={(event) => handleChange("risk_end_date", event.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Business Type</span>
+                  <input type="text" readOnly value={formState.business_type} />
+                </label>
+
+                <label className="form-field">
+                  <span>Sum Insured</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formState.sum_insured}
+                    onChange={(event) => handleChange("sum_insured", event.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Policy Type</span>
+                  <input type="text" readOnly value={formState.policy_type} />
+                </label>
+
+                <label className="form-field">
+                  <span>Company Name</span>
+                  <input type="text" readOnly value={selectedPolicy?.company_name || ""} />
+                </label>
+
+                <label className="form-field">
+                  <span>Product Name</span>
+                  <input type="text" readOnly value={selectedPolicy?.product_name || ""} />
+                </label>
+
+                <label className="form-field">
+                  <span>Vehicle Make</span>
+                  <input type="text" readOnly value={formState.vehicle_make} />
+                </label>
+
+                <label className="form-field">
+                  <span>Vehicle Model</span>
+                  <input type="text" readOnly value={formState.vehicle_model} />
+                </label>
+
+                <label className="form-field">
+                  <span>Year of Manufacture</span>
+                  <input type="number" readOnly value={formState.year_of_manufacture} />
+                </label>
+
+                <label className="form-field">
+                  <span>Registration No.</span>
+                  <input type="text" readOnly value={formState.registration_no} />
+                </label>
+
+                <label className="form-field">
+                  <span>Payment made by</span>
+                  <select
+                    value={formState.paid_by_type}
+                    onChange={(event) => handleChange("paid_by_type", event.target.value)}
+                  >
+                    <option value="">Select Payment made by</option>
+                    <option value="Client">Client</option>
+                    <option value="Agent">Agent</option>
+                  </select>
+                </label>
+
+                <label className="form-field">
+                  <span>Payment Mode</span>
+                  <select
+                    value={formState.payment_mode}
+                    onChange={(event) => handleChange("payment_mode", event.target.value)}
+                  >
+                    <option value="">Select Payment Mode</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="Online">Online</option>
+                    <option value="Cash">Cash</option>
+                  </select>
+                </label>
+
+                <div className="form-actions issue-policy-form__actions">
+                  <button type="submit" className="primary-button" disabled={saving}>
+                    {saving ? "Saving..." : "Save Renewal"}
+                  </button>
+                </div>
+              </form>
+
+              {error ? <p className="feedback feedback--error">{error}</p> : null}
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

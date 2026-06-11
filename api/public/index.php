@@ -110,12 +110,6 @@ try {
     if ($path === '/api/policies/renew-form' && $method === 'GET') {
         $pdo = Database::connection();
 
-        $customerGroups = $pdo->query(
-            'SELECT id, group_name
-             FROM customer_groups
-             ORDER BY group_name ASC'
-        )->fetchAll();
-
         $policies = $pdo->query(
             'SELECT
                 p.id,
@@ -136,19 +130,22 @@ try {
                 p.vehicle_model,
                 p.year_of_manufacture,
                 p.registration_no,
-                p.risk_end_date
+                p.risk_end_date,
+                p.renewal_status
              FROM policies p
              LEFT JOIN customers c ON c.id = p.customer_id
              LEFT JOIN customer_groups cg ON cg.id = c.group_id
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
              LEFT JOIN insurance_products ip ON ip.id = p.product_id
-             ORDER BY p.id DESC'
+             WHERE p.risk_end_date IS NOT NULL
+               AND p.risk_end_date >= curdate()
+               AND coalesce(p.renewal_status, "") <> "Renewed"
+             ORDER BY p.risk_end_date ASC, p.policy_number ASC'
         )->fetchAll();
 
         Response::json([
             'status' => 'ok',
             'data' => [
-                'customerGroups' => $customerGroups,
                 'policies' => $policies,
             ],
         ]);
