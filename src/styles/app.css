@@ -435,6 +435,42 @@ button {
   font-weight: 700;
 }
 
+.danger-button {
+  border: none;
+  border-radius: 9px;
+  background: #ffe7e9;
+  color: #bd1e2d;
+  padding: 9px 12px;
+  font-weight: 700;
+}
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.icon-button--edit {
+  background: #ebf2ff;
+  color: #2d57d7;
+}
+
+.icon-button--delete {
+  background: #ffe7e9;
+  color: #bd1e2d;
+}
+
 .text-button {
   background: transparent;
   color: #2d57d7;
@@ -496,6 +532,12 @@ button {
   color: var(--text-soft);
   font-size: 14px;
   padding: 18px 6px 6px;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 900px) {

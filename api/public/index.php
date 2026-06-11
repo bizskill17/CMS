@@ -10,7 +10,7 @@ use App\Response;
 use PDO;
 
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -1049,6 +1049,26 @@ try {
             Response::json([
                 'status' => 'ok',
                 'message' => 'Record updated successfully.'
+            ]);
+            exit;
+        }
+
+        if ($method === 'DELETE' && $id !== null) {
+            $statement = $pdo->prepare(sprintf('DELETE FROM %s WHERE id = :id', $config['table']));
+            $statement->bindValue(':id', $id, PDO::PARAM_INT);
+            $statement->execute();
+
+            if ($statement->rowCount() === 0) {
+                Response::json([
+                    'status' => 'error',
+                    'message' => 'Record not found.'
+                ], 404);
+                exit;
+            }
+
+            Response::json([
+                'status' => 'ok',
+                'message' => 'Record deleted successfully.'
             ]);
             exit;
         }

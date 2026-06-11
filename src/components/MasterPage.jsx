@@ -46,6 +46,23 @@ function getOptionLabel(resource, item) {
   return item.name ?? item.label ?? item.id;
 }
 
+function EditIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" />
+      <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42L18.37 3.29a1.003 1.003 0 0 0-1.42 0L15.13 5.1l3.75 3.75z" />
+    </svg>
+  );
+}
+
+function DeleteIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6 7h12l-1 14H7L6 7zm3-4h6l1 2h4v2H4V5h4l1-2z" />
+    </svg>
+  );
+}
+
 export default function MasterPage({ resourceKey }) {
   const config = masterConfigs[resourceKey];
   const [records, setRecords] = useState([]);
@@ -179,6 +196,38 @@ export default function MasterPage({ resourceKey }) {
     }
   };
 
+  const handleDelete = async (record) => {
+    const label = record.name || record.full_name || record.company_name || record.group_name || record.id;
+    const confirmed = window.confirm(`Delete "${label}"?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setMessage("");
+    setError("");
+
+    try {
+      const response = await fetch(`${API_BASE}/masters/${config.resource}/${record.id}`, {
+        method: "DELETE"
+      });
+      const json = await readApiJson(response);
+
+      if (!response.ok) {
+        throw new Error(json.message || "Delete failed.");
+      }
+
+      setRecords((current) => current.filter((item) => item.id !== record.id));
+      setMessage(json.message || "Record deleted successfully.");
+
+      if (editingId === record.id) {
+        resetForm();
+      }
+    } catch (deleteError) {
+      setError(deleteError.message);
+    }
+  };
+
   return (
     <div className="master-page">
       <div className="page-hero page-hero--masters">
@@ -232,13 +281,26 @@ export default function MasterPage({ resourceKey }) {
                           </td>
                         ))}
                         <td>
-                          <button
-                            type="button"
-                            className="secondary-button"
-                            onClick={() => handleEdit(record)}
-                          >
-                            Edit
-                          </button>
+                          <div className="table-actions">
+                            <button
+                              type="button"
+                              className="icon-button icon-button--edit"
+                              onClick={() => handleEdit(record)}
+                              aria-label="Edit record"
+                              title="Edit"
+                            >
+                              <EditIcon />
+                            </button>
+                            <button
+                              type="button"
+                              className="icon-button icon-button--delete"
+                              onClick={() => handleDelete(record)}
+                              aria-label="Delete record"
+                              title="Delete"
+                            >
+                              <DeleteIcon />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
