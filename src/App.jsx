@@ -4,6 +4,7 @@ import AppLayout from "./components/AppLayout";
 import IssuePolicyPage from "./components/IssuePolicyPage";
 import MasterPage from "./components/MasterPage";
 import PagePlaceholder from "./components/PagePlaceholder";
+import RenewPolicyPage from "./components/RenewPolicyPage";
 import { menuSections } from "./data/menu";
 import { masterConfigs } from "./data/masterConfigs";
 
@@ -17,6 +18,8 @@ function buildRoutes(items) {
           <AllPoliciesPage />
         ) : item.path === "/policies/issue" ? (
           <IssuePolicyPage />
+        ) : item.path === "/policies/renew" ? (
+          <RenewPolicyPage />
         ) : item.section === "Masters" && masterConfigs[item.resourceKey] ? (
           <MasterPage resourceKey={item.resourceKey} />
         ) : (

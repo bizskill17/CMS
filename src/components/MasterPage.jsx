@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import { masterConfigs } from "../data/masterConfigs";
+import { formatCellValue } from "../utils/formatting";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -227,7 +228,7 @@ export default function MasterPage({ resourceKey }) {
                               ? record[column.key]
                                 ? "Yes"
                                 : "No"
-                              : record[column.key] || "-"}
+                              : formatCellValue(record[column.key])}
                           </td>
                         ))}
                         <td>

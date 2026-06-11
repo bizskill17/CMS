@@ -107,6 +107,54 @@ try {
         exit;
     }
 
+    if ($path === '/api/policies/renew-form' && $method === 'GET') {
+        $pdo = Database::connection();
+
+        $customerGroups = $pdo->query(
+            'SELECT id, group_name
+             FROM customer_groups
+             ORDER BY group_name ASC'
+        )->fetchAll();
+
+        $policies = $pdo->query(
+            'SELECT
+                p.id,
+                p.policy_family_id,
+                p.customer_id,
+                c.group_id AS customer_group_id,
+                cg.group_name AS customer_group_name,
+                c.full_name AS customer_name,
+                c.mobile AS customer_mobile,
+                p.policy_number,
+                p.policy_type,
+                p.company_id,
+                ic.company_name,
+                p.product_id,
+                ip.product_name,
+                p.sum_insured,
+                p.vehicle_make,
+                p.vehicle_model,
+                p.year_of_manufacture,
+                p.registration_no,
+                p.risk_end_date
+             FROM policies p
+             LEFT JOIN customers c ON c.id = p.customer_id
+             LEFT JOIN customer_groups cg ON cg.id = c.group_id
+             LEFT JOIN insurance_companies ic ON ic.id = p.company_id
+             LEFT JOIN insurance_products ip ON ip.id = p.product_id
+             ORDER BY p.id DESC'
+        )->fetchAll();
+
+        Response::json([
+            'status' => 'ok',
+            'data' => [
+                'customerGroups' => $customerGroups,
+                'policies' => $policies,
+            ],
+        ]);
+        exit;
+    }
+
     if ($path === '/api/policies/issue-form' && $method === 'GET') {
         $pdo = Database::connection();
 
@@ -330,6 +378,183 @@ try {
                     'policy_id' => $policyId,
                     'policy_code' => $policyCode,
                     'policy_family_code' => $familyCode,
+                ],
+            ], 201);
+            exit;
+        } catch (Throwable $throwable) {
+            $pdo->rollBack();
+            throw $throwable;
+        }
+    }
+
+    if ($path === '/api/policies/renew' && $method === 'POST') {
+        $pdo = Database::connection();
+        $rawBody = file_get_contents('php://input');
+        $payload = json_decode($rawBody ?: '[]', true);
+
+        if (!is_array($payload)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Invalid JSON payload'
+            ], 422);
+            exit;
+        }
+
+        foreach (['previous_policy_id', 'new_policy_number'] as $requiredField) {
+            if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
+                Response::json([
+                    'status' => 'error',
+                    'message' => sprintf('Field "%s" is required.', $requiredField)
+                ], 422);
+                exit;
+            }
+        }
+
+        $previousPolicyId = (int) $payload['previous_policy_id'];
+        $previousPolicyStatement = $pdo->prepare(
+            'SELECT *
+             FROM policies
+             WHERE id = :id'
+        );
+        $previousPolicyStatement->bindValue(':id', $previousPolicyId, PDO::PARAM_INT);
+        $previousPolicyStatement->execute();
+        $previousPolicy = $previousPolicyStatement->fetch();
+
+        if (!$previousPolicy) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Selected old policy was not found.'
+            ], 404);
+            exit;
+        }
+
+        $pdo->beginTransaction();
+
+        try {
+            $policyCode = 'PL' . date('YmdHis') . random_int(100, 999);
+            $grossPremium = $payload['gross_premium'] !== '' ? (float) $payload['gross_premium'] : null;
+            $netPremium = $payload['net_premium'] !== '' ? (float) $payload['net_premium'] : null;
+
+            $statement = $pdo->prepare(
+                'INSERT INTO policies (
+                    policy_code,
+                    policy_family_id,
+                    previous_policy_id,
+                    customer_id,
+                    company_id,
+                    product_id,
+                    policy_number,
+                    business_type,
+                    policy_type,
+                    sum_insured,
+                    gross_premium,
+                    net_premium,
+                    issue_date,
+                    risk_start_date,
+                    risk_end_date,
+                    vehicle_make,
+                    vehicle_model,
+                    year_of_manufacture,
+                    registration_no,
+                    paid_by_type,
+                    payment_mode,
+                    payment_status,
+                    client_payment_status,
+                    payment_received_amount,
+                    payment_pending_amount,
+                    renewal_status,
+                    policy_status,
+                    inactive_reason,
+                    is_latest_in_family,
+                    last_status,
+                    fiscal_year_ending
+                 ) VALUES (
+                    :policy_code,
+                    :policy_family_id,
+                    :previous_policy_id,
+                    :customer_id,
+                    :company_id,
+                    :product_id,
+                    :policy_number,
+                    :business_type,
+                    :policy_type,
+                    :sum_insured,
+                    :gross_premium,
+                    :net_premium,
+                    :issue_date,
+                    :risk_start_date,
+                    :risk_end_date,
+                    :vehicle_make,
+                    :vehicle_model,
+                    :year_of_manufacture,
+                    :registration_no,
+                    :paid_by_type,
+                    :payment_mode,
+                    :payment_status,
+                    :client_payment_status,
+                    :payment_received_amount,
+                    :payment_pending_amount,
+                    :renewal_status,
+                    :policy_status,
+                    :inactive_reason,
+                    :is_latest_in_family,
+                    :last_status,
+                    :fiscal_year_ending
+                 )'
+            );
+
+            $statement->bindValue(':policy_code', $policyCode);
+            $statement->bindValue(':policy_family_id', (int) $previousPolicy['policy_family_id'], PDO::PARAM_INT);
+            $statement->bindValue(':previous_policy_id', $previousPolicyId, PDO::PARAM_INT);
+            $statement->bindValue(':customer_id', (int) $previousPolicy['customer_id'], PDO::PARAM_INT);
+            $statement->bindValue(':company_id', (int) $previousPolicy['company_id'], PDO::PARAM_INT);
+            $statement->bindValue(':product_id', $previousPolicy['product_id'] !== null ? (int) $previousPolicy['product_id'] : null, $previousPolicy['product_id'] !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $statement->bindValue(':policy_number', $payload['new_policy_number']);
+            $statement->bindValue(':business_type', 'Renewal');
+            $statement->bindValue(':policy_type', $payload['policy_type'] !== '' ? $payload['policy_type'] : $previousPolicy['policy_type']);
+            $statement->bindValue(':sum_insured', $payload['sum_insured'] !== '' ? $payload['sum_insured'] : null);
+            $statement->bindValue(':gross_premium', $grossPremium);
+            $statement->bindValue(':net_premium', $netPremium);
+            $statement->bindValue(':issue_date', $payload['issue_date'] !== '' ? $payload['issue_date'] : null);
+            $statement->bindValue(':risk_start_date', $payload['risk_start_date'] !== '' ? $payload['risk_start_date'] : null);
+            $statement->bindValue(':risk_end_date', $payload['risk_end_date'] !== '' ? $payload['risk_end_date'] : null);
+            $statement->bindValue(':vehicle_make', $payload['vehicle_make'] !== '' ? $payload['vehicle_make'] : null);
+            $statement->bindValue(':vehicle_model', $payload['vehicle_model'] !== '' ? $payload['vehicle_model'] : null);
+            $statement->bindValue(':year_of_manufacture', $payload['year_of_manufacture'] !== '' ? (int) $payload['year_of_manufacture'] : null, $payload['year_of_manufacture'] !== '' ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $statement->bindValue(':registration_no', $payload['registration_no'] !== '' ? $payload['registration_no'] : null);
+            $statement->bindValue(':paid_by_type', $payload['paid_by_type'] !== '' ? $payload['paid_by_type'] : null);
+            $statement->bindValue(':payment_mode', $payload['payment_mode'] !== '' ? $payload['payment_mode'] : null);
+            $statement->bindValue(':payment_status', 'Pending');
+            $statement->bindValue(':client_payment_status', 'Pending');
+            $statement->bindValue(':payment_received_amount', 0);
+            $statement->bindValue(':payment_pending_amount', $netPremium ?? 0);
+            $statement->bindValue(':renewal_status', 'Renewed');
+            $statement->bindValue(':policy_status', 'Active');
+            $statement->bindValue(':inactive_reason', null, PDO::PARAM_NULL);
+            $statement->bindValue(':is_latest_in_family', 1, PDO::PARAM_INT);
+            $statement->bindValue(':last_status', 'Renewed');
+            $statement->bindValue(':fiscal_year_ending', (int) date('Y'));
+            $statement->execute();
+
+            $updatePrevious = $pdo->prepare(
+                'UPDATE policies
+                 SET is_latest_in_family = 0, renewal_status = :renewal_status, last_status = :last_status
+                 WHERE id = :id'
+            );
+            $updatePrevious->bindValue(':renewal_status', 'Renewed');
+            $updatePrevious->bindValue(':last_status', 'Superseded');
+            $updatePrevious->bindValue(':id', $previousPolicyId, PDO::PARAM_INT);
+            $updatePrevious->execute();
+
+            $policyId = (int) $pdo->lastInsertId();
+            $pdo->commit();
+
+            Response::json([
+                'status' => 'ok',
+                'message' => 'Policy renewed successfully.',
+                'data' => [
+                    'policy_id' => $policyId,
+                    'policy_code' => $policyCode,
                 ],
             ], 201);
             exit;

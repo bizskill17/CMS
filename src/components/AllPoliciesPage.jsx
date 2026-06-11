@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { API_BASE } from "../config/api";
+import { formatCellValue } from "../utils/formatting";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -108,21 +109,21 @@ export default function AllPoliciesPage() {
                 ) : (
                   records.map((record) => (
                     <tr key={record.id}>
-                      <td>{record.policy_number || "-"}</td>
-                      <td>{record.customer_name || "-"}</td>
-                      <td>{record.customer_group_name || "-"}</td>
-                      <td>{record.company_name || "-"}</td>
-                      <td>{record.product_name || "-"}</td>
-                      <td>{record.policy_type || "-"}</td>
-                      <td>{record.business_type || "-"}</td>
-                      <td>{record.gross_premium || "-"}</td>
-                      <td>{record.net_premium || "-"}</td>
-                      <td>{record.issue_date || "-"}</td>
-                      <td>{record.risk_start_date || "-"}</td>
-                      <td>{record.risk_end_date || "-"}</td>
-                      <td>{record.paid_by_type || "-"}</td>
-                      <td>{record.payment_mode || "-"}</td>
-                      <td>{record.policy_status || "-"}</td>
+                      <td>{formatCellValue(record.policy_number)}</td>
+                      <td>{formatCellValue(record.customer_name)}</td>
+                      <td>{formatCellValue(record.customer_group_name)}</td>
+                      <td>{formatCellValue(record.company_name)}</td>
+                      <td>{formatCellValue(record.product_name)}</td>
+                      <td>{formatCellValue(record.policy_type)}</td>
+                      <td>{formatCellValue(record.business_type)}</td>
+                      <td>{formatCellValue(record.gross_premium)}</td>
+                      <td>{formatCellValue(record.net_premium)}</td>
+                      <td>{formatCellValue(record.issue_date)}</td>
+                      <td>{formatCellValue(record.risk_start_date)}</td>
+                      <td>{formatCellValue(record.risk_end_date)}</td>
+                      <td>{formatCellValue(record.paid_by_type)}</td>
+                      <td>{formatCellValue(record.payment_mode)}</td>
+                      <td>{formatCellValue(record.policy_status)}</td>
                     </tr>
                   ))
                 )}

@@ -221,8 +221,9 @@ button {
 
 .content-area {
   flex: 1;
-  display: grid;
-  place-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
   padding: 36px;
 }
 
@@ -250,6 +251,10 @@ button {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+.issue-policy-form__wide {
+  grid-column: 1 / -1;
 }
 
 .master-page {
@@ -455,6 +460,7 @@ button {
   width: 100%;
   border-collapse: collapse;
   min-width: 640px;
+  border: 1px solid #d5dfec;
 }
 
 .master-table th {
@@ -463,6 +469,7 @@ button {
   color: #fff;
   text-align: left;
   font-size: 13px;
+  border: 1px solid #d5dfec;
 }
 
 .master-table th:first-child {
@@ -475,7 +482,7 @@ button {
 
 .master-table td {
   padding: 12px 14px;
-  border-bottom: 1px solid #e3ebf5;
+  border: 1px solid #d5dfec;
   background: #fff;
   font-size: 14px;
   vertical-align: top;
