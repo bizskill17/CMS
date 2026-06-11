@@ -16,6 +16,7 @@ export const menuSections = [
       { label: "Insurance Companies", path: "/masters/insurance-companies" },
       { label: "Product Categories", path: "/masters/product-categories" },
       { label: "Insurance Products", path: "/masters/insurance-products" },
+      { label: "Document Types", path: "/masters/document-types" },
       { label: "Users", path: "/masters/users" },
       { label: "Agents", path: "/masters/agents" },
       { label: "Agent Accounts", path: "/masters/agent-accounts" }
@@ -29,10 +30,6 @@ export const menuSections = [
       { label: "All Policies", path: "/policies/all" },
       { label: "Issue Policy", path: "/policies/issue" },
       { label: "Renew Policy", path: "/policies/renew" },
-      { label: "Research Policy Holder", path: "/policies/research" },
-      { label: "Update Policy Expiry", path: "/policies/update-expiry" },
-      { label: "Inactivate Policy", path: "/policies/inactivate" },
-      { label: "Reactivate Policy", path: "/policies/reactivate" },
       { label: "Attach Documents", path: "/policies/attach-documents" }
     ]
   },

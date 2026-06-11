@@ -96,6 +96,16 @@ final class MasterRegistry
                 'nullable' => ['category_id', 'sub_category_name'],
                 'boolean' => ['is_active'],
             ],
+            'document-types' => [
+                'table' => 'document_types',
+                'select' => 'dt.id, dt.code, dt.name, dt.entity_level, dt.is_mandatory, dt.is_active, dt.sort_order, dt.description, dt.created_at',
+                'from' => 'document_types dt',
+                'order_by' => 'dt.sort_order asc, dt.name asc',
+                'write_columns' => ['code', 'name', 'entity_level', 'is_mandatory', 'is_active', 'sort_order', 'description'],
+                'required' => ['code', 'name', 'entity_level'],
+                'nullable' => ['sort_order', 'description'],
+                'boolean' => ['is_mandatory', 'is_active'],
+            ],
             'users' => [
                 'table' => 'users',
                 'select' => 'u.id, u.full_name, u.email, u.mobile, u.role_name, u.is_active, u.created_at, u.linked_agent_id, a.full_name as linked_agent_name',

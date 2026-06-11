@@ -95,6 +95,38 @@ export const masterConfigs = {
       { name: "is_active", label: "Active", type: "checkbox" }
     ]
   },
+  "document-types": {
+    title: "Document Types",
+    resource: "document-types",
+    tableColumns: [
+      { key: "code", label: "Code" },
+      { key: "name", label: "Name" },
+      { key: "entity_level", label: "Entity Level" },
+      { key: "is_mandatory", label: "Mandatory", type: "boolean" },
+      { key: "is_active", label: "Active", type: "boolean" },
+      { key: "sort_order", label: "Sort Order" }
+    ],
+    fields: [
+      { name: "code", label: "Code", type: "text", required: true },
+      { name: "name", label: "Name", type: "text", required: true },
+      {
+        name: "entity_level",
+        label: "Entity Level",
+        type: "select",
+        required: true,
+        staticOptions: [
+          { value: "", label: "Select Entity Level" },
+          { value: "customer", label: "Customer" },
+          { value: "policy", label: "Policy" },
+          { value: "payment", label: "Payment" }
+        ]
+      },
+      { name: "description", label: "Description", type: "textarea" },
+      { name: "sort_order", label: "Sort Order", type: "number" },
+      { name: "is_mandatory", label: "Mandatory", type: "checkbox" },
+      { name: "is_active", label: "Active", type: "checkbox" }
+    ]
+  },
   users: {
     title: "Users",
     resource: "users",
