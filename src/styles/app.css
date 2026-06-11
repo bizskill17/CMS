@@ -231,6 +231,27 @@ button {
   max-width: 980px;
 }
 
+.issue-policy-page {
+  max-width: 1260px;
+}
+
+.issue-policy-card {
+  margin-top: 24px;
+}
+
+.issue-policy-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 18px;
+}
+
+.issue-policy-form__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 .master-page {
   width: 100%;
   max-width: 1260px;
@@ -480,6 +501,10 @@ button {
   }
 
   .master-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .issue-policy-form {
     grid-template-columns: 1fr;
   }
 
