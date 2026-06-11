@@ -312,6 +312,36 @@ button {
   gap: 14px;
 }
 
+.master-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.master-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(24, 33, 47, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.master-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(720px, 100%);
+  max-height: calc(100vh - 48px);
+  padding: 24px;
+}
+
+.master-modal__body {
+  overflow-y: auto;
+  max-height: calc(100vh - 180px);
+  padding-right: 6px;
+}
+
 .master-form {
   display: grid;
   gap: 14px;
@@ -451,5 +481,35 @@ button {
 
   .master-grid {
     grid-template-columns: 1fr;
+  }
+
+  .master-card__actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 640px) {
+  .master-card__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .master-card__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .master-modal {
+    padding: 12px;
+  }
+
+  .master-modal__panel {
+    max-height: calc(100vh - 24px);
+    padding: 18px;
+  }
+
+  .master-modal__body {
+    max-height: calc(100vh - 150px);
   }
 }

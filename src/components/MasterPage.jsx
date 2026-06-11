@@ -186,98 +186,7 @@ export default function MasterPage({ resourceKey }) {
         <span>Create and maintain your foundational setup data here.</span>
       </div>
 
-      <div className={`master-grid${isFormOpen ? "" : " master-grid--list-only"}`}>
-        {isFormOpen ? (
-          <section className="master-card">
-            <div className="master-card__header">
-              <h3>{editingId ? `Edit ${config.title}` : `Add ${config.title}`}</h3>
-              <button type="button" className="text-button" onClick={resetForm}>
-                Cancel
-              </button>
-            </div>
-
-            <form className="master-form" onSubmit={handleSubmit}>
-              {config.fields.map((field) => {
-                if (field.type === "checkbox") {
-                  return (
-                    <label key={field.name} className="checkbox-field">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(formState[field.name])}
-                        onChange={(event) => handleChange(field, event.target.checked)}
-                      />
-                      <span>{field.label}</span>
-                    </label>
-                  );
-                }
-
-                if (field.type === "textarea") {
-                  return (
-                    <label key={field.name} className="form-field">
-                      <span>{field.label}</span>
-                      <textarea
-                        value={formState[field.name]}
-                        onChange={(event) => handleChange(field, event.target.value)}
-                        rows="3"
-                      />
-                    </label>
-                  );
-                }
-
-                if (field.type === "select") {
-                  const dynamicOptions = field.optionsFrom
-                    ? optionsMap[field.optionsFrom] || []
-                    : field.staticOptions || [];
-
-                  return (
-                    <label key={field.name} className="form-field">
-                      <span>{field.label}</span>
-                      <select
-                        value={formState[field.name]}
-                        onChange={(event) => handleChange(field, event.target.value)}
-                      >
-                        {!field.staticOptions ? <option value="">Select {field.label}</option> : null}
-                        {field.staticOptions
-                          ? field.staticOptions.map((option) => (
-                              <option key={`${field.name}-${option.value}`} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))
-                          : dynamicOptions.map((option) => (
-                              <option key={`${field.name}-${option.id}`} value={option.id}>
-                                {getOptionLabel(field.optionsFrom, option)}
-                              </option>
-                            ))}
-                      </select>
-                    </label>
-                  );
-                }
-
-                return (
-                  <label key={field.name} className="form-field">
-                    <span>{field.label}</span>
-                    <input
-                      type={field.type || "text"}
-                      value={formState[field.name]}
-                      required={Boolean(field.required)}
-                      onChange={(event) => handleChange(field, event.target.value)}
-                    />
-                  </label>
-                );
-              })}
-
-              <div className="form-actions">
-                <button type="submit" className="primary-button" disabled={saving}>
-                  {saving ? "Saving..." : editingId ? "Update Record" : "Save Record"}
-                </button>
-              </div>
-            </form>
-
-            {message ? <p className="feedback feedback--success">{message}</p> : null}
-            {error ? <p className="feedback feedback--error">{error}</p> : null}
-          </section>
-        ) : null}
-
+      <div className="master-grid master-grid--list-only">
         <section className="master-card master-card--table">
           <div className="master-card__header">
             <h3>{config.title} List</h3>
@@ -337,8 +246,106 @@ export default function MasterPage({ resourceKey }) {
               </table>
             </div>
           )}
+
+          {message ? <p className="feedback feedback--success">{message}</p> : null}
+          {error && !isFormOpen ? <p className="feedback feedback--error">{error}</p> : null}
         </section>
       </div>
+
+      {isFormOpen ? (
+        <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="master-form-title">
+          <div className="master-modal__backdrop" onClick={resetForm} />
+          <section className="master-card master-modal__panel">
+            <div className="master-card__header">
+              <h3 id="master-form-title">{editingId ? `Edit ${config.title}` : `Add ${config.title}`}</h3>
+              <button type="button" className="text-button" onClick={resetForm}>
+                Cancel
+              </button>
+            </div>
+
+            <div className="master-modal__body">
+              <form className="master-form" onSubmit={handleSubmit}>
+                {config.fields.map((field) => {
+                  if (field.type === "checkbox") {
+                    return (
+                      <label key={field.name} className="checkbox-field">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(formState[field.name])}
+                          onChange={(event) => handleChange(field, event.target.checked)}
+                        />
+                        <span>{field.label}</span>
+                      </label>
+                    );
+                  }
+
+                  if (field.type === "textarea") {
+                    return (
+                      <label key={field.name} className="form-field">
+                        <span>{field.label}</span>
+                        <textarea
+                          value={formState[field.name]}
+                          onChange={(event) => handleChange(field, event.target.value)}
+                          rows="3"
+                        />
+                      </label>
+                    );
+                  }
+
+                  if (field.type === "select") {
+                    const dynamicOptions = field.optionsFrom
+                      ? optionsMap[field.optionsFrom] || []
+                      : field.staticOptions || [];
+
+                    return (
+                      <label key={field.name} className="form-field">
+                        <span>{field.label}</span>
+                        <select
+                          value={formState[field.name]}
+                          onChange={(event) => handleChange(field, event.target.value)}
+                        >
+                          {!field.staticOptions ? <option value="">Select {field.label}</option> : null}
+                          {field.staticOptions
+                            ? field.staticOptions.map((option) => (
+                                <option key={`${field.name}-${option.value}`} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))
+                            : dynamicOptions.map((option) => (
+                                <option key={`${field.name}-${option.id}`} value={option.id}>
+                                  {getOptionLabel(field.optionsFrom, option)}
+                                </option>
+                              ))}
+                        </select>
+                      </label>
+                    );
+                  }
+
+                  return (
+                    <label key={field.name} className="form-field">
+                      <span>{field.label}</span>
+                      <input
+                        type={field.type || "text"}
+                        value={formState[field.name]}
+                        required={Boolean(field.required)}
+                        onChange={(event) => handleChange(field, event.target.value)}
+                      />
+                    </label>
+                  );
+                })}
+
+                <div className="form-actions">
+                  <button type="submit" className="primary-button" disabled={saving}>
+                    {saving ? "Saving..." : editingId ? "Update Record" : "Save Record"}
+                  </button>
+                </div>
+              </form>
+
+              {error ? <p className="feedback feedback--error">{error}</p> : null}
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }
