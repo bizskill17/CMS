@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import AllPoliciesPage from "./components/AllPoliciesPage";
 import AppLayout from "./components/AppLayout";
 import IssuePolicyPage from "./components/IssuePolicyPage";
 import MasterPage from "./components/MasterPage";
@@ -12,7 +13,9 @@ function buildRoutes(items) {
       key={item.path}
       path={item.path}
       element={
-        item.path === "/policies/issue" ? (
+        item.path === "/policies/all" ? (
+          <AllPoliciesPage />
+        ) : item.path === "/policies/issue" ? (
           <IssuePolicyPage />
         ) : item.section === "Masters" && masterConfigs[item.resourceKey] ? (
           <MasterPage resourceKey={item.resourceKey} />
