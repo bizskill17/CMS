@@ -274,6 +274,10 @@ button {
   align-items: start;
 }
 
+.master-grid--list-only {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .master-card {
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(22, 33, 45, 0.09);
@@ -299,6 +303,13 @@ button {
   color: var(--text-soft);
   font-size: 13px;
   font-weight: 600;
+}
+
+.master-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
 }
 
 .master-form {
