@@ -22,12 +22,12 @@ final class Database
         /** @var array<string, mixed> $config */
         $config = file_exists($configPath) ? require $configPath : [];
 
-        $host = self::env('HOSTINGER_DB_HOST', (string) ($config['host'] ?? 'localhost'));
-        $port = (int) self::env('HOSTINGER_DB_PORT', (string) ($config['port'] ?? 3306));
-        $database = self::env('HOSTINGER_DB_NAME', (string) ($config['database'] ?? ''));
-        $username = self::env('HOSTINGER_DB_USER', (string) ($config['username'] ?? ''));
-        $password = self::env('HOSTINGER_DB_PASSWORD', (string) ($config['password'] ?? ''));
-        $charset = self::env('HOSTINGER_DB_CHARSET', (string) ($config['charset'] ?? 'utf8mb4'));
+        $host = self::env(['HOSTINGER_DB_HOST', 'DB_HOST'], (string) ($config['host'] ?? 'localhost'));
+        $port = (int) self::env(['HOSTINGER_DB_PORT', 'DB_PORT'], (string) ($config['port'] ?? 3306));
+        $database = self::env(['HOSTINGER_DB_NAME', 'HOSTINGER_DB_DATABASE', 'DB_NAME', 'DB_DATABASE'], (string) ($config['database'] ?? ''));
+        $username = self::env(['HOSTINGER_DB_USER', 'HOSTINGER_DB_USERNAME', 'DB_USER', 'DB_USERNAME'], (string) ($config['username'] ?? ''));
+        $password = self::env(['HOSTINGER_DB_PASSWORD', 'DB_PASSWORD'], (string) ($config['password'] ?? ''));
+        $charset = self::env(['HOSTINGER_DB_CHARSET', 'DB_CHARSET'], (string) ($config['charset'] ?? 'utf8mb4'));
 
         if ($database === '' || $username === '') {
             throw new RuntimeException('Database settings are incomplete. Set api/config/database.php or Hostinger DB environment variables.');
@@ -48,10 +48,19 @@ final class Database
         return self::$connection;
     }
 
-    private static function env(string $key, string $default = ''): string
+    /**
+     * @param list<string> $keys
+     */
+    private static function env(array $keys, string $default = ''): string
     {
-        $value = getenv($key);
+        foreach ($keys as $key) {
+            $value = getenv($key);
 
-        return $value === false ? $default : $value;
+            if ($value !== false && trim($value) !== '') {
+                return $value;
+            }
+        }
+
+        return $default;
     }
 }

@@ -38,13 +38,25 @@ async function pathExists(filePath) {
   }
 }
 
+function readEnv(...keys) {
+  for (const key of keys) {
+    const value = process.env[key];
+    if (typeof value === "string" && value.trim() !== "") {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
 function getDatabaseConfigFromEnv() {
-  const host = process.env.HOSTINGER_DB_HOST?.trim();
-  const port = process.env.HOSTINGER_DB_PORT?.trim() || "3306";
-  const database = process.env.HOSTINGER_DB_NAME?.trim();
-  const username = process.env.HOSTINGER_DB_USER?.trim();
-  const password = process.env.HOSTINGER_DB_PASSWORD ?? "";
-  const charset = process.env.HOSTINGER_DB_CHARSET?.trim() || "utf8mb4";
+  const host = readEnv("HOSTINGER_DB_HOST", "DB_HOST");
+  const port = readEnv("HOSTINGER_DB_PORT", "DB_PORT") || "3306";
+  const database = readEnv("HOSTINGER_DB_NAME", "HOSTINGER_DB_DATABASE", "DB_NAME", "DB_DATABASE");
+  const username = readEnv("HOSTINGER_DB_USER", "HOSTINGER_DB_USERNAME", "DB_USER", "DB_USERNAME");
+  const password =
+    readEnv("HOSTINGER_DB_PASSWORD", "DB_PASSWORD") || process.env.HOSTINGER_DB_PASSWORD || process.env.DB_PASSWORD || "";
+  const charset = readEnv("HOSTINGER_DB_CHARSET", "DB_CHARSET") || "utf8mb4";
 
   if (!host || !database || !username || !password) {
     return null;
@@ -82,8 +94,8 @@ return [
     return;
   }
 
-  console.warn(
-    "No database config was bundled. Set HOSTINGER_DB_HOST, HOSTINGER_DB_NAME, HOSTINGER_DB_USER, and HOSTINGER_DB_PASSWORD before deployment."
+  throw new Error(
+    "No database config was bundled. Set HOSTINGER_DB_HOST, HOSTINGER_DB_NAME, HOSTINGER_DB_USER, and HOSTINGER_DB_PASSWORD, or provide equivalent DB_* secrets."
   );
 }
 
