@@ -25,6 +25,13 @@ jobs:
 
       - name: Build frontend and deploy package
         run: npm run build:hostinger
+        env:
+          HOSTINGER_DB_HOST: ${{ secrets.HOSTINGER_DB_HOST }}
+          HOSTINGER_DB_PORT: ${{ secrets.HOSTINGER_DB_PORT }}
+          HOSTINGER_DB_NAME: ${{ secrets.HOSTINGER_DB_NAME }}
+          HOSTINGER_DB_USER: ${{ secrets.HOSTINGER_DB_USER }}
+          HOSTINGER_DB_PASSWORD: ${{ secrets.HOSTINGER_DB_PASSWORD }}
+          HOSTINGER_DB_CHARSET: ${{ secrets.HOSTINGER_DB_CHARSET }}
 
       - name: Deploy files over FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
