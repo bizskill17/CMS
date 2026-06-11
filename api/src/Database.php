@@ -19,20 +19,19 @@ final class Database
         }
 
         $configPath = dirname(__DIR__) . '/config/database.php';
-
-        if (!file_exists($configPath)) {
-            throw new RuntimeException('Database config file not found.');
-        }
-
         /** @var array<string, mixed> $config */
-        $config = require $configPath;
+        $config = file_exists($configPath) ? require $configPath : [];
 
-        $host = $config['host'] ?? 'localhost';
-        $port = (int) ($config['port'] ?? 3306);
-        $database = $config['database'] ?? '';
-        $username = $config['username'] ?? '';
-        $password = $config['password'] ?? '';
-        $charset = $config['charset'] ?? 'utf8mb4';
+        $host = self::env('HOSTINGER_DB_HOST', (string) ($config['host'] ?? 'localhost'));
+        $port = (int) self::env('HOSTINGER_DB_PORT', (string) ($config['port'] ?? 3306));
+        $database = self::env('HOSTINGER_DB_NAME', (string) ($config['database'] ?? ''));
+        $username = self::env('HOSTINGER_DB_USER', (string) ($config['username'] ?? ''));
+        $password = self::env('HOSTINGER_DB_PASSWORD', (string) ($config['password'] ?? ''));
+        $charset = self::env('HOSTINGER_DB_CHARSET', (string) ($config['charset'] ?? 'utf8mb4'));
+
+        if ($database === '' || $username === '') {
+            throw new RuntimeException('Database settings are incomplete. Set api/config/database.php or Hostinger DB environment variables.');
+        }
 
         $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s', $host, $port, $database, $charset);
 
@@ -47,5 +46,12 @@ final class Database
         }
 
         return self::$connection;
+    }
+
+    private static function env(string $key, string $default = ''): string
+    {
+        $value = getenv($key);
+
+        return $value === false ? $default : $value;
     }
 }
