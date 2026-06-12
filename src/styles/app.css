@@ -239,8 +239,22 @@ button {
   padding: 36px;
 }
 
-.sidebar-toggle {
+.content-topbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 18px;
   margin-bottom: 18px;
+}
+
+.content-topbar__title {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.sidebar-toggle {
   border: none;
   border-radius: 12px;
   background: #2d57d7;
@@ -616,6 +630,10 @@ button {
 
   .content-area {
     padding: 24px;
+  }
+
+  .content-topbar__title {
+    font-size: 28px;
   }
 
   .master-grid {
