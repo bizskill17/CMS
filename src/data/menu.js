@@ -14,6 +14,8 @@ export const menuSections = [
       { label: "Customers", path: "/masters/customers" },
       { label: "Customer Groups", path: "/masters/customer-groups" },
       { label: "Insurance Companies", path: "/masters/insurance-companies" },
+      { label: "States", path: "/masters/states" },
+      { label: "Cities", path: "/masters/cities" },
       { label: "Product Categories", path: "/masters/product-categories" },
       { label: "Insurance Products", path: "/masters/insurance-products" },
       { label: "Document Types", path: "/masters/document-types" },

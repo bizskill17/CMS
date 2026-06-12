@@ -63,6 +63,36 @@ export const masterConfigs = {
       { name: "is_active", label: "Active", type: "checkbox" }
     ]
   },
+  states: {
+    title: "States",
+    resource: "states",
+    tableColumns: [
+      { key: "state_name", label: "State Name" },
+      { key: "state_code", label: "State Code" },
+      { key: "is_active", label: "Active", type: "boolean" }
+    ],
+    fields: [
+      { name: "state_name", label: "State Name", type: "text", required: true },
+      { name: "state_code", label: "State Code", type: "text" },
+      { name: "is_active", label: "Active", type: "checkbox" }
+    ]
+  },
+  cities: {
+    title: "Cities",
+    resource: "cities",
+    tableColumns: [
+      { key: "city_name", label: "City Name" },
+      { key: "state_name", label: "State" },
+      { key: "city_code", label: "City Code" },
+      { key: "is_active", label: "Active", type: "boolean" }
+    ],
+    fields: [
+      { name: "state_id", label: "State", type: "select", optionsFrom: "states", required: true },
+      { name: "city_name", label: "City Name", type: "text", required: true },
+      { name: "city_code", label: "City Code", type: "text" },
+      { name: "is_active", label: "Active", type: "checkbox" }
+    ]
+  },
   "product-categories": {
     title: "Product Categories",
     resource: "product-categories",

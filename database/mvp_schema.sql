@@ -88,6 +88,26 @@ create table insurance_companies (
   created_at datetime not null default current_timestamp
 );
 
+create table states (
+  id bigint unsigned auto_increment primary key,
+  state_name varchar(100) not null unique,
+  state_code varchar(20),
+  is_active tinyint(1) not null default 1,
+  created_at datetime not null default current_timestamp
+);
+
+create table cities (
+  id bigint unsigned auto_increment primary key,
+  state_id bigint unsigned not null,
+  city_name varchar(100) not null,
+  city_code varchar(20),
+  is_active tinyint(1) not null default 1,
+  created_at datetime not null default current_timestamp,
+  unique key uk_state_city (state_id, city_name),
+  constraint fk_cities_state
+    foreign key (state_id) references states(id)
+);
+
 create table product_categories (
   id bigint unsigned auto_increment primary key,
   category_name varchar(100) not null unique,
