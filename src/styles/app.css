@@ -389,6 +389,17 @@ button {
   color: var(--text-dark);
 }
 
+.form-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.form-label__required {
+  color: #d11a2a;
+  font-weight: 800;
+}
+
 .form-field input,
 .form-field select,
 .form-field textarea {

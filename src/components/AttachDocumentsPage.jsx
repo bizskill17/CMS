@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { API_BASE } from "../config/api";
 import { formatCellValue } from "../utils/formatting";
+import FormLabel from "./FormLabel";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -234,17 +235,17 @@ export default function AttachDocumentsPage() {
             <div className="master-modal__body">
               <form className="master-form" onSubmit={handleSubmit}>
                 <label className="form-field">
-                  <span>Policy No.</span>
+                  <FormLabel>Policy No.</FormLabel>
                   <input type="text" readOnly value={selectedPolicy?.policy_number || ""} />
                 </label>
 
                 <label className="form-field">
-                  <span>Customer</span>
+                  <FormLabel>Customer</FormLabel>
                   <input type="text" readOnly value={selectedPolicy?.customer_name || ""} />
                 </label>
 
                 <label className="form-field">
-                  <span>Document Type</span>
+                  <FormLabel required>Document Type</FormLabel>
                   <select
                     value={formState.document_type_id}
                     required
@@ -262,7 +263,7 @@ export default function AttachDocumentsPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Document Number</span>
+                  <FormLabel>Document Number</FormLabel>
                   <input
                     type="text"
                     value={formState.document_number}
@@ -273,7 +274,7 @@ export default function AttachDocumentsPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Document Date</span>
+                  <FormLabel>Document Date</FormLabel>
                   <input
                     type="date"
                     value={formState.document_date}
@@ -284,7 +285,7 @@ export default function AttachDocumentsPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Expiry Date</span>
+                  <FormLabel>Expiry Date</FormLabel>
                   <input
                     type="date"
                     value={formState.expiry_date}
@@ -295,7 +296,7 @@ export default function AttachDocumentsPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Choose File</span>
+                  <FormLabel required>Choose File</FormLabel>
                   <input
                     type="file"
                     required
@@ -306,7 +307,7 @@ export default function AttachDocumentsPage() {
                 </label>
 
                 <label className="form-field issue-policy-form__wide">
-                  <span>Remarks</span>
+                  <FormLabel>Remarks</FormLabel>
                   <textarea
                     rows="3"
                     value={formState.remarks}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
+import FormLabel from "./FormLabel";
 
 const initialFormState = {
   customer_group_id: "",
@@ -247,7 +248,7 @@ export default function IssuePolicyPage() {
         ) : (
           <form className="issue-policy-form" onSubmit={handleSubmit}>
             <label className="form-field">
-              <span>Customer Group</span>
+              <FormLabel>Customer Group</FormLabel>
               <select
                 value={formState.customer_group_id}
                 onChange={(event) => handleChange("customer_group_id", event.target.value)}
@@ -262,7 +263,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Customer</span>
+              <FormLabel required>Customer</FormLabel>
               <input
                 list="customer-options"
                 value={customerQuery}
@@ -286,7 +287,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Policy No.</span>
+              <FormLabel required>Policy No.</FormLabel>
               <input
                 type="text"
                 value={formState.policy_number}
@@ -296,7 +297,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Gross Premium</span>
+              <FormLabel>Gross Premium</FormLabel>
               <input
                 type="number"
                 min="0"
@@ -307,7 +308,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Net Premium</span>
+              <FormLabel>Net Premium</FormLabel>
               <input
                 type="number"
                 min="0"
@@ -318,7 +319,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Policy Issued Date</span>
+              <FormLabel>Policy Issued Date</FormLabel>
               <input
                 type="date"
                 value={formState.issue_date}
@@ -327,7 +328,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Risk Inception Date</span>
+              <FormLabel>Risk Inception Date</FormLabel>
               <input
                 type="date"
                 value={formState.risk_start_date}
@@ -336,7 +337,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Risk Expiry Date</span>
+              <FormLabel>Risk Expiry Date</FormLabel>
               <input
                 type="date"
                 value={formState.risk_end_date}
@@ -345,7 +346,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Business Type</span>
+              <FormLabel>Business Type</FormLabel>
               <select
                 value={formState.business_type}
                 onChange={(event) => handleChange("business_type", event.target.value)}
@@ -357,7 +358,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Sum Insured</span>
+              <FormLabel>Sum Insured</FormLabel>
               <input
                 type="number"
                 min="0"
@@ -368,7 +369,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Policy Type</span>
+              <FormLabel>Policy Type</FormLabel>
               <select
                 value={formState.policy_type}
                 onChange={(event) => handleChange("policy_type", event.target.value)}
@@ -383,7 +384,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Insurance Company</span>
+              <FormLabel required>Insurance Company</FormLabel>
               <select
                 value={formState.company_id}
                 onChange={(event) => handleChange("company_id", event.target.value)}
@@ -398,7 +399,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Product Name</span>
+              <FormLabel>Product Name</FormLabel>
               <input
                 list="product-options"
                 value={productQuery}
@@ -420,7 +421,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Vehicle Make</span>
+              <FormLabel>Vehicle Make</FormLabel>
               <input
                 type="text"
                 value={formState.vehicle_make}
@@ -429,7 +430,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Vehicle Model</span>
+              <FormLabel>Vehicle Model</FormLabel>
               <input
                 type="text"
                 value={formState.vehicle_model}
@@ -438,7 +439,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Manufacture Year</span>
+              <FormLabel>Manufacture Year</FormLabel>
               <input
                 type="number"
                 min="1900"
@@ -450,7 +451,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Registration No.</span>
+              <FormLabel>Registration No.</FormLabel>
               <input
                 type="text"
                 value={formState.registration_no}
@@ -459,7 +460,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Payment By</span>
+              <FormLabel>Payment By</FormLabel>
               <select
                 value={formState.paid_by_type}
                 onChange={(event) => handleChange("paid_by_type", event.target.value)}
@@ -471,7 +472,7 @@ export default function IssuePolicyPage() {
             </label>
 
             <label className="form-field">
-              <span>Payment Mode</span>
+              <FormLabel>Payment Mode</FormLabel>
               <select
                 value={formState.payment_mode}
                 onChange={(event) => handleChange("payment_mode", event.target.value)}
@@ -486,7 +487,7 @@ export default function IssuePolicyPage() {
             {showAgentChequeFields ? (
               <>
                 <label className="form-field">
-                  <span>Cheque No.</span>
+                  <FormLabel required>Cheque No.</FormLabel>
                   <input
                     type="text"
                     required
@@ -496,7 +497,7 @@ export default function IssuePolicyPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Cheque Date</span>
+                  <FormLabel required>Cheque Date</FormLabel>
                   <input
                     type="date"
                     required
@@ -506,7 +507,7 @@ export default function IssuePolicyPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Amount</span>
+                  <FormLabel required>Amount</FormLabel>
                   <input
                     type="number"
                     min="0"

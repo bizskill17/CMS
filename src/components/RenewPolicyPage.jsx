@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { API_BASE } from "../config/api";
 import { formatCellValue, formatDateDisplay } from "../utils/formatting";
+import FormLabel from "./FormLabel";
 
 const initialFormState = {
   customer_group_id: "",
@@ -286,22 +287,22 @@ export default function RenewPolicyPage() {
             <div className="master-modal__body">
               <form className="issue-policy-form" onSubmit={handleSubmit}>
                 <label className="form-field">
-                  <span>Group Name</span>
+                  <FormLabel>Group Name</FormLabel>
                   <input type="text" readOnly value={selectedPolicy?.customer_group_name || ""} />
                 </label>
 
                 <label className="form-field issue-policy-form__wide">
-                  <span>Old Policy Details</span>
+                  <FormLabel>Old Policy Details</FormLabel>
                   <textarea readOnly rows="2" value={buildOldPolicyDetail(selectedPolicy)} />
                 </label>
 
                 <label className="form-field issue-policy-form__wide">
-                  <span>Policy Holder Detail</span>
+                  <FormLabel>Policy Holder Detail</FormLabel>
                   <textarea readOnly rows="2" value={buildPolicyHolderDetail(selectedPolicy)} />
                 </label>
 
                 <label className="form-field">
-                  <span>New Policy Number</span>
+                  <FormLabel required>New Policy Number</FormLabel>
                   <input
                     type="text"
                     value={formState.new_policy_number}
@@ -311,7 +312,7 @@ export default function RenewPolicyPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Gross Premium</span>
+                  <FormLabel>Gross Premium</FormLabel>
                   <input
                     type="number"
                     min="0"
@@ -322,7 +323,7 @@ export default function RenewPolicyPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Net Premium</span>
+                  <FormLabel>Net Premium</FormLabel>
                   <input
                     type="number"
                     min="0"
@@ -333,7 +334,7 @@ export default function RenewPolicyPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Policy Issued Date</span>
+                  <FormLabel>Policy Issued Date</FormLabel>
                   <input
                     type="date"
                     value={formState.issue_date}
@@ -342,7 +343,7 @@ export default function RenewPolicyPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Risk Inception Date</span>
+                  <FormLabel>Risk Inception Date</FormLabel>
                   <input
                     type="date"
                     value={formState.risk_start_date}
@@ -351,7 +352,7 @@ export default function RenewPolicyPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Risk Expiry Date</span>
+                  <FormLabel>Risk Expiry Date</FormLabel>
                   <input
                     type="date"
                     value={formState.risk_end_date}
@@ -360,12 +361,12 @@ export default function RenewPolicyPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Business Type</span>
+                  <FormLabel>Business Type</FormLabel>
                   <input type="text" readOnly value={formState.business_type} />
                 </label>
 
                 <label className="form-field">
-                  <span>Sum Insured</span>
+                  <FormLabel>Sum Insured</FormLabel>
                   <input
                     type="number"
                     min="0"
@@ -376,42 +377,42 @@ export default function RenewPolicyPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Policy Type</span>
+                  <FormLabel>Policy Type</FormLabel>
                   <input type="text" readOnly value={formState.policy_type} />
                 </label>
 
                 <label className="form-field">
-                  <span>Company Name</span>
+                  <FormLabel>Company Name</FormLabel>
                   <input type="text" readOnly value={selectedPolicy?.company_name || ""} />
                 </label>
 
                 <label className="form-field">
-                  <span>Product Name</span>
+                  <FormLabel>Product Name</FormLabel>
                   <input type="text" readOnly value={selectedPolicy?.product_name || ""} />
                 </label>
 
                 <label className="form-field">
-                  <span>Vehicle Make</span>
+                  <FormLabel>Vehicle Make</FormLabel>
                   <input type="text" readOnly value={formState.vehicle_make} />
                 </label>
 
                 <label className="form-field">
-                  <span>Vehicle Model</span>
+                  <FormLabel>Vehicle Model</FormLabel>
                   <input type="text" readOnly value={formState.vehicle_model} />
                 </label>
 
                 <label className="form-field">
-                  <span>Year of Manufacture</span>
+                  <FormLabel>Year of Manufacture</FormLabel>
                   <input type="number" readOnly value={formState.year_of_manufacture} />
                 </label>
 
                 <label className="form-field">
-                  <span>Registration No.</span>
+                  <FormLabel>Registration No.</FormLabel>
                   <input type="text" readOnly value={formState.registration_no} />
                 </label>
 
                 <label className="form-field">
-                  <span>Payment made by</span>
+                  <FormLabel>Payment made by</FormLabel>
                   <select
                     value={formState.paid_by_type}
                     onChange={(event) => handleChange("paid_by_type", event.target.value)}
@@ -423,7 +424,7 @@ export default function RenewPolicyPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Payment Mode</span>
+                  <FormLabel>Payment Mode</FormLabel>
                   <select
                     value={formState.payment_mode}
                     onChange={(event) => handleChange("payment_mode", event.target.value)}

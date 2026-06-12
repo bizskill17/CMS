@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { API_BASE } from "../config/api";
 import { formatCellValue } from "../utils/formatting";
+import FormLabel from "./FormLabel";
 
 const initialFormState = {
   payment_date: "",
@@ -239,17 +240,17 @@ export default function PendingPaymentsPage() {
             <div className="master-modal__body">
               <form className="master-form" onSubmit={handleSubmit}>
                 <label className="form-field">
-                  <span>Policy No.</span>
+                  <FormLabel>Policy No.</FormLabel>
                   <input type="text" readOnly value={selectedPolicy?.policy_number || ""} />
                 </label>
 
                 <label className="form-field">
-                  <span>Customer</span>
+                  <FormLabel>Customer</FormLabel>
                   <input type="text" readOnly value={selectedPolicy?.customer_name || ""} />
                 </label>
 
                 <label className="form-field">
-                  <span>Payment Date</span>
+                  <FormLabel required>Payment Date</FormLabel>
                   <input
                     type="date"
                     required
@@ -259,7 +260,7 @@ export default function PendingPaymentsPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Amount</span>
+                  <FormLabel required>Amount</FormLabel>
                   <input
                     type="number"
                     min="0"
@@ -271,7 +272,7 @@ export default function PendingPaymentsPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Payment Mode</span>
+                  <FormLabel required>Payment Mode</FormLabel>
                   <select
                     required
                     value={formState.payment_mode}
@@ -285,7 +286,7 @@ export default function PendingPaymentsPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Payment Status</span>
+                  <FormLabel>Payment Status</FormLabel>
                   <select
                     value={formState.payment_status}
                     onChange={(event) => handleChange("payment_status", event.target.value)}
@@ -297,7 +298,7 @@ export default function PendingPaymentsPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Cheque Number</span>
+                  <FormLabel>Cheque Number</FormLabel>
                   <input
                     type="text"
                     value={formState.cheque_number}
@@ -306,7 +307,7 @@ export default function PendingPaymentsPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Cheque Date</span>
+                  <FormLabel>Cheque Date</FormLabel>
                   <input
                     type="date"
                     value={formState.cheque_date}
@@ -315,7 +316,7 @@ export default function PendingPaymentsPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Clearing Date</span>
+                  <FormLabel>Clearing Date</FormLabel>
                   <input
                     type="date"
                     value={formState.clearing_date}
@@ -324,7 +325,7 @@ export default function PendingPaymentsPage() {
                 </label>
 
                 <label className="form-field">
-                  <span>Reference Number</span>
+                  <FormLabel>Reference Number</FormLabel>
                   <input
                     type="text"
                     value={formState.reference_number}
@@ -333,7 +334,7 @@ export default function PendingPaymentsPage() {
                 </label>
 
                 <label className="form-field issue-policy-form__wide">
-                  <span>Remarks</span>
+                  <FormLabel>Remarks</FormLabel>
                   <textarea
                     rows="3"
                     value={formState.remarks}

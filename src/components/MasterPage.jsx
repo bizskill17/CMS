@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import { masterConfigs } from "../data/masterConfigs";
 import { formatCellValue } from "../utils/formatting";
+import FormLabel from "./FormLabel";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -354,7 +355,7 @@ export default function MasterPage({ resourceKey }) {
                   if (field.type === "textarea") {
                     return (
                       <label key={field.name} className="form-field">
-                        <span>{field.label}</span>
+                        <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
                         <textarea
                           value={formState[field.name]}
                           onChange={(event) => handleChange(field, event.target.value)}
@@ -382,7 +383,7 @@ export default function MasterPage({ resourceKey }) {
 
                     return (
                       <label key={field.name} className="form-field">
-                        <span>{field.label}</span>
+                        <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
                         <select
                           value={formState[field.name]}
                           onChange={(event) => handleChange(field, event.target.value)}
@@ -411,7 +412,7 @@ export default function MasterPage({ resourceKey }) {
 
                   return (
                     <label key={field.name} className="form-field">
-                      <span>{field.label}</span>
+                      <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
                       <input
                         type={field.type || "text"}
                         value={formState[field.name]}
