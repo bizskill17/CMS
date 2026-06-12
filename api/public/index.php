@@ -582,6 +582,22 @@ try {
             }
         }
 
+        $requiresChequeDetails =
+            (($payload['paid_by_type'] ?? '') === 'Agent')
+            && (($payload['payment_mode'] ?? '') === 'Cheque');
+
+        if ($requiresChequeDetails) {
+            foreach (['cheque_number', 'cheque_date', 'cheque_amount'] as $requiredField) {
+                if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
+                    Response::json([
+                        'status' => 'error',
+                        'message' => sprintf('Field "%s" is required when Payment By is Agent and Payment Mode is Cheque.', $requiredField)
+                    ], 422);
+                    exit;
+                }
+            }
+        }
+
         $customerId = (int) $payload['customer_id'];
         $companyId = (int) $payload['company_id'];
         $productId = isset($payload['product_id']) && $payload['product_id'] !== '' ? (int) $payload['product_id'] : null;
@@ -653,6 +669,9 @@ try {
                     client_payment_status,
                     payment_received_amount,
                     payment_pending_amount,
+                    client_cheque_number,
+                    client_cheque_date,
+                    payment_remarks,
                     policy_status,
                     last_status,
                     fiscal_year_ending
@@ -681,6 +700,9 @@ try {
                     :client_payment_status,
                     :payment_received_amount,
                     :payment_pending_amount,
+                    :client_cheque_number,
+                    :client_cheque_date,
+                    :payment_remarks,
                     :policy_status,
                     :last_status,
                     :fiscal_year_ending
@@ -714,6 +736,12 @@ try {
             $statement->bindValue(':client_payment_status', 'Pending');
             $statement->bindValue(':payment_received_amount', 0);
             $statement->bindValue(':payment_pending_amount', $netPremium ?? 0);
+            $statement->bindValue(':client_cheque_number', $requiresChequeDetails ? $payload['cheque_number'] : null);
+            $statement->bindValue(':client_cheque_date', $requiresChequeDetails ? $payload['cheque_date'] : null);
+            $statement->bindValue(
+                ':payment_remarks',
+                $requiresChequeDetails ? sprintf('Initial agent cheque amount: %s', $payload['cheque_amount']) : null
+            );
             $statement->bindValue(':policy_status', 'Active');
             $statement->bindValue(':last_status', 'Issued');
             $statement->bindValue(':fiscal_year_ending', (int) date('Y'));

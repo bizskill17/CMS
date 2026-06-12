@@ -20,7 +20,10 @@ const initialFormState = {
   year_of_manufacture: "",
   registration_no: "",
   paid_by_type: "",
-  payment_mode: ""
+  payment_mode: "",
+  cheque_number: "",
+  cheque_date: "",
+  cheque_amount: ""
 };
 
 async function readApiJson(response) {
@@ -141,6 +144,8 @@ export default function IssuePolicyPage() {
     () => lookupData.products.find((product) => String(product.id) === formState.product_id),
     [formState.product_id, lookupData.products]
   );
+  const showAgentChequeFields =
+    formState.paid_by_type === "Agent" && formState.payment_mode === "Cheque";
 
   useEffect(() => {
     if (selectedCustomer) {
@@ -171,6 +176,15 @@ export default function IssuePolicyPage() {
       if (name === "product_id") {
         const product = lookupData.products.find((item) => String(item.id) === value);
         next.policy_type = product?.category_id ? String(product.category_id) : next.policy_type;
+      }
+
+      if (
+        (name === "paid_by_type" && value !== "Agent") ||
+        (name === "payment_mode" && value !== "Cheque")
+      ) {
+        next.cheque_number = "";
+        next.cheque_date = "";
+        next.cheque_amount = "";
       }
 
       return next;
@@ -468,6 +482,42 @@ export default function IssuePolicyPage() {
                 <option value="Cash">Cash</option>
               </select>
             </label>
+
+            {showAgentChequeFields ? (
+              <>
+                <label className="form-field">
+                  <span>Cheque No.</span>
+                  <input
+                    type="text"
+                    required
+                    value={formState.cheque_number}
+                    onChange={(event) => handleChange("cheque_number", event.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Cheque Date</span>
+                  <input
+                    type="date"
+                    required
+                    value={formState.cheque_date}
+                    onChange={(event) => handleChange("cheque_date", event.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Amount</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    value={formState.cheque_amount}
+                    onChange={(event) => handleChange("cheque_amount", event.target.value)}
+                  />
+                </label>
+              </>
+            ) : null}
 
             <div className="form-actions issue-policy-form__actions">
               <button type="button" className="secondary-button" onClick={resetForm}>

@@ -19,8 +19,25 @@ export const masterConfigs = {
       { name: "alternate_mobile", label: "Alternate Mobile", type: "text" },
       { name: "email", label: "Email", type: "email" },
       { name: "gstin", label: "GSTIN", type: "text" },
-      { name: "city", label: "City", type: "text" },
-      { name: "state", label: "State", type: "text" },
+      {
+        name: "state",
+        label: "State",
+        type: "select",
+        optionsFrom: "states",
+        optionValueKey: "state_name",
+        optionLabelKey: "state_name",
+        resetsFields: ["city"]
+      },
+      {
+        name: "city",
+        label: "City",
+        type: "select",
+        optionsFrom: "cities",
+        optionValueKey: "city_name",
+        optionLabelKey: "city_name",
+        dependsOn: "state",
+        dependsOnKey: "state_name"
+      },
       { name: "notes", label: "Notes", type: "textarea" },
       { name: "is_active", label: "Active", type: "checkbox" }
     ]

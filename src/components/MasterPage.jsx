@@ -41,9 +41,15 @@ function emptyState(config) {
 function getOptionLabel(resource, item) {
   if (resource === "customer-groups") return item.group_name;
   if (resource === "insurance-companies") return item.company_name;
+  if (resource === "states") return item.state_name;
+  if (resource === "cities") return item.city_name;
   if (resource === "product-categories") return item.category_name;
   if (resource === "agents") return item.full_name;
   return item.name ?? item.label ?? item.id;
+}
+
+function getOptionValue(field, option) {
+  return field.optionValueKey ? option[field.optionValueKey] ?? "" : option.id;
 }
 
 function EditIcon() {
@@ -136,6 +142,9 @@ export default function MasterPage({ resourceKey }) {
   const handleChange = (field, value) => {
     setFormState((current) => ({
       ...current,
+      ...(field.resetsFields
+        ? Object.fromEntries(field.resetsFields.map((fieldName) => [fieldName, ""]))
+        : {}),
       [field.name]: field.type === "checkbox" ? Boolean(value) : value
     }));
   };
@@ -357,7 +366,18 @@ export default function MasterPage({ resourceKey }) {
 
                   if (field.type === "select") {
                     const dynamicOptions = field.optionsFrom
-                      ? optionsMap[field.optionsFrom] || []
+                      ? (optionsMap[field.optionsFrom] || []).filter((option) => {
+                          if (!field.dependsOn || !field.dependsOnKey) {
+                            return true;
+                          }
+
+                          const parentValue = formState[field.dependsOn];
+                          if (!parentValue) {
+                            return false;
+                          }
+
+                          return String(option[field.dependsOnKey] ?? "") === String(parentValue);
+                        })
                       : field.staticOptions || [];
 
                     return (
@@ -375,8 +395,13 @@ export default function MasterPage({ resourceKey }) {
                                 </option>
                               ))
                             : dynamicOptions.map((option) => (
-                                <option key={`${field.name}-${option.id}`} value={option.id}>
-                                  {getOptionLabel(field.optionsFrom, option)}
+                                <option
+                                  key={`${field.name}-${field.optionValueKey || "id"}-${getOptionValue(field, option)}`}
+                                  value={getOptionValue(field, option)}
+                                >
+                                  {field.optionLabelKey
+                                    ? option[field.optionLabelKey]
+                                    : getOptionLabel(field.optionsFrom, option)}
                                 </option>
                               ))}
                         </select>
