@@ -546,6 +546,21 @@ try {
              ORDER BY ip.product_name ASC'
         )->fetchAll();
 
+        $agentAccounts = $pdo->query(
+            'SELECT
+                apa.id,
+                apa.agent_id,
+                a.full_name AS agent_name,
+                apa.account_label,
+                apa.account_type,
+                apa.bank_name,
+                apa.is_default
+             FROM agent_payment_accounts apa
+             LEFT JOIN agents a ON a.id = apa.agent_id
+             WHERE apa.is_active = 1
+             ORDER BY a.full_name ASC, apa.is_default DESC, apa.account_label ASC'
+        )->fetchAll();
+
         Response::json([
             'status' => 'ok',
             'data' => [
@@ -554,6 +569,7 @@ try {
                 'policyTypes' => $policyTypes,
                 'insuranceCompanies' => $insuranceCompanies,
                 'products' => $products,
+                'agentAccounts' => $agentAccounts,
             ],
         ]);
         exit;
@@ -598,10 +614,23 @@ try {
             }
         }
 
+        if ((($payload['paid_by_type'] ?? '') === 'Agent')
+            && (!array_key_exists('agent_payment_account_id', $payload) || trim((string) $payload['agent_payment_account_id']) === '')
+        ) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Field "agent_payment_account_id" is required when Payment By is Agent.'
+            ], 422);
+            exit;
+        }
+
         $customerId = (int) $payload['customer_id'];
         $companyId = (int) $payload['company_id'];
         $productId = isset($payload['product_id']) && $payload['product_id'] !== '' ? (int) $payload['product_id'] : null;
         $policyTypeId = isset($payload['policy_type']) && $payload['policy_type'] !== '' ? (int) $payload['policy_type'] : null;
+        $agentPaymentAccountId = isset($payload['agent_payment_account_id']) && $payload['agent_payment_account_id'] !== ''
+            ? (int) $payload['agent_payment_account_id']
+            : null;
         $policyTypeName = null;
 
         if ($productId !== null && $policyTypeId !== null) {
@@ -665,6 +694,7 @@ try {
                     registration_no,
                     paid_by_type,
                     payment_mode,
+                    agent_payment_account_id,
                     payment_status,
                     client_payment_status,
                     payment_received_amount,
@@ -696,6 +726,7 @@ try {
                     :registration_no,
                     :paid_by_type,
                     :payment_mode,
+                    :agent_payment_account_id,
                     :payment_status,
                     :client_payment_status,
                     :payment_received_amount,
@@ -732,6 +763,7 @@ try {
             $statement->bindValue(':registration_no', $payload['registration_no'] !== '' ? $payload['registration_no'] : null);
             $statement->bindValue(':paid_by_type', $payload['paid_by_type'] !== '' ? $payload['paid_by_type'] : null);
             $statement->bindValue(':payment_mode', $payload['payment_mode'] !== '' ? $payload['payment_mode'] : null);
+            $statement->bindValue(':agent_payment_account_id', $agentPaymentAccountId, $agentPaymentAccountId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
             $statement->bindValue(':payment_status', 'Pending');
             $statement->bindValue(':client_payment_status', 'Pending');
             $statement->bindValue(':payment_received_amount', 0);

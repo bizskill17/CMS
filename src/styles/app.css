@@ -400,6 +400,11 @@ button {
   font-weight: 800;
 }
 
+.form-field .form-label__required,
+.checkbox-field .form-label__required {
+  color: #d11a2a;
+}
+
 .form-field input,
 .form-field select,
 .form-field textarea {

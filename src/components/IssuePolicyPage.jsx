@@ -21,6 +21,7 @@ const initialFormState = {
   year_of_manufacture: "",
   registration_no: "",
   paid_by_type: "",
+  agent_payment_account_id: "",
   payment_mode: "",
   cheque_number: "",
   cheque_date: "",
@@ -66,7 +67,8 @@ export default function IssuePolicyPage() {
     customers: [],
     policyTypes: [],
     insuranceCompanies: [],
-    products: []
+    products: [],
+    agentAccounts: []
   });
   const [customerQuery, setCustomerQuery] = useState("");
   const [productQuery, setProductQuery] = useState("");
@@ -93,7 +95,8 @@ export default function IssuePolicyPage() {
           customers: sortByLabel(json.data.customers || [], "full_name"),
           policyTypes: sortByLabel(json.data.policyTypes || [], "category_name"),
           insuranceCompanies: sortByLabel(json.data.insuranceCompanies || [], "company_name"),
-          products: sortByLabel(json.data.products || [], "product_name")
+          products: sortByLabel(json.data.products || [], "product_name"),
+          agentAccounts: sortByLabel(json.data.agentAccounts || [], "account_label")
         });
       } catch (loadError) {
         setError(loadError.message);
@@ -186,6 +189,10 @@ export default function IssuePolicyPage() {
         next.cheque_number = "";
         next.cheque_date = "";
         next.cheque_amount = "";
+      }
+
+      if (name === "paid_by_type" && value !== "Agent") {
+        next.agent_payment_account_id = "";
       }
 
       return next;
@@ -470,6 +477,26 @@ export default function IssuePolicyPage() {
                 <option value="Agent">Agent</option>
               </select>
             </label>
+
+            {formState.paid_by_type === "Agent" ? (
+              <label className="form-field">
+                <FormLabel required>Agent Accounts</FormLabel>
+                <select
+                  required
+                  value={formState.agent_payment_account_id}
+                  onChange={(event) => handleChange("agent_payment_account_id", event.target.value)}
+                >
+                  <option value="">Select Agent Account</option>
+                  {lookupData.agentAccounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {[account.agent_name, account.account_label, account.account_type]
+                        .filter(Boolean)
+                        .join(" - ")}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
 
             <label className="form-field">
               <FormLabel>Payment Mode</FormLabel>
