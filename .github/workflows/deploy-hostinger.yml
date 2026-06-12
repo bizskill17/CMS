@@ -36,40 +36,25 @@ jobs:
       - name: Verify deploy DB config
         run: test -f deploy/api/config/database.php
 
-      - name: Validate SFTP settings
-        env:
-          HOSTINGER_SERVER: ${{ secrets.HOSTINGER_SFTP_SERVER || secrets.HOSTINGER_FTP_SERVER }}
-          HOSTINGER_USERNAME: ${{ secrets.HOSTINGER_SFTP_USERNAME || secrets.HOSTINGER_FTP_USERNAME }}
-          HOSTINGER_PASSWORD: ${{ secrets.HOSTINGER_SFTP_PASSWORD || secrets.HOSTINGER_FTP_PASSWORD }}
-          HOSTINGER_PORT: ${{ secrets.HOSTINGER_SFTP_PORT }}
-          HOSTINGER_TARGET_DIR: ${{ secrets.HOSTINGER_TARGET_DIR }}
-        run: |
-          test -n "$HOSTINGER_SERVER" || (echo "Missing HOSTINGER_SFTP_SERVER or HOSTINGER_FTP_SERVER secret." && exit 1)
-          test -n "$HOSTINGER_USERNAME" || (echo "Missing HOSTINGER_SFTP_USERNAME or HOSTINGER_FTP_USERNAME secret." && exit 1)
-          test -n "$HOSTINGER_PASSWORD" || (echo "Missing HOSTINGER_SFTP_PASSWORD or HOSTINGER_FTP_PASSWORD secret." && exit 1)
-          test -n "$HOSTINGER_PORT" || (echo "Missing HOSTINGER_SFTP_PORT secret. Set it to the SFTP port shown in Hostinger hPanel." && exit 1)
-          test -n "$HOSTINGER_TARGET_DIR" || (echo "Missing HOSTINGER_TARGET_DIR secret." && exit 1)
-
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      - name: Deploy files over SFTP
+      - name: Deploy files over FTP
         env:
-          HOSTINGER_SERVER: ${{ secrets.HOSTINGER_SFTP_SERVER || secrets.HOSTINGER_FTP_SERVER }}
-          HOSTINGER_USERNAME: ${{ secrets.HOSTINGER_SFTP_USERNAME || secrets.HOSTINGER_FTP_USERNAME }}
-          HOSTINGER_PASSWORD: ${{ secrets.HOSTINGER_SFTP_PASSWORD || secrets.HOSTINGER_FTP_PASSWORD }}
-          HOSTINGER_PORT: ${{ secrets.HOSTINGER_SFTP_PORT }}
+          HOSTINGER_SERVER: ${{ secrets.HOSTINGER_FTP_SERVER }}
+          HOSTINGER_USERNAME: ${{ secrets.HOSTINGER_FTP_USERNAME }}
+          HOSTINGER_PASSWORD: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
           HOSTINGER_TARGET_DIR: ${{ secrets.HOSTINGER_TARGET_DIR }}
         run: |
-          timeout 5m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "sftp://$HOSTINGER_SERVER:$HOSTINGER_PORT" <<EOF
+          timeout 5m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "ftp://$HOSTINGER_SERVER" <<EOF
           set cmd:fail-exit yes
           set net:timeout 20
           set net:max-retries 1
           set net:reconnect-interval-base 5
           set net:reconnect-interval-max 5
           set xfer:clobber on
-          set sftp:auto-confirm yes
-          set sftp:connect-program "ssh -a -x -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+          set ftp:passive-mode yes
+          set ftp:ssl-allow no
           set ssl:verify-certificate no
           mirror -R ./deploy/ "$HOSTINGER_TARGET_DIR" --verbose
           bye
