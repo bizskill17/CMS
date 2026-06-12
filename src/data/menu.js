@@ -40,11 +40,7 @@ export const menuSections = [
     path: "/payments",
     icon: "payments",
     items: [
-      { label: "Pending Payments", path: "/payments/pending" },
-      { label: "Record Client Payment", path: "/payments/record-client-payment" },
-      { label: "Record Cheque Received", path: "/payments/record-cheque" },
-      { label: "Update Cheque Status", path: "/payments/update-cheque-status" },
-      { label: "Payment Follow Ups", path: "/payments/follow-ups" }
+      { label: "Pending Payments", path: "/payments/pending" }
     ]
   },
   {
