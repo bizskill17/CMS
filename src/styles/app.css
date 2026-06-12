@@ -412,6 +412,16 @@ button {
   font-size: 14px;
 }
 
+.form-field input[readonly],
+.form-field textarea[readonly],
+.form-field select:disabled,
+.form-field input:disabled,
+.form-field textarea:disabled {
+  background: #e7ebf1;
+  color: #5d6877;
+  cursor: not-allowed;
+}
+
 .checkbox-field {
   display: flex;
   align-items: center;
