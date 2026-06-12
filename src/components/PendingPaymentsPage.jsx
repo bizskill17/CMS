@@ -252,13 +252,22 @@ export default function PendingPaymentsPage() {
                       <td>{formatCellValue(record.payment_pending_amount)}</td>
                       <td>{formatCellValue(record.client_payment_status)}</td>
                       <td>
-                        <button
-                          type="button"
-                          className="secondary-button"
-                          onClick={() => openModal(record)}
-                        >
-                          Update Client Payment
-                        </button>
+                        <div className="table-actions">
+                          <button
+                            type="button"
+                            className="secondary-button"
+                            onClick={() => console.log("Followup for payment record:", record.id)}
+                          >
+                            Followup
+                          </button>
+                          <button
+                            type="button"
+                            className="primary-button"
+                            onClick={() => openModal(record)}
+                          >
+                            Update Client Payment
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))

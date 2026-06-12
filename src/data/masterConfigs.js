@@ -156,8 +156,7 @@ export const masterConfigs = {
       { key: "name", label: "Name" },
       { key: "entity_level", label: "Entity Level" },
       { key: "is_mandatory", label: "Mandatory", type: "boolean" },
-      { key: "is_active", label: "Active", type: "boolean" },
-      { key: "sort_order", label: "Sort Order" }
+      { key: "is_active", label: "Active", type: "boolean" }
     ],
     fields: [
       { name: "code", label: "Code", type: "text", required: true },

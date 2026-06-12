@@ -267,7 +267,7 @@ export default function RenewPolicyPage() {
                       )}
                     </th>
                   ))}
-                  <th>Renew</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -291,13 +291,22 @@ export default function RenewPolicyPage() {
                       <td>{formatCellValue(policy.policy_type)}</td>
                       <td>{formatCellValue(policy.registration_no)}</td>
                       <td>
-                        <button
-                          type="button"
-                          className="secondary-button"
-                          onClick={() => openRenewForm(policy)}
-                        >
-                          Renew
-                        </button>
+                        <div className="table-actions">
+                          <button
+                            type="button"
+                            className="secondary-button"
+                            onClick={() => console.log("Followup for policy:", policy.id)}
+                          >
+                            Followup
+                          </button>
+                          <button
+                            type="button"
+                            className="primary-button"
+                            onClick={() => openRenewForm(policy)}
+                          >
+                            Renew
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
