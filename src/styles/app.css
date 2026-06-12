@@ -47,6 +47,17 @@ button {
   border-right: 2px solid rgba(22, 33, 45, 0.25);
   display: flex;
   flex-direction: column;
+  flex: 0 0 390px;
+  overflow: hidden;
+  transition: width 0.25s ease, flex-basis 0.25s ease, opacity 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.sidebar--collapsed {
+  width: 0;
+  flex-basis: 0;
+  border-right-color: transparent;
+  opacity: 0;
 }
 
 .brand-panel {
@@ -222,9 +233,23 @@ button {
 .content-area {
   flex: 1;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: flex-start;
   padding: 36px;
+}
+
+.sidebar-toggle {
+  margin-bottom: 18px;
+  border: none;
+  border-radius: 12px;
+  background: #2d57d7;
+  color: #fff;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(45, 87, 215, 0.24);
 }
 
 .page-shell {
@@ -280,13 +305,8 @@ button {
 }
 
 .page-hero h2 {
-  margin: 0 0 10px;
+  margin: 0;
   font-size: 34px;
-}
-
-.page-hero span {
-  color: var(--text-soft);
-  font-size: 15px;
 }
 
 .page-hero--masters {
@@ -573,6 +593,12 @@ button {
 
   .sidebar {
     width: 100%;
+    flex-basis: auto;
+  }
+
+  .sidebar--collapsed {
+    width: 0;
+    flex-basis: 0;
   }
 
   .content-area {

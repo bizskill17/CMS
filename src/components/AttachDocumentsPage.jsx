@@ -150,9 +150,7 @@ export default function AttachDocumentsPage() {
   return (
     <div className="page-shell issue-policy-page">
       <div className="page-hero page-hero--masters">
-        <p>Policies</p>
         <h2>Attach Documents</h2>
-        <span>Policies listed here still need document upload.</span>
       </div>
 
       <section className="master-card issue-policy-card">

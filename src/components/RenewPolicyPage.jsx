@@ -204,9 +204,7 @@ export default function RenewPolicyPage() {
   return (
     <div className="page-shell issue-policy-page">
       <div className="page-hero page-hero--masters">
-        <p>Policies</p>
         <h2>Renew Policy</h2>
-        <span>Renew an existing policy and carry forward the linked customer and family details.</span>
       </div>
 
       <section className="master-card issue-policy-card">

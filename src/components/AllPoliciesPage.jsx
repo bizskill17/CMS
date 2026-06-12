@@ -62,9 +62,7 @@ export default function AllPoliciesPage() {
   return (
     <div className="page-shell issue-policy-page">
       <div className="page-hero page-hero--masters">
-        <p>Policies</p>
         <h2>All Policies</h2>
-        <span>Browse issued policies with customer, insurer, product, and payment details.</span>
       </div>
 
       <section className="master-card issue-policy-card">

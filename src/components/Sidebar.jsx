@@ -28,7 +28,7 @@ function Icon({ name }) {
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen }) {
   const location = useLocation();
   const defaultOpenKey = useMemo(() => {
     const matched = menuSections.find((section) =>
@@ -44,7 +44,7 @@ export default function Sidebar() {
   }, [defaultOpenKey]);
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? "" : "sidebar--collapsed"}`}>
       <div className="brand-panel">
         <div className="brand-icon">
           <svg viewBox="0 0 24 24" aria-hidden="true">

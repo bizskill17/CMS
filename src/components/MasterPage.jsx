@@ -241,9 +241,7 @@ export default function MasterPage({ resourceKey }) {
   return (
     <div className="master-page">
       <div className="page-hero page-hero--masters">
-        <p>Masters</p>
         <h2>{config.title}</h2>
-        <span>Create and maintain your foundational setup data here.</span>
       </div>
 
       <div className="master-grid master-grid--list-only">

@@ -153,9 +153,7 @@ export default function PendingPaymentsPage() {
   return (
     <div className="page-shell issue-policy-page">
       <div className="page-hero page-hero--masters">
-        <p>Payments</p>
         <h2>Pending Payments</h2>
-        <span>Policies paid by agent that still need client payment updates.</span>
       </div>
 
       <section className="master-card issue-policy-card">
