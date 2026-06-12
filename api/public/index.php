@@ -58,6 +58,61 @@ try {
         exit;
     }
 
+    if (preg_match('#^/api/customers/(\d+)/policies$#', $path, $matches) === 1 && $method === 'GET') {
+        $pdo = Database::connection();
+        $customerId = (int) $matches[1];
+
+        $customerStatement = $pdo->prepare(
+            'SELECT id, customer_code, full_name
+             FROM customers
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $customerStatement->bindValue(':id', $customerId, PDO::PARAM_INT);
+        $customerStatement->execute();
+        $customer = $customerStatement->fetch();
+
+        if (!$customer) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Customer not found.'
+            ], 404);
+            exit;
+        }
+
+        $policyStatement = $pdo->prepare(
+            'SELECT
+                p.id,
+                p.policy_number,
+                p.business_type,
+                p.policy_type,
+                p.issue_date,
+                p.risk_start_date,
+                p.risk_end_date,
+                p.renewal_status,
+                p.policy_status,
+                p.registration_no,
+                ic.company_name,
+                ip.product_name
+             FROM policies p
+             LEFT JOIN insurance_companies ic ON ic.id = p.company_id
+             LEFT JOIN insurance_products ip ON ip.id = p.product_id
+             WHERE p.customer_id = :customer_id
+             ORDER BY p.risk_end_date DESC, p.issue_date DESC, p.id DESC'
+        );
+        $policyStatement->bindValue(':customer_id', $customerId, PDO::PARAM_INT);
+        $policyStatement->execute();
+
+        Response::json([
+            'status' => 'ok',
+            'data' => [
+                'customer' => $customer,
+                'policies' => $policyStatement->fetchAll()
+            ]
+        ]);
+        exit;
+    }
+
     if ($path === '/api/masters' && $method === 'GET') {
         Response::json([
             'status' => 'ok',

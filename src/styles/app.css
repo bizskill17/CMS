@@ -524,6 +524,11 @@ button {
   color: #2d57d7;
 }
 
+.icon-button--view {
+  background: #eef8ff;
+  color: #0b6fb8;
+}
+
 .icon-button--delete {
   background: #ffe7e9;
   color: #bd1e2d;

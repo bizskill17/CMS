@@ -49,6 +49,10 @@ export default function AttachDocumentsPage() {
     file: null
   });
 
+  const policyDocumentTypes = documentTypes.filter(
+    (documentType) => String(documentType.entity_level || "").toLowerCase() === "policy"
+  );
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -252,7 +256,7 @@ export default function AttachDocumentsPage() {
                     }
                   >
                     <option value="">Select Document Type</option>
-                    {documentTypes.map((documentType) => (
+                    {policyDocumentTypes.map((documentType) => (
                       <option key={documentType.id} value={documentType.id}>
                         {documentType.name}
                       </option>

@@ -87,6 +87,14 @@ function DeleteIcon() {
   );
 }
 
+function ViewIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 5c5.5 0 9.8 4.6 10.9 6-.9 1.4-5.2 6-10.9 6S2.2 12.4 1.1 11C2.2 9.6 6.5 5 12 5Zm0 2C8.5 7 5.4 9.6 3.8 11 5.4 12.4 8.5 15 12 15s6.6-2.6 8.2-4C18.6 9.6 15.5 7 12 7Zm0 1.5A2.5 2.5 0 1 1 9.5 11 2.5 2.5 0 0 1 12 8.5Z" />
+    </svg>
+  );
+}
+
 export default function MasterPage({ resourceKey }) {
   const config = masterConfigs[resourceKey];
   const [records, setRecords] = useState([]);
@@ -98,6 +106,13 @@ export default function MasterPage({ resourceKey }) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [relatedPoliciesModal, setRelatedPoliciesModal] = useState({
+    isOpen: false,
+    customer: null,
+    policies: [],
+    loading: false,
+    error: ""
+  });
 
   const dependencies = useMemo(
     () =>
@@ -264,6 +279,51 @@ export default function MasterPage({ resourceKey }) {
     }
   };
 
+  const resetRelatedPoliciesModal = () => {
+    setRelatedPoliciesModal({
+      isOpen: false,
+      customer: null,
+      policies: [],
+      loading: false,
+      error: ""
+    });
+  };
+
+  const handleViewRelatedPolicies = async (record) => {
+    setRelatedPoliciesModal({
+      isOpen: true,
+      customer: record,
+      policies: [],
+      loading: true,
+      error: ""
+    });
+
+    try {
+      const response = await fetch(`${API_BASE}/customers/${record.id}/policies`);
+      const json = await readApiJson(response);
+
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to load customer policies.");
+      }
+
+      setRelatedPoliciesModal({
+        isOpen: true,
+        customer: json.data.customer || record,
+        policies: json.data.policies || [],
+        loading: false,
+        error: ""
+      });
+    } catch (loadError) {
+      setRelatedPoliciesModal({
+        isOpen: true,
+        customer: record,
+        policies: [],
+        loading: false,
+        error: loadError.message
+      });
+    }
+  };
+
   return (
     <div className="master-page">
       <div className="page-hero page-hero--masters">
@@ -316,6 +376,17 @@ export default function MasterPage({ resourceKey }) {
                         ))}
                         <td>
                           <div className="table-actions">
+                            {resourceKey === "customers" ? (
+                              <button
+                                type="button"
+                                className="icon-button icon-button--view"
+                                onClick={() => handleViewRelatedPolicies(record)}
+                                aria-label="View related policies"
+                                title="View related policies"
+                              >
+                                <ViewIcon />
+                              </button>
+                            ) : null}
                             <button
                               type="button"
                               className="icon-button icon-button--edit"
@@ -459,6 +530,76 @@ export default function MasterPage({ resourceKey }) {
               </form>
 
               {error ? <p className="feedback feedback--error">{error}</p> : null}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {resourceKey === "customers" && relatedPoliciesModal.isOpen ? (
+        <div
+          className="master-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="customer-related-policies-title"
+        >
+          <div className="master-modal__backdrop" onClick={resetRelatedPoliciesModal} />
+          <section className="master-card master-modal__panel master-modal__panel--wide">
+            <div className="master-card__header">
+              <h3 id="customer-related-policies-title">
+                Related Policies - {relatedPoliciesModal.customer?.full_name || "Customer"}
+              </h3>
+              <button type="button" className="text-button" onClick={resetRelatedPoliciesModal}>
+                Cancel
+              </button>
+            </div>
+
+            <div className="master-modal__body">
+              {relatedPoliciesModal.loading ? (
+                <div className="table-state">Loading related policies...</div>
+              ) : relatedPoliciesModal.error ? (
+                <p className="feedback feedback--error">{relatedPoliciesModal.error}</p>
+              ) : (
+                <div className="table-wrap">
+                  <table className="master-table">
+                    <thead>
+                      <tr>
+                        <th>Policy No.</th>
+                        <th>Business Type</th>
+                        <th>Policy Type</th>
+                        <th>Company</th>
+                        <th>Product</th>
+                        <th>Issue Date</th>
+                        <th>Risk Expiry Date</th>
+                        <th>Renewal Status</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {relatedPoliciesModal.policies.length === 0 ? (
+                        <tr>
+                          <td colSpan="9" className="table-state">
+                            No related policies found for this customer.
+                          </td>
+                        </tr>
+                      ) : (
+                        relatedPoliciesModal.policies.map((policy) => (
+                          <tr key={policy.id}>
+                            <td>{formatCellValue(policy.policy_number)}</td>
+                            <td>{formatCellValue(policy.business_type)}</td>
+                            <td>{formatCellValue(policy.policy_type)}</td>
+                            <td>{formatCellValue(policy.company_name)}</td>
+                            <td>{formatCellValue(policy.product_name)}</td>
+                            <td>{formatCellValue(policy.issue_date)}</td>
+                            <td>{formatCellValue(policy.risk_end_date)}</td>
+                            <td>{formatCellValue(policy.renewal_status)}</td>
+                            <td>{formatCellValue(policy.policy_status)}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </section>
         </div>
