@@ -19,8 +19,11 @@ export default function AppLayout() {
             className="sidebar-toggle"
             type="button"
             onClick={() => setIsSidebarOpen(true)}
+            aria-label="Show menu"
           >
-            Show Menu
+            <span className="sidebar-toggle__line" aria-hidden="true"></span>
+            <span className="sidebar-toggle__line" aria-hidden="true"></span>
+            <span className="sidebar-toggle__line" aria-hidden="true"></span>
           </button>
         ) : null}
         <Outlet />
