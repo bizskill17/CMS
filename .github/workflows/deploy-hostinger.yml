@@ -36,14 +36,20 @@ jobs:
       - name: Verify deploy DB config
         run: test -f deploy/api/config/database.php
 
-      - name: Deploy files over FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.HOSTINGER_FTP_SERVER }}
-          username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
-          password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
-          protocol: ftp
-          port: 21
-          local-dir: ./deploy/
-          server-dir: ${{ secrets.HOSTINGER_TARGET_DIR }}
-          dangerous-clean-slate: false
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Deploy files over SFTP
+        env:
+          HOSTINGER_SERVER: ${{ secrets.HOSTINGER_FTP_SERVER }}
+          HOSTINGER_USERNAME: ${{ secrets.HOSTINGER_FTP_USERNAME }}
+          HOSTINGER_PASSWORD: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+          HOSTINGER_PORT: ${{ secrets.HOSTINGER_SFTP_PORT || '22' }}
+          HOSTINGER_TARGET_DIR: ${{ secrets.HOSTINGER_TARGET_DIR }}
+        run: |
+          lftp -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "sftp://$HOSTINGER_SERVER:$HOSTINGER_PORT" <<EOF
+          set sftp:auto-confirm yes
+          set ssl:verify-certificate no
+          mirror -R ./deploy/ "$HOSTINGER_TARGET_DIR" --verbose
+          bye
+          EOF
