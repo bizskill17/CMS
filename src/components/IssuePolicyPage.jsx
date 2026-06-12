@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config/api";
 import FormLabel from "./FormLabel";
 
@@ -69,6 +70,7 @@ function sortByLabel(items, key) {
 }
 
 export default function IssuePolicyPage() {
+  const navigate = useNavigate();
   const [formState, setFormState] = useState(createInitialFormState);
   const [lookupData, setLookupData] = useState({
     customerGroups: [],
@@ -239,6 +241,10 @@ export default function IssuePolicyPage() {
 
       setMessage(json.message || "Policy issued successfully.");
       resetForm();
+
+      setTimeout(() => {
+        navigate("/policies/all");
+      }, 1500);
     } catch (saveError) {
       setError(saveError.message);
     } finally {
