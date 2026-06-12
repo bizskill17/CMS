@@ -201,6 +201,7 @@ export default function IssuePolicyPage() {
 
       if (name === "paid_by_type" && value !== "Agent") {
         next.agent_payment_account_id = "";
+        next.payment_mode = "";
       }
 
       return next;
@@ -481,37 +482,39 @@ export default function IssuePolicyPage() {
             </label>
 
             {formState.paid_by_type === "Agent" ? (
-              <label className="form-field">
-                <FormLabel required>Agent Accounts</FormLabel>
-                <select
-                  required
-                  value={formState.agent_payment_account_id}
-                  onChange={(event) => handleChange("agent_payment_account_id", event.target.value)}
-                >
-                  <option value="">Select Agent Account</option>
-                  {lookupData.agentAccounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {[account.agent_name, account.account_label, account.account_type]
-                        .filter(Boolean)
-                        .join(" - ")}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
+              <>
+                <label className="form-field">
+                  <FormLabel required>Agent Accounts</FormLabel>
+                  <select
+                    required
+                    value={formState.agent_payment_account_id}
+                    onChange={(event) => handleChange("agent_payment_account_id", event.target.value)}
+                  >
+                    <option value="">Select Agent Account</option>
+                    {lookupData.agentAccounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {[account.agent_name, account.account_label, account.account_type]
+                          .filter(Boolean)
+                          .join(" - ")}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-            <label className="form-field">
-              <FormLabel>Payment Mode</FormLabel>
-              <select
-                value={formState.payment_mode}
-                onChange={(event) => handleChange("payment_mode", event.target.value)}
-              >
-                <option value="">Select Payment Mode</option>
-                <option value="Cheque">Cheque</option>
-                <option value="Online">Online</option>
-                <option value="Cash">Cash</option>
-              </select>
-            </label>
+                <label className="form-field">
+                  <FormLabel>Payment Mode</FormLabel>
+                  <select
+                    value={formState.payment_mode}
+                    onChange={(event) => handleChange("payment_mode", event.target.value)}
+                  >
+                    <option value="">Select Payment Mode</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="Online">Online</option>
+                    <option value="Cash">Cash</option>
+                  </select>
+                </label>
+              </>
+            ) : null}
 
             {showAgentChequeFields ? (
               <>
