@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import { formatCellValue } from "../utils/formatting";
 import FormLabel from "./FormLabel";
@@ -50,8 +50,33 @@ export default function PendingPaymentsPage() {
   const [formState, setFormState] = useState(initialFormState);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedRecords = useMemo(() => {
+    if (!sortConfig.key) return records;
+
+    return [...records].sort((a, b) => {
+      const aVal = a[sortConfig.key];
+      const bVal = b[sortConfig.key];
+
+      if (aVal === bVal) return 0;
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
+
+      const result = aVal < bVal ? -1 : 1;
+      return sortConfig.direction === "asc" ? result : -result;
+    });
+  }, [records, sortConfig]);
 
   useEffect(() => {
     const load = async () => {
@@ -167,29 +192,44 @@ export default function PendingPaymentsPage() {
             <table className="master-table">
               <thead>
                 <tr>
-                  <th>Policy No.</th>
-                  <th>Customer</th>
-                  <th>Company</th>
-                  <th>Policy Type</th>
-                  <th>Issue Date</th>
-                  <th>Payment By</th>
-                  <th>Net Premium</th>
-                  <th>Received</th>
-                  <th>Pending</th>
-                  <th>Client Payment Status</th>
+                  <th>Sl.No.</th>
+                  {[
+                    { key: "policy_number", label: "Policy No." },
+                    { key: "customer_name", label: "Customer" },
+                    { key: "company_name", label: "Company" },
+                    { key: "policy_type", label: "Policy Type" },
+                    { key: "issue_date", label: "Issue Date" },
+                    { key: "paid_by_type", label: "Payment By" },
+                    { key: "net_premium", label: "Net Premium" },
+                    { key: "payment_received_amount", label: "Received" },
+                    { key: "payment_pending_amount", label: "Pending" },
+                    { key: "client_payment_status", label: "Client Payment Status" }
+                  ].map((col) => (
+                    <th
+                      key={col.key}
+                      onClick={() => handleSort(col.key)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {col.label}
+                      {sortConfig.key === col.key && (
+                        <span>{sortConfig.direction === "asc" ? " ▲" : " ▼"}</span>
+                      )}
+                    </th>
+                  ))}
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {records.length === 0 ? (
+                {sortedRecords.length === 0 ? (
                   <tr>
-                    <td colSpan="11" className="table-state">
+                    <td colSpan="12" className="table-state">
                       No pending payments from clients found.
                     </td>
                   </tr>
                 ) : (
-                  records.map((record) => (
+                  sortedRecords.map((record, index) => (
                     <tr key={record.id}>
+                      <td>{index + 1}</td>
                       <td>{formatCellValue(record.policy_number)}</td>
                       <td>{formatCellValue(record.customer_name)}</td>
                       <td>{formatCellValue(record.company_name)}</td>

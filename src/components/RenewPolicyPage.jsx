@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import { formatCellValue, formatDateDisplay } from "../utils/formatting";
 import FormLabel from "./FormLabel";
@@ -93,8 +93,34 @@ export default function RenewPolicyPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedPolicies = useMemo(() => {
+    const policies = lookupData.policies || [];
+    if (!sortConfig.key) return policies;
+
+    return [...policies].sort((a, b) => {
+      const aVal = a[sortConfig.key];
+      const bVal = b[sortConfig.key];
+
+      if (aVal === bVal) return 0;
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
+
+      const result = aVal < bVal ? -1 : 1;
+      return sortConfig.direction === "asc" ? result : -result;
+    });
+  }, [lookupData.policies, sortConfig]);
 
   useEffect(() => {
     const load = async () => {
@@ -218,28 +244,43 @@ export default function RenewPolicyPage() {
             <table className="master-table">
               <thead>
                 <tr>
-                  <th>Expiry Date</th>
-                  <th>Policy No.</th>
-                  <th>Customer</th>
-                  <th>Mobile</th>
-                  <th>Group</th>
-                  <th>Company Name</th>
-                  <th>Product Name</th>
-                  <th>Policy Type</th>
-                  <th>Registration No.</th>
+                  <th>Sl.No.</th>
+                  {[
+                    { key: "risk_end_date", label: "Expiry Date" },
+                    { key: "policy_number", label: "Policy No." },
+                    { key: "customer_name", label: "Customer" },
+                    { key: "customer_mobile", label: "Mobile" },
+                    { key: "customer_group_name", label: "Group" },
+                    { key: "company_name", label: "Company Name" },
+                    { key: "product_name", label: "Product Name" },
+                    { key: "policy_type", label: "Policy Type" },
+                    { key: "registration_no", label: "Registration No." }
+                  ].map((col) => (
+                    <th
+                      key={col.key}
+                      onClick={() => handleSort(col.key)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {col.label}
+                      {sortConfig.key === col.key && (
+                        <span>{sortConfig.direction === "asc" ? " ▲" : " ▼"}</span>
+                      )}
+                    </th>
+                  ))}
                   <th>Renew</th>
                 </tr>
               </thead>
               <tbody>
-                {lookupData.policies.length === 0 ? (
+                {sortedPolicies.length === 0 ? (
                   <tr>
-                    <td colSpan="10" className="table-state">
+                    <td colSpan="11" className="table-state">
                       No policies are currently eligible for renewal.
                     </td>
                   </tr>
                 ) : (
-                  lookupData.policies.map((policy) => (
+                  sortedPolicies.map((policy, index) => (
                     <tr key={policy.id}>
+                      <td>{index + 1}</td>
                       <td>{formatCellValue(policy.risk_end_date)}</td>
                       <td>{formatCellValue(policy.policy_number)}</td>
                       <td>{formatCellValue(policy.customer_name)}</td>

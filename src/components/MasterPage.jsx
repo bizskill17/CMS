@@ -104,6 +104,7 @@ export default function MasterPage({ resourceKey }) {
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [relatedPoliciesModal, setRelatedPoliciesModal] = useState({
@@ -113,6 +114,28 @@ export default function MasterPage({ resourceKey }) {
     loading: false,
     error: ""
   });
+
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedRecords = useMemo(() => {
+    if (!sortConfig.key) return records;
+
+    return [...records].sort((a, b) => {
+      const aVal = a[sortConfig.key];
+      const bVal = b[sortConfig.key];
+
+      if (aVal === bVal) return 0;
+
+      const result = aVal < bVal ? -1 : 1;
+      return sortConfig.direction === "asc" ? result : -result;
+    });
+  }, [records, sortConfig]);
 
   const dependencies = useMemo(
     () =>
@@ -345,22 +368,33 @@ export default function MasterPage({ resourceKey }) {
               <table className="master-table">
                 <thead>
                   <tr>
+                    <th>Sl.No.</th>
                     {config.tableColumns.map((column) => (
-                      <th key={column.key}>{column.label}</th>
+                      <th
+                        key={column.key}
+                        onClick={() => handleSort(column.key)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {column.label}
+                        {sortConfig.key === column.key && (
+                          <span>{sortConfig.direction === "asc" ? " ▲" : " ▼"}</span>
+                        )}
+                      </th>
                     ))}
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {records.length === 0 ? (
+                  {sortedRecords.length === 0 ? (
                     <tr>
-                      <td colSpan={config.tableColumns.length + 1} className="table-state">
+                      <td colSpan={config.tableColumns.length + 2} className="table-state">
                         No records yet.
                       </td>
                     </tr>
                   ) : (
-                    records.map((record) => (
+                    sortedRecords.map((record, index) => (
                       <tr key={record.id}>
+                        <td>{index + 1}</td>
                         {config.tableColumns.map((column) => (
                           <td key={`${record.id}-${column.key}`}>
                             {column.type === "boolean"

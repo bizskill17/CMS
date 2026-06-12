@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import { formatCellValue } from "../utils/formatting";
 import FormLabel from "./FormLabel";
@@ -40,6 +40,7 @@ export default function AttachDocumentsPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [formState, setFormState] = useState({
     document_type_id: "",
     document_number: "",
@@ -48,6 +49,30 @@ export default function AttachDocumentsPage() {
     remarks: "",
     file: null
   });
+
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedRecords = useMemo(() => {
+    if (!sortConfig.key) return records;
+
+    return [...records].sort((a, b) => {
+      const aVal = a[sortConfig.key];
+      const bVal = b[sortConfig.key];
+
+      if (aVal === bVal) return 0;
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
+
+      const result = aVal < bVal ? -1 : 1;
+      return sortConfig.direction === "asc" ? result : -result;
+    });
+  }, [records, sortConfig]);
 
   const policyDocumentTypes = documentTypes.filter(
     (documentType) => String(documentType.entity_level || "").toLowerCase() === "policy"
@@ -168,28 +193,43 @@ export default function AttachDocumentsPage() {
             <table className="master-table">
               <thead>
                 <tr>
-                  <th>Policy No.</th>
-                  <th>Customer</th>
-                  <th>Group Name</th>
-                  <th>Insurance Company</th>
-                  <th>Product Name</th>
-                  <th>Policy Type</th>
-                  <th>Issue Date</th>
-                  <th>Risk Expiry Date</th>
+                  <th>Sl.No.</th>
+                  {[
+                    { key: "policy_number", label: "Policy No." },
+                    { key: "customer_name", label: "Customer" },
+                    { key: "customer_group_name", label: "Group Name" },
+                    { key: "company_name", label: "Insurance Company" },
+                    { key: "product_name", label: "Product Name" },
+                    { key: "policy_type", label: "Policy Type" },
+                    { key: "issue_date", label: "Issue Date" },
+                    { key: "risk_end_date", label: "Risk Expiry Date" }
+                  ].map((col) => (
+                    <th
+                      key={col.key}
+                      onClick={() => handleSort(col.key)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {col.label}
+                      {sortConfig.key === col.key && (
+                        <span>{sortConfig.direction === "asc" ? " ▲" : " ▼"}</span>
+                      )}
+                    </th>
+                  ))}
                   <th>Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {records.length === 0 ? (
+                {sortedRecords.length === 0 ? (
                   <tr>
-                    <td colSpan="10" className="table-state">
+                    <td colSpan="11" className="table-state">
                       No policies are pending document upload.
                     </td>
                   </tr>
                 ) : (
-                  records.map((record) => (
+                  sortedRecords.map((record, index) => (
                     <tr key={record.id}>
+                      <td>{index + 1}</td>
                       <td>{formatCellValue(record.policy_number)}</td>
                       <td>{formatCellValue(record.customer_name)}</td>
                       <td>{formatCellValue(record.customer_group_name)}</td>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import { formatCellValue } from "../utils/formatting";
 
@@ -34,6 +34,31 @@ export default function AllPoliciesPage() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedRecords = useMemo(() => {
+    if (!sortConfig.key) return records;
+
+    return [...records].sort((a, b) => {
+      const aVal = a[sortConfig.key];
+      const bVal = b[sortConfig.key];
+
+      if (aVal === bVal) return 0;
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
+
+      const result = aVal < bVal ? -1 : 1;
+      return sortConfig.direction === "asc" ? result : -result;
+    });
+  }, [records, sortConfig]);
 
   useEffect(() => {
     const load = async () => {
@@ -76,33 +101,48 @@ export default function AllPoliciesPage() {
             <table className="master-table">
               <thead>
                 <tr>
-                  <th>Policy No.</th>
-                  <th>Customer</th>
-                  <th>Customer Group</th>
-                  <th>Insurance Company</th>
-                  <th>Product Name</th>
-                  <th>Policy Type</th>
-                  <th>Business Type</th>
-                  <th>Gross Premium</th>
-                  <th>Net Premium</th>
-                  <th>Issue Date</th>
-                  <th>Risk Start</th>
-                  <th>Risk End</th>
-                  <th>Payment By</th>
-                  <th>Payment Mode</th>
-                  <th>Status</th>
+                  <th>Sl.No.</th>
+                  {[
+                    { key: "policy_number", label: "Policy No." },
+                    { key: "customer_name", label: "Customer" },
+                    { key: "customer_group_name", label: "Customer Group" },
+                    { key: "company_name", label: "Insurance Company" },
+                    { key: "product_name", label: "Product Name" },
+                    { key: "policy_type", label: "Policy Type" },
+                    { key: "business_type", label: "Business Type" },
+                    { key: "gross_premium", label: "Gross Premium" },
+                    { key: "net_premium", label: "Net Premium" },
+                    { key: "issue_date", label: "Issue Date" },
+                    { key: "risk_start_date", label: "Risk Start" },
+                    { key: "risk_end_date", label: "Risk End" },
+                    { key: "paid_by_type", label: "Payment By" },
+                    { key: "payment_mode", label: "Payment Mode" },
+                    { key: "policy_status", label: "Status" }
+                  ].map((col) => (
+                    <th
+                      key={col.key}
+                      onClick={() => handleSort(col.key)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {col.label}
+                      {sortConfig.key === col.key && (
+                        <span>{sortConfig.direction === "asc" ? " ▲" : " ▼"}</span>
+                      )}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {records.length === 0 ? (
+                {sortedRecords.length === 0 ? (
                   <tr>
-                    <td colSpan="15" className="table-state">
+                    <td colSpan="16" className="table-state">
                       No policies found.
                     </td>
                   </tr>
                 ) : (
-                  records.map((record) => (
+                  sortedRecords.map((record, index) => (
                     <tr key={record.id}>
+                      <td>{index + 1}</td>
                       <td>{formatCellValue(record.policy_number)}</td>
                       <td>{formatCellValue(record.customer_name)}</td>
                       <td>{formatCellValue(record.customer_group_name)}</td>
