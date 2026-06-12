@@ -220,8 +220,9 @@ export default function RenewPolicyPage() {
                 <tr>
                   <th>Expiry Date</th>
                   <th>Policy No.</th>
-                  <th>Group Name</th>
-                  <th>Policy Holder Detail</th>
+                  <th>Customer</th>
+                  <th>Mobile</th>
+                  <th>Group</th>
                   <th>Company Name</th>
                   <th>Product Name</th>
                   <th>Policy Type</th>
@@ -232,7 +233,7 @@ export default function RenewPolicyPage() {
               <tbody>
                 {lookupData.policies.length === 0 ? (
                   <tr>
-                    <td colSpan="9" className="table-state">
+                    <td colSpan="10" className="table-state">
                       No policies are currently eligible for renewal.
                     </td>
                   </tr>
@@ -241,8 +242,9 @@ export default function RenewPolicyPage() {
                     <tr key={policy.id}>
                       <td>{formatCellValue(policy.risk_end_date)}</td>
                       <td>{formatCellValue(policy.policy_number)}</td>
+                      <td>{formatCellValue(policy.customer_name)}</td>
+                      <td>{formatCellValue(policy.customer_mobile)}</td>
                       <td>{formatCellValue(policy.customer_group_name)}</td>
-                      <td>{formatCellValue(buildPolicyHolderDetail(policy))}</td>
                       <td>{formatCellValue(policy.company_name)}</td>
                       <td>{formatCellValue(policy.product_name)}</td>
                       <td>{formatCellValue(policy.policy_type)}</td>

@@ -40,7 +40,7 @@ export const menuSections = [
     path: "/payments",
     icon: "payments",
     items: [
-      { label: "Pending Payments", path: "/payments/pending" }
+      { label: "Pending Payments from Clients", path: "/payments/pending" }
     ]
   },
   {
@@ -51,7 +51,7 @@ export const menuSections = [
       { label: "Policies Added", path: "/reports/policies-added" },
       { label: "Policies This Week", path: "/reports/policies-this-week" },
       { label: "Policies This Month", path: "/reports/policies-this-month" },
-      { label: "Pending Payments", path: "/reports/pending-payments" },
+      { label: "Pending Payments from Clients", path: "/reports/pending-payments" },
       { label: "Pending Document Uploads", path: "/reports/pending-document-uploads" },
       { label: "Payments Received", path: "/reports/payments-received" }
     ]

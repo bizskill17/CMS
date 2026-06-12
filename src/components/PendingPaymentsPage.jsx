@@ -184,7 +184,7 @@ export default function PendingPaymentsPage() {
                 {records.length === 0 ? (
                   <tr>
                     <td colSpan="11" className="table-state">
-                      No pending agent-side client payments found.
+                      No pending payments from clients found.
                     </td>
                   </tr>
                 ) : (
@@ -348,6 +348,9 @@ export default function PendingPaymentsPage() {
           </section>
         </div>
       ) : null}
+    </div>
+  );
+}
     </div>
   );
 }
