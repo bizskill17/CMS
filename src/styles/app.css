@@ -505,12 +505,14 @@ button {
 .icon-button {
   width: 36px;
   height: 36px;
-  border: none;
+  border: 1px solid #d5dfec;
   border-radius: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  background: #f8fbff;
+  color: #2d57d7;
 }
 
 .icon-button svg {
@@ -520,18 +522,12 @@ button {
 }
 
 .icon-button--edit {
-  background: #ebf2ff;
-  color: #2d57d7;
 }
 
 .icon-button--view {
-  background: #eef8ff;
-  color: #0b6fb8;
 }
 
 .icon-button--delete {
-  background: #ffe7e9;
-  color: #bd1e2d;
 }
 
 .text-button {
