@@ -47,8 +47,15 @@ jobs:
           HOSTINGER_PORT: ${{ secrets.HOSTINGER_SFTP_PORT || '22' }}
           HOSTINGER_TARGET_DIR: ${{ secrets.HOSTINGER_TARGET_DIR }}
         run: |
-          lftp -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "sftp://$HOSTINGER_SERVER:$HOSTINGER_PORT" <<EOF
+          timeout 5m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "sftp://$HOSTINGER_SERVER:$HOSTINGER_PORT" <<EOF
+          set cmd:fail-exit yes
+          set net:timeout 20
+          set net:max-retries 1
+          set net:reconnect-interval-base 5
+          set net:reconnect-interval-max 5
+          set xfer:clobber on
           set sftp:auto-confirm yes
+          set sftp:connect-program "ssh -a -x -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
           set ssl:verify-certificate no
           mirror -R ./deploy/ "$HOSTINGER_TARGET_DIR" --verbose
           bye
