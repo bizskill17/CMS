@@ -53,6 +53,23 @@ function getOptionValue(field, option) {
   return field.optionValueKey ? option[field.optionValueKey] ?? "" : option.id;
 }
 
+function validateField(field, value) {
+  const normalizedValue = String(value ?? "").trim();
+
+  if (!normalizedValue) {
+    return "";
+  }
+
+  if (field.validation?.pattern) {
+    const pattern = new RegExp(field.validation.pattern);
+    if (!pattern.test(normalizedValue)) {
+      return field.validation.message || `Invalid ${field.label}.`;
+    }
+  }
+
+  return "";
+}
+
 function EditIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -167,9 +184,18 @@ export default function MasterPage({ resourceKey }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setSaving(true);
     setMessage("");
     setError("");
+
+    for (const field of config.fields) {
+      const validationError = validateField(field, formState[field.name]);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+    }
+
+    setSaving(true);
 
     try {
       const method = editingId ? "PUT" : "POST";
@@ -415,6 +441,10 @@ export default function MasterPage({ resourceKey }) {
                         type={field.type || "text"}
                         value={formState[field.name]}
                         required={Boolean(field.required)}
+                        inputMode={field.validation?.pattern === "^\\d{10}$" ? "numeric" : undefined}
+                        pattern={field.validation?.pattern}
+                        title={field.validation?.message}
+                        maxLength={field.validation?.pattern === "^\\d{10}$" ? 10 : undefined}
                         onChange={(event) => handleChange(field, event.target.value)}
                       />
                     </label>

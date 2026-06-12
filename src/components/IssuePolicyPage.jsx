@@ -2,31 +2,39 @@ import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import FormLabel from "./FormLabel";
 
-const initialFormState = {
-  customer_group_id: "",
-  customer_id: "",
-  policy_number: "",
-  gross_premium: "",
-  net_premium: "",
-  issue_date: "",
-  risk_start_date: "",
-  risk_end_date: "",
-  business_type: "",
-  sum_insured: "",
-  policy_type: "",
-  company_id: "",
-  product_id: "",
-  vehicle_make: "",
-  vehicle_model: "",
-  year_of_manufacture: "",
-  registration_no: "",
-  paid_by_type: "",
-  agent_payment_account_id: "",
-  payment_mode: "",
-  cheque_number: "",
-  cheque_date: "",
-  cheque_amount: ""
-};
+function getTodayDateValue() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function createInitialFormState() {
+  const today = getTodayDateValue();
+
+  return {
+    customer_group_id: "",
+    customer_id: "",
+    policy_number: "",
+    gross_premium: "",
+    net_premium: "",
+    issue_date: today,
+    risk_start_date: today,
+    risk_end_date: "",
+    business_type: "",
+    sum_insured: "",
+    policy_type: "",
+    company_id: "",
+    product_id: "",
+    vehicle_make: "",
+    vehicle_model: "",
+    year_of_manufacture: "",
+    registration_no: "",
+    paid_by_type: "",
+    agent_payment_account_id: "",
+    payment_mode: "",
+    cheque_number: "",
+    cheque_date: "",
+    cheque_amount: ""
+  };
+}
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -61,7 +69,7 @@ function sortByLabel(items, key) {
 }
 
 export default function IssuePolicyPage() {
-  const [formState, setFormState] = useState(initialFormState);
+  const [formState, setFormState] = useState(createInitialFormState);
   const [lookupData, setLookupData] = useState({
     customerGroups: [],
     customers: [],
@@ -200,7 +208,7 @@ export default function IssuePolicyPage() {
   };
 
   const resetForm = () => {
-    setFormState(initialFormState);
+    setFormState(createInitialFormState());
     setCustomerQuery("");
     setProductQuery("");
   };

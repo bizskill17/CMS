@@ -1,3 +1,8 @@
+const mobileFieldValidation = {
+  pattern: "^\\d{10}$",
+  message: "Mobile number must be exactly 10 digits."
+};
+
 export const masterConfigs = {
   customers: {
     title: "Customers",
@@ -15,8 +20,13 @@ export const masterConfigs = {
       { name: "customer_code", label: "Customer Code", type: "text", required: true },
       { name: "group_id", label: "Customer Group", type: "select", optionsFrom: "customer-groups" },
       { name: "full_name", label: "Customer Name", type: "text", required: true },
-      { name: "mobile", label: "Mobile", type: "text" },
-      { name: "alternate_mobile", label: "Alternate Mobile", type: "text" },
+      { name: "mobile", label: "Mobile", type: "text", validation: mobileFieldValidation },
+      {
+        name: "alternate_mobile",
+        label: "Alternate Mobile",
+        type: "text",
+        validation: mobileFieldValidation
+      },
       { name: "email", label: "Email", type: "email" },
       { name: "gstin", label: "GSTIN", type: "text" },
       {
@@ -184,7 +194,7 @@ export const masterConfigs = {
     fields: [
       { name: "full_name", label: "Full Name", type: "text", required: true },
       { name: "email", label: "Email", type: "email", required: true },
-      { name: "mobile", label: "Mobile", type: "text" },
+      { name: "mobile", label: "Mobile", type: "text", validation: mobileFieldValidation },
       {
         name: "role_name",
         label: "Role",
@@ -215,7 +225,7 @@ export const masterConfigs = {
     fields: [
       { name: "employee_code", label: "Employee Code", type: "text", required: true },
       { name: "full_name", label: "Full Name", type: "text", required: true },
-      { name: "mobile", label: "Mobile", type: "text" },
+      { name: "mobile", label: "Mobile", type: "text", validation: mobileFieldValidation },
       { name: "email", label: "Email", type: "email" },
       { name: "is_active", label: "Active", type: "checkbox" }
     ]
