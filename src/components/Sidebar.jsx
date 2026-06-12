@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { menuSections } from "../data/menu";
+import { API_BASE } from "../config/api";
 
 function Icon({ name }) {
   const icons = {
@@ -30,6 +31,19 @@ function Icon({ name }) {
 
 export default function Sidebar({ isOpen }) {
   const location = useLocation();
+  const [counts, setCounts] = useState({});
+
+  useEffect(() => {
+    fetch(`${API_BASE}/menu/counts`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.status === "ok") {
+          setCounts(json.data || {});
+        }
+      })
+      .catch((err) => console.error("Failed to fetch menu counts", err));
+  }, []);
+
   const defaultOpenKey = useMemo(() => {
     const matched = menuSections.find((section) =>
       section.items.some((item) => item.path === location.pathname)
@@ -110,7 +124,10 @@ export default function Sidebar({ isOpen }) {
                       `submenu-item ${isActive ? "is-current" : ""}`
                     }
                   >
-                    {item.label}
+                    <span>{item.label}</span>
+                    {item.countKey && counts[item.countKey] !== undefined && (
+                      <span className="menu-item-count">{counts[item.countKey]}</span>
+                    )}
                   </NavLink>
                 ))}
               </div>

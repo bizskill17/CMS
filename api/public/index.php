@@ -35,6 +35,46 @@ try {
         exit;
     }
 
+    if ($path === '/api/menu/counts' && $method === 'GET') {
+        $pdo = Database::connection();
+        $counts = [];
+
+        // Masters counts
+        $registry = MasterRegistry::all();
+        foreach ($registry as $key => $config) {
+            $table = $config['table'];
+            $counts[$key] = (int) $pdo->query("SELECT count(*) FROM $table")->fetchColumn();
+        }
+
+        // Policies counts
+        $counts['all-policies'] = (int) $pdo->query('SELECT count(*) FROM policies')->fetchColumn();
+        $counts['renew-policy'] = (int) $pdo->query(
+            'SELECT count(*) FROM policies 
+             WHERE risk_end_date IS NOT NULL 
+               AND risk_end_date >= curdate() 
+               AND coalesce(renewal_status, "") <> "Renewed"'
+        )->fetchColumn();
+        
+        $counts['attach-documents'] = (int) $pdo->query(
+            'SELECT count(*) FROM (
+                SELECT p.id FROM policies p
+                LEFT JOIN documents d ON d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1
+                GROUP BY p.id HAVING count(d.id) = 0
+             ) pending_docs'
+        )->fetchColumn();
+
+        // Payments counts
+        $counts['pending-payments'] = (int) $pdo->query(
+            'SELECT count(*) FROM policies WHERE paid_by_type = "Agent" AND coalesce(payment_pending_amount, 0) > 0'
+        )->fetchColumn();
+
+        Response::json([
+            'status' => 'ok',
+            'data' => $counts
+        ]);
+        exit;
+    }
+
     if ($path === '/api/customers' && $method === 'GET') {
         $pdo = Database::connection();
         $limit = isset($_GET['limit']) ? max(1, min(100, (int) $_GET['limit'])) : 25;
