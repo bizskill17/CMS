@@ -351,6 +351,3 @@ export default function PendingPaymentsPage() {
     </div>
   );
 }
-    </div>
-  );
-}
