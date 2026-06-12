@@ -326,14 +326,10 @@ export default function MasterPage({ resourceKey }) {
 
   return (
     <div className="master-page">
-      <div className="page-hero page-hero--masters">
-        <h2>{config.title}</h2>
-      </div>
-
       <div className="master-grid master-grid--list-only">
         <section className="master-card master-card--table">
           <div className="master-card__header">
-            <h3>{config.title} List</h3>
+            <span></span>
             <div className="master-card__actions">
               <span>{records.length} records</span>
               <button type="button" className="primary-button" onClick={handleAdd}>

@@ -152,13 +152,9 @@ export default function PendingPaymentsPage() {
 
   return (
     <div className="page-shell issue-policy-page">
-      <div className="page-hero page-hero--masters">
-        <h2>Pending Payments</h2>
-      </div>
-
       <section className="master-card issue-policy-card">
         <div className="master-card__header">
-          <h3>Agent Collected Policies</h3>
+          <span></span>
           <span>{records.length} records</span>
         </div>
 

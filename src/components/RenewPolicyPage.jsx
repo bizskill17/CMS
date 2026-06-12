@@ -203,13 +203,9 @@ export default function RenewPolicyPage() {
 
   return (
     <div className="page-shell issue-policy-page">
-      <div className="page-hero page-hero--masters">
-        <h2>Renew Policy</h2>
-      </div>
-
       <section className="master-card issue-policy-card">
         <div className="master-card__header">
-          <h3>Policies Ready For Renewal</h3>
+          <span></span>
           <span>{lookupData.policies.length} records</span>
         </div>
 

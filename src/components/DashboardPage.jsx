@@ -135,14 +135,9 @@ export default function DashboardPage() {
 
   return (
     <div className="dashboard-page">
-      <section className="page-hero dashboard-hero">
-        <h2>Policy</h2>
-        <p>Important policy renewal and collection status</p>
-      </section>
-
       <section className="master-card dashboard-card">
         <div className="master-card__header">
-          <h3>Policy</h3>
+          <span></span>
           <span>{dashboardItems.length} dashboard items</span>
         </div>
 

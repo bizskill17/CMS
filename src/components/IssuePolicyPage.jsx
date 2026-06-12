@@ -247,13 +247,9 @@ export default function IssuePolicyPage() {
 
   return (
     <div className="page-shell issue-policy-page">
-      <div className="page-hero page-hero--masters">
-        <h2>Issue Policy</h2>
-      </div>
-
       <section className="master-card issue-policy-card">
         <div className="master-card__header">
-          <h3>Issue a Policy Form</h3>
+          <span></span>
         </div>
 
         {loading ? (
