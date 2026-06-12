@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import AllPoliciesPage from "./components/AllPoliciesPage";
 import AttachDocumentsPage from "./components/AttachDocumentsPage";
 import AppLayout from "./components/AppLayout";
+import DashboardPage from "./components/DashboardPage";
 import IssuePolicyPage from "./components/IssuePolicyPage";
 import MasterPage from "./components/MasterPage";
 import PendingPaymentsPage from "./components/PendingPaymentsPage";
@@ -18,6 +19,8 @@ function buildRoutes(items) {
       element={
         item.path === "/policies/all" ? (
           <AllPoliciesPage />
+        ) : item.path === "/dashboard" ? (
+          <DashboardPage />
         ) : item.path === "/payments/pending" ? (
           <PendingPaymentsPage />
         ) : item.path === "/policies/attach-documents" ? (

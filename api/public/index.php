@@ -162,6 +162,59 @@ try {
         exit;
     }
 
+    if ($path === '/api/dashboard/policy-summary' && $method === 'GET') {
+        $pdo = Database::connection();
+
+        $renewalsNext7Days = (int) $pdo->query(
+            'SELECT count(*)
+             FROM policies p
+             WHERE p.risk_end_date IS NOT NULL
+               AND p.risk_end_date >= curdate()
+               AND p.risk_end_date <= date_add(curdate(), interval 7 day)
+               AND coalesce(p.renewal_status, "") <> "Renewed"'
+        )->fetchColumn();
+
+        $pendingDocumentUploads = (int) $pdo->query(
+            'SELECT count(*)
+             FROM (
+                SELECT p.id
+                FROM policies p
+                LEFT JOIN documents d
+                  ON d.policy_id = p.id
+                 AND d.deleted_at IS NULL
+                 AND d.is_active = 1
+                GROUP BY p.id
+                HAVING count(d.id) = 0
+             ) pending_documents'
+        )->fetchColumn();
+
+        $renewalsOverdue = (int) $pdo->query(
+            'SELECT count(*)
+             FROM policies p
+             WHERE p.risk_end_date IS NOT NULL
+               AND p.risk_end_date < curdate()
+               AND coalesce(p.renewal_status, "") <> "Renewed"'
+        )->fetchColumn();
+
+        $pendingClientCollections = (int) $pdo->query(
+            'SELECT count(*)
+             FROM policies p
+             WHERE p.paid_by_type = "Agent"
+               AND coalesce(p.payment_pending_amount, 0) > 0'
+        )->fetchColumn();
+
+        Response::json([
+            'status' => 'ok',
+            'data' => [
+                'renewals_next_7_days' => $renewalsNext7Days,
+                'pending_document_uploads' => $pendingDocumentUploads,
+                'renewals_overdue' => $renewalsOverdue,
+                'pending_client_collections' => $pendingClientCollections,
+            ]
+        ]);
+        exit;
+    }
+
     if ($path === '/api/policies/pending-documents' && $method === 'GET') {
         $pdo = Database::connection();
         $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
