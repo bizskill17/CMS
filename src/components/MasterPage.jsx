@@ -395,15 +395,22 @@ export default function MasterPage({ resourceKey }) {
                     sortedRecords.map((record, index) => (
                       <tr key={record.id}>
                         <td>{index + 1}</td>
-                        {config.tableColumns.map((column) => (
-                          <td key={`${record.id}-${column.key}`}>
-                            {column.type === "boolean"
-                              ? record[column.key]
-                                ? "Yes"
-                                : "No"
-                              : formatCellValue(record[column.key])}
-                          </td>
-                        ))}
+                        {config.tableColumns.map((column) => {
+                          const isName = column.key.toLowerCase().includes("name") || 
+                                       column.key.toLowerCase().includes("customer") || 
+                                       column.key.toLowerCase().includes("company") ||
+                                       column.key.toLowerCase().includes("agent");
+                          
+                          return (
+                            <td key={`${record.id}-${column.key}`} className={isName ? "text-blue" : ""}>
+                              {column.type === "boolean"
+                                ? record[column.key]
+                                  ? "Yes"
+                                  : "No"
+                                : formatCellValue(record[column.key])}
+                            </td>
+                          );
+                        })}
                         <td>
                           <div className="table-actions">
                             {resourceKey === "customers" ? (
@@ -617,8 +624,8 @@ export default function MasterPage({ resourceKey }) {
                             <td>{formatCellValue(policy.policy_number)}</td>
                             <td>{formatCellValue(policy.business_type)}</td>
                             <td>{formatCellValue(policy.policy_type)}</td>
-                            <td>{formatCellValue(policy.company_name)}</td>
-                            <td>{formatCellValue(policy.product_name)}</td>
+                            <td className="text-blue">{formatCellValue(policy.company_name)}</td>
+                            <td className="text-blue">{formatCellValue(policy.product_name)}</td>
                             <td>{formatCellValue(policy.issue_date)}</td>
                             <td>{formatCellValue(policy.risk_end_date)}</td>
                             <td>{formatCellValue(policy.renewal_status)}</td>

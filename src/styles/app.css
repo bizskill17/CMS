@@ -603,6 +603,11 @@ button {
   padding-top: 6px;
 }
 
+.text-blue {
+  color: #2d57d7;
+  font-weight: 600;
+}
+
 .primary-button,
 .secondary-button,
 .text-button {

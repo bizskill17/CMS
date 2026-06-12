@@ -283,11 +283,11 @@ export default function RenewPolicyPage() {
                       <td>{index + 1}</td>
                       <td>{formatCellValue(policy.risk_end_date)}</td>
                       <td>{formatCellValue(policy.policy_number)}</td>
-                      <td>{formatCellValue(policy.customer_name)}</td>
+                      <td className="text-blue">{formatCellValue(policy.customer_name)}</td>
                       <td>{formatCellValue(policy.customer_mobile)}</td>
-                      <td>{formatCellValue(policy.customer_group_name)}</td>
-                      <td>{formatCellValue(policy.company_name)}</td>
-                      <td>{formatCellValue(policy.product_name)}</td>
+                      <td className="text-blue">{formatCellValue(policy.customer_group_name)}</td>
+                      <td className="text-blue">{formatCellValue(policy.company_name)}</td>
+                      <td className="text-blue">{formatCellValue(policy.product_name)}</td>
                       <td>{formatCellValue(policy.policy_type)}</td>
                       <td>{formatCellValue(policy.registration_no)}</td>
                       <td>

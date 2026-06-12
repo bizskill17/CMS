@@ -231,10 +231,10 @@ export default function AttachDocumentsPage() {
                     <tr key={record.id}>
                       <td>{index + 1}</td>
                       <td>{formatCellValue(record.policy_number)}</td>
-                      <td>{formatCellValue(record.customer_name)}</td>
-                      <td>{formatCellValue(record.customer_group_name)}</td>
-                      <td>{formatCellValue(record.company_name)}</td>
-                      <td>{formatCellValue(record.product_name)}</td>
+                      <td className="text-blue">{formatCellValue(record.customer_name)}</td>
+                      <td className="text-blue">{formatCellValue(record.customer_group_name)}</td>
+                      <td className="text-blue">{formatCellValue(record.company_name)}</td>
+                      <td className="text-blue">{formatCellValue(record.product_name)}</td>
                       <td>{formatCellValue(record.policy_type)}</td>
                       <td>{formatCellValue(record.issue_date)}</td>
                       <td>{formatCellValue(record.risk_end_date)}</td>

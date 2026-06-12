@@ -8,6 +8,7 @@ const initialFormState = {
   amount: "",
   payment_mode: "",
   payment_status: "Received",
+  agent_account_id: "",
   cheque_number: "",
   cheque_date: "",
   clearing_date: "",
@@ -45,6 +46,7 @@ async function readApiJson(response) {
 
 export default function PendingPaymentsPage() {
   const [records, setRecords] = useState([]);
+  const [agentAccounts, setAgentAccounts] = useState([]);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formState, setFormState] = useState(initialFormState);
@@ -84,14 +86,23 @@ export default function PendingPaymentsPage() {
       setError("");
 
       try {
-        const response = await fetch(`${API_BASE}/payments/pending-client?limit=100`);
-        const json = await readApiJson(response);
+        const [paymentsRes, agentsRes] = await Promise.all([
+          fetch(`${API_BASE}/payments/pending-client?limit=100`),
+          fetch(`${API_BASE}/masters/agent-accounts?limit=250`)
+        ]);
 
-        if (!response.ok) {
-          throw new Error(json.message || "Failed to load pending payments.");
+        const paymentsJson = await readApiJson(paymentsRes);
+        const agentsJson = await readApiJson(agentsRes);
+
+        if (!paymentsRes.ok) {
+          throw new Error(paymentsJson.message || "Failed to load pending payments.");
+        }
+        if (!agentsRes.ok) {
+          throw new Error(agentsJson.message || "Failed to load agent accounts.");
         }
 
-        setRecords(json.data || []);
+        setRecords(paymentsJson.data || []);
+        setAgentAccounts(agentsJson.data || []);
       } catch (loadError) {
         setError(loadError.message);
       } finally {
@@ -231,8 +242,8 @@ export default function PendingPaymentsPage() {
                     <tr key={record.id}>
                       <td>{index + 1}</td>
                       <td>{formatCellValue(record.policy_number)}</td>
-                      <td>{formatCellValue(record.customer_name)}</td>
-                      <td>{formatCellValue(record.company_name)}</td>
+                      <td className="text-blue">{formatCellValue(record.customer_name)}</td>
+                      <td className="text-blue">{formatCellValue(record.company_name)}</td>
                       <td>{formatCellValue(record.policy_type)}</td>
                       <td>{formatCellValue(record.issue_date)}</td>
                       <td>{formatCellValue(record.paid_by_type)}</td>
@@ -316,6 +327,21 @@ export default function PendingPaymentsPage() {
                     <option value="Cheque">Cheque</option>
                     <option value="Online">Online</option>
                     <option value="Cash">Cash</option>
+                  </select>
+                </label>
+
+                <label className="form-field">
+                  <FormLabel>Agent Account</FormLabel>
+                  <select
+                    value={formState.agent_account_id}
+                    onChange={(event) => handleChange("agent_account_id", event.target.value)}
+                  >
+                    <option value="">Select Agent Account</option>
+                    {agentAccounts.map((acc) => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.agent_name} - {acc.account_label} ({acc.bank_name || "N/A"})
+                      </option>
+                    ))}
                   </select>
                 </label>
 
