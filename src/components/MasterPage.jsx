@@ -298,6 +298,26 @@ export default function MasterPage({ resourceKey }) {
   );
 
   useEffect(() => {
+    setMessage("");
+    setError("");
+    setSearchTerm("");
+    setIsFiltersOpen(false);
+    setIsFormOpen(false);
+    setEditingId(null);
+    setFormState(emptyState(config));
+    setIsBulkUploadOpen(false);
+    setBulkUploadFile(null);
+    setBulkUploading(false);
+    setBulkUploadResult({
+      processed: 0,
+      successCount: 0,
+      failureCount: 0,
+      errors: []
+    });
+    resetRelatedPoliciesModal();
+  }, [resourceKey, config]);
+
+  useEffect(() => {
     const load = async () => {
       setLoading(true);
       setError("");
