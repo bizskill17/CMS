@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ActionIconDisplay } from "./ActionIcon";
 import { API_BASE } from "../config/api";
 import { masterConfigs } from "../data/masterConfigs";
 import { buildFilterOptions, filterRecords, sortRecords } from "../utils/dataView";
@@ -108,6 +109,7 @@ export default function MasterPage({ resourceKey }) {
   const [saving, setSaving] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [searchTerm, setSearchTerm] = useState("");
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -377,8 +379,16 @@ export default function MasterPage({ resourceKey }) {
         <section className="master-card master-card--table">
           <div className="master-card__header">
             <span></span>
-            <div className="master-card__actions">
+            <div className="master-card__actions master-card__actions--header">
               <span>{sortedRecords.length} records</span>
+              {filterConfigs.length > 0 ? (
+                <ActionIconDisplay
+                  icon="filter"
+                  label="Filters"
+                  active={isFiltersOpen}
+                  onClick={() => setIsFiltersOpen((current) => !current)}
+                />
+              ) : null}
               <button type="button" className="primary-button" onClick={handleAdd}>
                 + Add
               </button>
@@ -389,50 +399,52 @@ export default function MasterPage({ resourceKey }) {
             <div className="table-state">Loading records...</div>
           ) : (
             <>
-              <div className="data-toolbar">
-                <div className="data-toolbar__search">
-                  <input
-                    type="search"
-                    placeholder={`Search ${config.title}`}
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                  />
-                </div>
-
-                <div className="data-toolbar__filters">
-                  {filterConfigs.map((filter) => (
-                    <MultiSelectFilter
-                      key={filter.key}
-                      label={filter.label}
-                      options={filter.options}
-                      selectedValues={activeFilters[filter.key] || []}
-                      onChange={(values) =>
-                        setActiveFilters((current) => ({
-                          ...current,
-                          [filter.key]: values
-                        }))
-                      }
+              {isFiltersOpen ? (
+                <div className="data-toolbar">
+                  <div className="data-toolbar__search">
+                    <input
+                      type="search"
+                      placeholder={`Search ${config.title}`}
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
                     />
-                  ))}
+                  </div>
 
-                  {filterConfigs.length > 0 ? (
-                    <div className="data-toolbar__clear">
-                      <button
-                        type="button"
-                        className="clear-filters-button"
-                        onClick={() => {
-                          setSearchTerm("");
-                          setActiveFilters(
-                            Object.fromEntries(filterConfigs.map((filter) => [filter.key, []]))
-                          );
-                        }}
-                      >
-                        Clear Filters
-                      </button>
-                    </div>
-                  ) : null}
+                  <div className="data-toolbar__filters">
+                    {filterConfigs.map((filter) => (
+                      <MultiSelectFilter
+                        key={filter.key}
+                        label={filter.label}
+                        options={filter.options}
+                        selectedValues={activeFilters[filter.key] || []}
+                        onChange={(values) =>
+                          setActiveFilters((current) => ({
+                            ...current,
+                            [filter.key]: values
+                          }))
+                        }
+                      />
+                    ))}
+
+                    {filterConfigs.length > 0 ? (
+                      <div className="data-toolbar__clear">
+                        <button
+                          type="button"
+                          className="clear-filters-button"
+                          onClick={() => {
+                            setSearchTerm("");
+                            setActiveFilters(
+                              Object.fromEntries(filterConfigs.map((filter) => [filter.key, []]))
+                            );
+                          }}
+                        >
+                          Clear Filters
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
+              ) : null}
 
               <div className="table-wrap">
                 <table className="master-table">

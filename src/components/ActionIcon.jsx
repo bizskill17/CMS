@@ -40,6 +40,13 @@ function IconSvg({ name }) {
         <path d="M6 8a7 7 0 1 1 1.8 8.9" />
         <path d="M6 4v5h5" />
       </>
+    ),
+    filter: (
+      <>
+        <path d="M4 6h16" />
+        <path d="M7 12h10" />
+        <path d="M10 18h4" />
+      </>
     )
   };
 

@@ -406,6 +406,10 @@ button {
   gap: 14px;
 }
 
+.master-card__actions--header {
+  flex-wrap: wrap;
+}
+
 .dashboard-card {
   margin-top: 24px;
 }
@@ -1091,10 +1095,6 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .view-toggle {
-    justify-self: start;
-  }
-
   .dashboard-tile__content {
     align-items: flex-start;
     flex-direction: column;
@@ -1110,6 +1110,10 @@ button {
   .master-card__actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .master-card__actions--header {
+    width: 100%;
   }
 
   .dashboard-table__item {
@@ -1140,11 +1144,7 @@ button {
   }
 
   .view-toggle {
-    width: 100%;
-  }
-
-  .view-toggle__button {
-    flex: 1;
+    width: auto;
   }
 
   .record-card__body {

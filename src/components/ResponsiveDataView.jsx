@@ -37,6 +37,7 @@ export default function ResponsiveDataView({
   const [preferredView, setPreferredView] = useState("auto");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState(initialSort);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState(() =>
     Object.fromEntries(filterConfigs.map((filter) => [filter.key, []]))
   );
@@ -73,65 +74,76 @@ export default function ResponsiveDataView({
     <>
       <div className="master-card__header">
         <span>{title}</span>
-        <span>{sortedRecords.length} records</span>
-      </div>
-
-      <div className="data-toolbar">
-        <div className="data-toolbar__search">
-          <input
-            type="search"
-            placeholder={`Search ${title}`}
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-          />
-        </div>
-
-        <div className="data-toolbar__filters">
-          {filterConfigs.map((filter) => (
-            <MultiSelectFilter
-              key={filter.key}
-              label={filter.label}
-              options={filter.options}
-              selectedValues={activeFilters[filter.key] || []}
-              onChange={(values) =>
-                setActiveFilters((current) => ({
-                  ...current,
-                  [filter.key]: values
-                }))
-              }
-            />
-          ))}
+        <div className="master-card__actions master-card__actions--header">
+          <span>{sortedRecords.length} records</span>
           {filterConfigs.length > 0 ? (
-            <div className="data-toolbar__clear">
-              <button
-                type="button"
-                className="clear-filters-button"
-                onClick={() => {
-                  setSearchTerm("");
-                  setActiveFilters(Object.fromEntries(filterConfigs.map((filter) => [filter.key, []])));
-                }}
-              >
-                Clear Filters
-              </button>
-            </div>
+            <ActionIconDisplay
+              icon="filter"
+              label="Filters"
+              active={isFiltersOpen}
+              onClick={() => setIsFiltersOpen((current) => !current)}
+            />
           ) : null}
-        </div>
-
-        <div className="view-toggle" aria-label="View switcher">
-          <ActionIconDisplay
-            icon="cards"
-            label="Cards"
-            active={appliedView === "card"}
-            onClick={() => setPreferredView("card")}
-          />
-          <ActionIconDisplay
-            icon="table"
-            label="Table"
-            active={appliedView === "table"}
-            onClick={() => setPreferredView("table")}
-          />
+          <div className="view-toggle" aria-label="View switcher">
+            <ActionIconDisplay
+              icon="cards"
+              label="Cards"
+              active={appliedView === "card"}
+              onClick={() => setPreferredView("card")}
+            />
+            <ActionIconDisplay
+              icon="table"
+              label="Table"
+              active={appliedView === "table"}
+              onClick={() => setPreferredView("table")}
+            />
+          </div>
         </div>
       </div>
+
+      {isFiltersOpen ? (
+        <div className="data-toolbar">
+          <div className="data-toolbar__search">
+            <input
+              type="search"
+              placeholder={`Search ${title}`}
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+          </div>
+
+          <div className="data-toolbar__filters">
+            {filterConfigs.map((filter) => (
+              <MultiSelectFilter
+                key={filter.key}
+                label={filter.label}
+                options={filter.options}
+                selectedValues={activeFilters[filter.key] || []}
+                onChange={(values) =>
+                  setActiveFilters((current) => ({
+                    ...current,
+                    [filter.key]: values
+                  }))
+                }
+              />
+            ))}
+            {filterConfigs.length > 0 ? (
+              <div className="data-toolbar__clear">
+                <button
+                  type="button"
+                  className="clear-filters-button"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setActiveFilters(Object.fromEntries(filterConfigs.map((filter) => [filter.key, []])));
+                  }}
+                >
+                  Clear Filters
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       {loading ? (
         <div className="table-state">{loadingMessage}</div>
