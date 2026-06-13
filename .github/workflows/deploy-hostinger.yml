@@ -66,14 +66,22 @@ jobs:
 
           attempt_deploy() {
             protocol="$1"
-            target_url="${protocol}://$HOSTINGER_SERVER${port_part}"
-
-            echo "Trying deploy with protocol: $protocol"
+            target_scheme="$protocol"
+            ssl_cmd="set ftp:ssl-allow no;"
 
             if [ "$protocol" = "ftps" ]; then
-              timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" -e "$common_cmds set ftp:ssl-allow yes; set ftp:ssl-force yes; mirror -R ./deploy/ \"$HOSTINGER_TARGET_DIR\" --verbose; bye"
+              target_scheme="ftp"
+              ssl_cmd="set ftp:ssl-allow yes; set ftp:ssl-force yes;"
+            fi
+
+            target_url="${target_scheme}://$HOSTINGER_SERVER${port_part}"
+
+            echo "Trying deploy with protocol: $protocol via $target_url"
+
+            if [ "$protocol" = "ftps" ]; then
+              timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" -e "$common_cmds $ssl_cmd mirror -R ./deploy/ \"$HOSTINGER_TARGET_DIR\" --verbose; bye"
             elif [ "$protocol" = "ftp" ]; then
-              timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" -e "$common_cmds set ftp:ssl-allow no; mirror -R ./deploy/ \"$HOSTINGER_TARGET_DIR\" --verbose; bye"
+              timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" -e "$common_cmds $ssl_cmd mirror -R ./deploy/ \"$HOSTINGER_TARGET_DIR\" --verbose; bye"
             else
               timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" -e "$common_cmds set sftp:auto-confirm yes; mirror -R ./deploy/ \"$HOSTINGER_TARGET_DIR\" --verbose; bye"
             fi
