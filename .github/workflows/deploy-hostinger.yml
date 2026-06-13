@@ -72,8 +72,10 @@ jobs:
 
             if [ "$protocol" = "ftps" ]; then
               timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" -e "$common_cmds set ftp:ssl-allow yes; set ftp:ssl-force yes; mirror -R ./deploy/ \"$HOSTINGER_TARGET_DIR\" --verbose; bye"
-            else
+            elif [ "$protocol" = "ftp" ]; then
               timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" -e "$common_cmds set ftp:ssl-allow no; mirror -R ./deploy/ \"$HOSTINGER_TARGET_DIR\" --verbose; bye"
+            else
+              timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" -e "$common_cmds set sftp:auto-confirm yes; mirror -R ./deploy/ \"$HOSTINGER_TARGET_DIR\" --verbose; bye"
             fi
           }
 
@@ -82,4 +84,4 @@ jobs:
             exit 0
           fi
 
-          attempt_deploy "ftps" || attempt_deploy "ftp"
+          attempt_deploy "ftps" || attempt_deploy "ftp" || attempt_deploy "sftp"
