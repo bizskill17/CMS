@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
+import { ActionIconButton } from "./ActionIcon";
 import FormLabel from "./FormLabel";
 import ResponsiveDataView from "./ResponsiveDataView";
 import { buildFilterOptions } from "../utils/dataView";
@@ -194,13 +195,11 @@ export default function AttachDocumentsPage() {
           ]}
           filterConfigs={filterConfigs}
           renderActions={(record) => (
-            <button
-              type="button"
-              className="secondary-button"
+            <ActionIconButton
+              icon="upload"
+              label="Upload Document"
               onClick={() => handleOpenUpload(record)}
-            >
-              Upload Document
-            </button>
+            />
           )}
           cardTitle={(record) => record.policy_number || "Policy"}
           cardSubtitle={(record) => `${record.customer_name || "-"} • ${record.company_name || "-"}`}

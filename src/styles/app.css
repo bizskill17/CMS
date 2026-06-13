@@ -567,21 +567,41 @@ button {
   border-radius: 14px;
   padding: 4px;
   background: #f8fbff;
+  gap: 4px;
 }
 
-.view-toggle__button {
+.icon-toggle-button,
+.icon-action-button {
   border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.icon-toggle-button {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
   background: transparent;
   color: var(--text-soft);
-  padding: 10px 14px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 700;
 }
 
-.view-toggle__button.is-active {
+.icon-toggle-button.is-active {
   background: #2d57d7;
   color: #fff;
+}
+
+.icon-toggle-button svg,
+.icon-action-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .multi-filter {
@@ -1009,6 +1029,22 @@ button {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.icon-action-button {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
+.icon-action-button--secondary {
+  background: #ebf2ff;
+  color: #2d57d7;
+}
+
+.icon-action-button--primary {
+  background: #2d57d7;
+  color: #fff;
 }
 
 @media (max-width: 900px) {

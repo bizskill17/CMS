@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
+import { ActionIconButton } from "./ActionIcon";
 import FormLabel from "./FormLabel";
 import ResponsiveDataView from "./ResponsiveDataView";
 import { buildFilterOptions } from "../utils/dataView";
@@ -204,16 +205,13 @@ export default function PendingPaymentsPage() {
           filterConfigs={filterConfigs}
           renderActions={(record) => (
             <>
-              <button type="button" className="secondary-button">
-                Followup
-              </button>
-              <button
-                type="button"
-                className="primary-button"
+              <ActionIconButton icon="followup" label="Followup" />
+              <ActionIconButton
+                icon="payment"
+                label="Update Client Payment"
+                tone="primary"
                 onClick={() => openModal(record)}
-              >
-                Update Client Payment
-              </button>
+              />
             </>
           )}
           cardTitle={(record) => record.policy_number || "Policy"}

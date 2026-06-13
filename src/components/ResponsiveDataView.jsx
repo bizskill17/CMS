@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ActionIconDisplay } from "./ActionIcon";
 import MultiSelectFilter from "./MultiSelectFilter";
 import { filterRecords, getRecordValue, sortRecords } from "../utils/dataView";
 import { formatCellValue } from "../utils/formatting";
@@ -117,20 +118,18 @@ export default function ResponsiveDataView({
         </div>
 
         <div className="view-toggle" aria-label="View switcher">
-          <button
-            type="button"
-            className={`view-toggle__button ${appliedView === "card" ? "is-active" : ""}`}
+          <ActionIconDisplay
+            icon="cards"
+            label="Cards"
+            active={appliedView === "card"}
             onClick={() => setPreferredView("card")}
-          >
-            Cards
-          </button>
-          <button
-            type="button"
-            className={`view-toggle__button ${appliedView === "table" ? "is-active" : ""}`}
+          />
+          <ActionIconDisplay
+            icon="table"
+            label="Table"
+            active={appliedView === "table"}
             onClick={() => setPreferredView("table")}
-          >
-            Table
-          </button>
+          />
         </div>
       </div>
 

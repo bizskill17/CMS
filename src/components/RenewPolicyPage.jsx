@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
+import { ActionIconButton } from "./ActionIcon";
 import { formatDateDisplay } from "../utils/formatting";
 import FormLabel from "./FormLabel";
 import ResponsiveDataView from "./ResponsiveDataView";
@@ -247,16 +248,13 @@ export default function RenewPolicyPage() {
           filterConfigs={filterConfigs}
           renderActions={(policy) => (
             <>
-              <button type="button" className="secondary-button">
-                Followup
-              </button>
-              <button
-                type="button"
-                className="primary-button"
+              <ActionIconButton icon="followup" label="Followup" />
+              <ActionIconButton
+                icon="renew"
+                label="Renew"
+                tone="primary"
                 onClick={() => openRenewForm(policy)}
-              >
-                Renew
-              </button>
+              />
             </>
           )}
           cardTitle={(policy) => policy.policy_number || "Policy"}
