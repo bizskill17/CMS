@@ -57,7 +57,13 @@ const columns = [
   { key: "net_premium", label: "Net Premium" },
   { key: "payment_received_amount", label: "Received" },
   { key: "payment_pending_amount", label: "Pending" },
-  { key: "client_payment_status", label: "Client Payment Status" }
+  { key: "client_payment_status", label: "Client Payment Status" },
+  { key: "follow_up_at", label: "Follow Up Date" },
+  { key: "follow_up_by_name", label: "Follow Up By" },
+  { key: "follow_up_mode", label: "Follow Up Mode" },
+  { key: "next_follow_up_at", label: "Next Follow Up Date" },
+  { key: "follow_up_status", label: "Follow Up Status" },
+  { key: "follow_up_remarks", label: "Follow Up Remarks" }
 ];
 
 export default function PendingPaymentsPage() {
@@ -219,6 +225,21 @@ export default function PendingPaymentsPage() {
         throw new Error(json.message || "Failed to save follow up.");
       }
 
+      setRecords((current) =>
+        current.map((record) =>
+          record.id === payload.policy_id
+            ? {
+                ...record,
+                follow_up_at: json.data?.follow_up_at || record.follow_up_at,
+                follow_up_by_name: json.data?.follow_up_by_name || record.follow_up_by_name,
+                follow_up_mode: json.data?.follow_up_mode || record.follow_up_mode,
+                next_follow_up_at: json.data?.next_follow_up_at || record.next_follow_up_at,
+                follow_up_status: json.data?.follow_up_status || record.follow_up_status,
+                follow_up_remarks: json.data?.follow_up_remarks || record.follow_up_remarks
+              }
+            : record
+        )
+      );
       setMessage(json.message || "Follow up saved successfully.");
       closeFollowUpModal();
     } catch (saveError) {
@@ -273,7 +294,9 @@ export default function PendingPaymentsPage() {
             { key: "net_premium", label: "Net Premium" },
             { key: "payment_received_amount", label: "Received" },
             { key: "payment_pending_amount", label: "Pending" },
-            { key: "client_payment_status", label: "Status", highlight: true }
+            { key: "client_payment_status", label: "Status", highlight: true },
+            { key: "follow_up_status", label: "Follow Up Status", highlight: true },
+            { key: "next_follow_up_at", label: "Next Follow Up Date" }
           ]}
         />
 

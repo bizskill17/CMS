@@ -93,7 +93,13 @@ const columns = [
   { key: "company_name", label: "Company Name", highlight: true },
   { key: "product_name", label: "Product Name", highlight: true },
   { key: "policy_type", label: "Policy Type" },
-  { key: "registration_no", label: "Registration No." }
+  { key: "registration_no", label: "Registration No." },
+  { key: "follow_up_at", label: "Follow Up Date" },
+  { key: "follow_up_by_name", label: "Follow Up By" },
+  { key: "follow_up_mode", label: "Follow Up Mode" },
+  { key: "next_follow_up_at", label: "Next Follow Up Date" },
+  { key: "follow_up_status", label: "Follow Up Status" },
+  { key: "follow_up_remarks", label: "Follow Up Remarks" }
 ];
 
 export default function RenewPolicyPage() {
@@ -257,6 +263,22 @@ export default function RenewPolicyPage() {
         throw new Error(json.message || "Failed to save follow up.");
       }
 
+      setLookupData((current) => ({
+        ...current,
+        policies: (current.policies || []).map((record) =>
+          record.id === payload.policy_id
+            ? {
+                ...record,
+                follow_up_at: json.data?.follow_up_at || record.follow_up_at,
+                follow_up_by_name: json.data?.follow_up_by_name || record.follow_up_by_name,
+                follow_up_mode: json.data?.follow_up_mode || record.follow_up_mode,
+                next_follow_up_at: json.data?.next_follow_up_at || record.next_follow_up_at,
+                follow_up_status: json.data?.follow_up_status || record.follow_up_status,
+                follow_up_remarks: json.data?.follow_up_remarks || record.follow_up_remarks
+              }
+            : record
+        )
+      }));
       setMessage(json.message || "Follow up saved successfully.");
       closeFollowUpModal();
     } catch (saveError) {
@@ -318,7 +340,9 @@ export default function RenewPolicyPage() {
             { key: "customer_mobile", label: "Mobile" },
             { key: "customer_group_name", label: "Group", highlight: true },
             { key: "product_name", label: "Product", highlight: true },
-            { key: "registration_no", label: "Registration No." }
+            { key: "registration_no", label: "Registration No." },
+            { key: "follow_up_status", label: "Follow Up Status", highlight: true },
+            { key: "next_follow_up_at", label: "Next Follow Up Date" }
           ]}
         />
 

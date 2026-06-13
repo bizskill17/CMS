@@ -653,9 +653,25 @@ try {
                 p.payment_received_amount,
                 p.payment_pending_amount,
                 p.client_payment_status,
+                fu.follow_up_at,
+                fu.follow_up_mode,
+                fu.next_follow_up_at,
+                fu.outcome_status AS follow_up_status,
+                fu.response_summary AS follow_up_remarks,
+                u.full_name AS follow_up_by_name,
                 c.full_name AS customer_name,
                 ic.company_name
              FROM policies p
+             LEFT JOIN (
+                SELECT fu1.*
+                FROM follow_ups fu1
+                INNER JOIN (
+                    SELECT policy_id, MAX(id) AS latest_id
+                    FROM follow_ups
+                    GROUP BY policy_id
+                ) latest_follow_up ON latest_follow_up.latest_id = fu1.id
+             ) fu ON fu.policy_id = p.id
+             LEFT JOIN users u ON u.linked_agent_id = fu.done_by_agent_id
              LEFT JOIN customers c ON c.id = p.customer_id
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
              WHERE p.paid_by_type = "Agent"
@@ -931,8 +947,11 @@ try {
                     'id' => $followUpId,
                     'policy_id' => $policyId,
                     'follow_up_at' => $followUpAt,
+                    'follow_up_mode' => trim((string) $payload['follow_up_mode']),
                     'next_follow_up_at' => $nextFollowUpAt,
-                    'outcome_status' => $status
+                    'follow_up_status' => $status,
+                    'follow_up_remarks' => $remarks !== '' ? $remarks : null,
+                    'follow_up_by_name' => (string) $user['full_name']
                 ]
             ], 201);
             exit;
@@ -966,8 +985,24 @@ try {
                 p.year_of_manufacture,
                 p.registration_no,
                 p.risk_end_date,
-                p.renewal_status
+                p.renewal_status,
+                fu.follow_up_at,
+                fu.follow_up_mode,
+                fu.next_follow_up_at,
+                fu.outcome_status AS follow_up_status,
+                fu.response_summary AS follow_up_remarks,
+                u.full_name AS follow_up_by_name
              FROM policies p
+             LEFT JOIN (
+                SELECT fu1.*
+                FROM follow_ups fu1
+                INNER JOIN (
+                    SELECT policy_id, MAX(id) AS latest_id
+                    FROM follow_ups
+                    GROUP BY policy_id
+                ) latest_follow_up ON latest_follow_up.latest_id = fu1.id
+             ) fu ON fu.policy_id = p.id
+             LEFT JOIN users u ON u.linked_agent_id = fu.done_by_agent_id
              LEFT JOIN customers c ON c.id = p.customer_id
              LEFT JOIN customer_groups cg ON cg.id = c.group_id
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
