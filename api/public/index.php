@@ -68,6 +68,20 @@ try {
             'SELECT count(*) FROM policies WHERE paid_by_type = "Agent" AND coalesce(payment_pending_amount, 0) > 0'
         )->fetchColumn();
 
+        // Reports counts
+        $counts['policies-added'] = (int) $pdo->query(
+            'SELECT count(*) FROM policies p WHERE date(p.created_at) = curdate()'
+        )->fetchColumn();
+        $counts['policies-this-week'] = (int) $pdo->query(
+            'SELECT count(*) FROM policies p WHERE yearweek(p.created_at, 1) = yearweek(curdate(), 1)'
+        )->fetchColumn();
+        $counts['policies-this-month'] = (int) $pdo->query(
+            'SELECT count(*) FROM policies p WHERE year(p.created_at) = year(curdate()) AND month(p.created_at) = month(curdate())'
+        )->fetchColumn();
+        $counts['expiry-reports'] = (int) $pdo->query(
+            'SELECT count(*) FROM policies p WHERE p.risk_end_date IS NOT NULL'
+        )->fetchColumn();
+
         Response::json([
             'status' => 'ok',
             'data' => $counts

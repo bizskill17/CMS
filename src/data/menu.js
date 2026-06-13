@@ -49,10 +49,10 @@ export const menuSections = [
     path: "/reports",
     icon: "reports",
     items: [
-      { label: "Policies Added", path: "/reports/policies-added" },
-      { label: "Policies This Week", path: "/reports/policies-this-week" },
-      { label: "Policies This Month", path: "/reports/policies-this-month" },
-      { label: "Expiry Reports", path: "/reports/expiry-reports" },
+      { label: "Policies Added Today", path: "/reports/policies-added", countKey: "policies-added" },
+      { label: "Policies This Week", path: "/reports/policies-this-week", countKey: "policies-this-week" },
+      { label: "Policies This Month", path: "/reports/policies-this-month", countKey: "policies-this-month" },
+      { label: "Expiry Reports", path: "/reports/expiry-reports", countKey: "expiry-reports" },
       { label: "Pending Payments from Clients", path: "/reports/pending-payments", countKey: "pending-payments" },
       { label: "Pending Document Uploads", path: "/reports/pending-document-uploads", countKey: "attach-documents" }
     ]

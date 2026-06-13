@@ -1,6 +1,6 @@
 export const reportConfigs = {
   "policies-added": {
-    title: "Policies Added",
+    title: "Policies Added Today",
     endpoint: "/reports/policies-added",
     emptyMessage: "No policies added today.",
     loadingMessage: "Loading policies added...",
