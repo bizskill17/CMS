@@ -45,6 +45,10 @@ export default function AppLayout() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const handleSidebarToggle = () => {
+    setIsSidebarOpen((current) => !current);
+  };
+
   return (
     <div className="app-shell">
       <Sidebar isOpen={isSidebarOpen} isMobile={isMobile} onClose={() => setIsSidebarOpen(false)} />
@@ -53,8 +57,8 @@ export default function AppLayout() {
           <button
             className="sidebar-toggle"
             type="button"
-            onClick={() => setIsSidebarOpen(true)}
-            aria-label="Show menu"
+            onClick={handleSidebarToggle}
+            aria-label={isSidebarOpen ? "Hide menu" : "Show menu"}
           >
             <span className="sidebar-toggle__line" aria-hidden="true"></span>
             <span className="sidebar-toggle__line" aria-hidden="true"></span>
