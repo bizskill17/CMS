@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ActionIconDisplay } from "./ActionIcon";
 import MultiSelectFilter from "./MultiSelectFilter";
+import { downloadCsv } from "../utils/export";
 import { filterRecords, getRecordValue, sortRecords } from "../utils/dataView";
 import { formatCellValue } from "../utils/formatting";
 
@@ -82,20 +83,36 @@ export default function ResponsiveDataView({
               label="Filters"
               active={isFiltersOpen}
               onClick={() => setIsFiltersOpen((current) => !current)}
+              variant="toolbar"
             />
           ) : null}
+          <ActionIconDisplay
+            icon="excel"
+            label="Download Excel"
+            showLabel
+            variant="toolbar"
+            onClick={() =>
+              downloadCsv({
+                title,
+                columns,
+                records: sortedRecords
+              })
+            }
+          />
           <div className="view-toggle" aria-label="View switcher">
             <ActionIconDisplay
               icon="cards"
               label="Cards"
               active={appliedView === "card"}
               onClick={() => setPreferredView("card")}
+              variant="toolbar"
             />
             <ActionIconDisplay
               icon="table"
               label="Table"
               active={appliedView === "table"}
               onClick={() => setPreferredView("table")}
+              variant="toolbar"
             />
           </div>
         </div>

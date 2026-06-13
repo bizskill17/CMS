@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ActionIconDisplay } from "./ActionIcon";
 import { API_BASE } from "../config/api";
+import { downloadCsv } from "../utils/export";
 
 const dashboardItems = [
   {
@@ -144,7 +146,31 @@ export default function DashboardPage() {
       <section className="master-card dashboard-card">
         <div className="master-card__header">
           <span></span>
-          <span>{dashboardItems.length} dashboard items</span>
+          <div className="master-card__actions master-card__actions--header">
+            <span>{dashboardItems.length} dashboard items</span>
+            <ActionIconDisplay
+              icon="excel"
+              label="Download Excel"
+              showLabel
+              variant="toolbar"
+              onClick={() =>
+                downloadCsv({
+                  title: "Dashboard",
+                  columns: [
+                    { key: "label", label: "Dashboard Item" },
+                    { key: "count", label: "Count" },
+                    { key: "path", label: "Route" }
+                  ],
+                  records: dashboardItems,
+                  mapRecord: (item) => ({
+                    label: item.label,
+                    count: summary[item.key],
+                    path: item.path
+                  })
+                })
+              }
+            />
+          </div>
         </div>
 
         {loading ? (

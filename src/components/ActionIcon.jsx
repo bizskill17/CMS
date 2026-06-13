@@ -47,6 +47,14 @@ function IconSvg({ name }) {
         <path d="M7 12h10" />
         <path d="M10 18h4" />
       </>
+    ),
+    excel: (
+      <>
+        <path d="M14 3.5h-6A2.5 2.5 0 0 0 5.5 6v12A2.5 2.5 0 0 0 8 20.5h8A2.5 2.5 0 0 0 18.5 18V8Z" />
+        <path d="M14 3.5V8h4.5" />
+        <path d="m8.5 11.5 4 5" />
+        <path d="m12.5 11.5-4 5" />
+      </>
     )
   };
 
@@ -71,16 +79,24 @@ export function ActionIconButton({ icon, label, tone = "secondary", ...props }) 
   );
 }
 
-export function ActionIconDisplay({ icon, label, active = false, onClick }) {
+export function ActionIconDisplay({
+  icon,
+  label,
+  active = false,
+  onClick,
+  variant = "icon",
+  showLabel = false
+}) {
   return (
     <button
       type="button"
       aria-label={label}
       title={label}
-      className={`icon-toggle-button ${active ? "is-active" : ""}`}
+      className={`icon-toggle-button icon-toggle-button--${variant} ${active ? "is-active" : ""}`}
       onClick={onClick}
     >
       <IconSvg name={icon} />
+      {showLabel ? <span>{label}</span> : null}
     </button>
   );
 }

@@ -3,6 +3,7 @@ import { ActionIconDisplay } from "./ActionIcon";
 import { API_BASE } from "../config/api";
 import { masterConfigs } from "../data/masterConfigs";
 import { buildFilterOptions, filterRecords, sortRecords } from "../utils/dataView";
+import { downloadCsv } from "../utils/export";
 import { formatCellValue } from "../utils/formatting";
 import FormLabel from "./FormLabel";
 import MultiSelectFilter from "./MultiSelectFilter";
@@ -387,8 +388,29 @@ export default function MasterPage({ resourceKey }) {
                   label="Filters"
                   active={isFiltersOpen}
                   onClick={() => setIsFiltersOpen((current) => !current)}
+                  variant="toolbar"
                 />
               ) : null}
+              <ActionIconDisplay
+                icon="excel"
+                label="Download Excel"
+                showLabel
+                variant="toolbar"
+                onClick={() =>
+                  downloadCsv({
+                    title: config.title,
+                    columns: config.tableColumns,
+                    records: sortedRecords,
+                    mapRecord: (record) =>
+                      Object.fromEntries(
+                        config.tableColumns.map((column) => [
+                          column.key,
+                          column.type === "boolean" ? (record[column.key] ? "Yes" : "No") : record[column.key]
+                        ])
+                      )
+                  })
+                }
+              />
               <button type="button" className="primary-button" onClick={handleAdd}>
                 + Add
               </button>

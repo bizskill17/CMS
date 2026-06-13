@@ -597,6 +597,30 @@ button {
   color: #fff;
 }
 
+.icon-toggle-button--toolbar {
+  width: auto;
+  min-width: 42px;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid #8094ff;
+  border-radius: 10px;
+  background: #fff;
+  color: #4d5eff;
+  gap: 8px;
+  box-shadow: 0 0 0 2px rgba(128, 148, 255, 0.08);
+}
+
+.icon-toggle-button--toolbar.is-active {
+  background: #eef2ff;
+  color: #2d57d7;
+}
+
+.icon-toggle-button--toolbar span {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .icon-toggle-button svg,
 .icon-action-button svg {
   width: 18px;
@@ -1114,6 +1138,10 @@ button {
 
   .master-card__actions--header {
     width: 100%;
+  }
+
+  .master-card__actions--header .primary-button {
+    order: -1;
   }
 
   .dashboard-table__item {
