@@ -845,38 +845,8 @@ export default function MasterPage({ resourceKey }) {
       <div className="master-grid master-grid--list-only">
         <section className="master-card master-card--table">
           <div className="master-card__header">
-            <span></span>
+            <span>{sortedRecords.length} records</span>
             <div className="master-card__actions master-card__actions--header">
-              <span>{sortedRecords.length} records</span>
-              {filterConfigs.length > 0 ? (
-                <ActionIconDisplay
-                  icon="filter"
-                  label="Filters"
-                  active={isFiltersOpen}
-                  onClick={() => setIsFiltersOpen((current) => !current)}
-                  variant="toolbar"
-                />
-              ) : null}
-              <ActionIconDisplay
-                icon="excel"
-                label="Download Excel"
-                showLabel
-                variant="toolbar"
-                onClick={() =>
-                  downloadCsv({
-                    title: config.title,
-                    columns: config.tableColumns,
-                    records: sortedRecords,
-                    mapRecord: (record) =>
-                      Object.fromEntries(
-                        config.tableColumns.map((column) => [
-                          column.key,
-                          column.type === "boolean" ? (record[column.key] ? "Yes" : "No") : record[column.key]
-                        ])
-                      )
-                  })
-                }
-              />
               <div className="view-toggle" aria-label="View switcher">
                 <ActionIconDisplay
                   icon="cards"
@@ -893,19 +863,64 @@ export default function MasterPage({ resourceKey }) {
                   variant="toolbar"
                 />
               </div>
-              <button
-                type="button"
-                className="secondary-button secondary-button--template"
-                onClick={handleDownloadTemplate}
-              >
-                Download Template
-              </button>
-              <button type="button" className="secondary-button secondary-button--upload" onClick={openBulkUpload}>
-                Upload
-              </button>
+              {!isMobile ? (
+                <button
+                  type="button"
+                  className="secondary-button secondary-button--template"
+                  onClick={handleDownloadTemplate}
+                >
+                  Download Template
+                </button>
+              ) : null}
+              {!isMobile ? (
+                <button type="button" className="secondary-button secondary-button--upload" onClick={openBulkUpload}>
+                  Upload
+                </button>
+              ) : null}
               <button type="button" className="primary-button primary-button--add" onClick={handleAdd}>
                 + Add
               </button>
+            </div>
+          </div>
+
+          <div className="master-list-toolbar">
+            <div className="master-list-toolbar__search">
+              <input
+                type="search"
+                placeholder={`Search ${config.title}`}
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </div>
+            <div className="master-list-toolbar__actions">
+              {filterConfigs.length > 0 ? (
+                <ActionIconDisplay
+                  icon="filter"
+                  label="Filters"
+                  active={isFiltersOpen}
+                  onClick={() => setIsFiltersOpen((current) => !current)}
+                  variant="toolbar"
+                />
+              ) : null}
+              <ActionIconDisplay
+                icon="excel"
+                label="Download Excel"
+                variant="toolbar"
+                onClick={() =>
+                  downloadCsv({
+                    title: config.title,
+                    columns: config.tableColumns,
+                    records: sortedRecords,
+                    mapRecord: (record) =>
+                      Object.fromEntries(
+                        config.tableColumns.map((column) => [
+                          column.key,
+                          column.type === "boolean" ? (record[column.key] ? "Yes" : "No") : record[column.key]
+                        ])
+                      )
+                  })
+                }
+              />
             </div>
           </div>
 
@@ -917,15 +932,6 @@ export default function MasterPage({ resourceKey }) {
             <>
               {isFiltersOpen ? (
                 <div className="data-toolbar">
-                  <div className="data-toolbar__search">
-                    <input
-                      type="search"
-                      placeholder={`Search ${config.title}`}
-                      value={searchTerm}
-                      onChange={(event) => setSearchTerm(event.target.value)}
-                    />
-                  </div>
-
                   <div className="data-toolbar__filters">
                     {filterConfigs.map((filter) => (
                       <MultiSelectFilter

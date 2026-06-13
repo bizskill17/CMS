@@ -25,20 +25,14 @@ function getCurrentViewName(pathname) {
 export default function AppLayout() {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(() => getIsMobileViewport());
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => !getIsMobileViewport());
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => true);
   const currentViewName = getCurrentViewName(location.pathname);
-
-  useEffect(() => {
-    if (isMobile) {
-      setIsSidebarOpen(false);
-    }
-  }, [location.pathname, isMobile]);
 
   useEffect(() => {
     const handleResize = () => {
       const nextIsMobile = getIsMobileViewport();
       setIsMobile(nextIsMobile);
-      setIsSidebarOpen(!nextIsMobile);
+      setIsSidebarOpen(true);
     };
 
     window.addEventListener("resize", handleResize);
@@ -66,7 +60,6 @@ export default function AppLayout() {
           </button>
           <div className="content-topbar__copy">
             {currentViewName ? <h1 className="content-topbar__title">{currentViewName}</h1> : null}
-            <p className="content-topbar__subtitle">Insurance workflow suite</p>
           </div>
         </div>
         <Outlet />

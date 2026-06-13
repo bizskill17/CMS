@@ -445,8 +445,9 @@ button {
 .dashboard-table__item {
   display: flex;
   align-items: center;
-  gap: 20px;
   min-width: 0;
+  flex: 1;
+  text-align: left;
 }
 
 .dashboard-table__count-cell {
@@ -494,26 +495,11 @@ button {
   border-radius: 18px;
   background: #fff;
   padding: 18px 20px;
-  display: grid;
-  grid-template-columns: 56px minmax(0, 1fr);
-  gap: 16px;
+  display: flex;
   align-items: center;
   cursor: pointer;
   text-align: left;
   box-shadow: 0 14px 30px rgba(38, 60, 89, 0.08);
-}
-
-.dashboard-tile__serial {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: #ebf2ff;
-  color: #2d57d7;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  font-weight: 800;
 }
 
 .dashboard-tile__content {
@@ -521,6 +507,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  width: 100%;
 }
 
 .data-toolbar {
@@ -806,6 +793,35 @@ button {
 .record-cards {
   display: grid;
   gap: 16px;
+}
+
+.master-list-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.master-list-toolbar__search {
+  flex: 1;
+  min-width: 0;
+}
+
+.master-list-toolbar__search input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #97aeff;
+  border-radius: 12px;
+  padding: 11px 14px;
+  background: #fff;
+  color: var(--text-dark);
+  font-size: 14px;
+}
+
+.master-list-toolbar__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .record-card {
@@ -1231,7 +1247,9 @@ button {
 .table-actions {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .icon-action-button {
@@ -1337,6 +1355,16 @@ button {
     justify-content: space-between;
   }
 
+  .master-list-toolbar {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .master-list-toolbar__search {
+    width: 100%;
+    flex-basis: 100%;
+  }
+
   .page-shell,
   .dashboard-page,
   .issue-policy-page,
@@ -1359,8 +1387,8 @@ button {
   }
 
   .dashboard-tile__content {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
   }
 }
 
@@ -1390,6 +1418,13 @@ button {
 
   .master-card__actions--header .primary-button {
     order: -1;
+  }
+
+  .master-card__actions--header {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
   }
 
   .dashboard-table__item {
@@ -1434,6 +1469,15 @@ button {
     align-self: flex-start;
   }
 
+  .master-list-toolbar {
+    gap: 10px;
+  }
+
+  .master-list-toolbar__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
   .record-card__body {
     grid-template-columns: 1fr;
   }
@@ -1449,7 +1493,7 @@ button {
   }
 
   .dashboard-tile {
-    grid-template-columns: 1fr;
+    padding: 16px;
   }
 
   .expiry-reports__section h3 {

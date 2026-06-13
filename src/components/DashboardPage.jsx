@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ActionIconDisplay } from "./ActionIcon";
 import { Spinner } from "./Spinner";
 import { API_BASE } from "../config/api";
-import { downloadCsv } from "../utils/export";
 
 const dashboardItems = [
   {
@@ -107,28 +105,6 @@ export default function DashboardPage() {
           <span></span>
           <div className="master-card__actions master-card__actions--header">
             <span>{dashboardItems.length} dashboard items</span>
-            <ActionIconDisplay
-              icon="excel"
-              label="Download Excel"
-              showLabel
-              variant="toolbar"
-              onClick={() =>
-                downloadCsv({
-                  title: "Dashboard",
-                  columns: [
-                    { key: "label", label: "Dashboard Item" },
-                    { key: "count", label: "Count" },
-                    { key: "path", label: "Route" }
-                  ],
-                  records: dashboardItems,
-                  mapRecord: (item) => ({
-                    label: item.label,
-                    count: summary[item.key],
-                    path: item.path
-                  })
-                })
-              }
-            />
           </div>
         </div>
 
@@ -140,14 +116,13 @@ export default function DashboardPage() {
           <p className="feedback feedback--error">{error}</p>
         ) : (
           <div className="dashboard-list">
-            {dashboardItems.map((item, index) => (
+            {dashboardItems.map((item) => (
               <button
                 key={item.key}
                 type="button"
                 className="dashboard-tile"
                 onClick={() => navigate(item.path)}
               >
-                <span className="dashboard-tile__serial">{index + 1}</span>
                 <span className="dashboard-tile__content">
                   <span className="dashboard-table__item">
                     <span>{item.label}</span>

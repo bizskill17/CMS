@@ -101,7 +101,6 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
         </div>
         <div className="brand-copy">
           <h1>Policy Management System</h1>
-          <span>Insurance workflow suite</span>
         </div>
       </div>
 
@@ -132,7 +131,7 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
             );
           }
 
-          const isOpen = openGroup === section.label;
+          const isOpen = isMobile ? true : openGroup === section.label;
 
           return (
             <section
@@ -143,7 +142,11 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
                 className="menu-card menu-card--collapsible"
                 type="button"
                 aria-expanded={isOpen}
-                onClick={() => setOpenGroup(isOpen ? null : section.label)}
+                onClick={() => {
+                  if (!isMobile) {
+                    setOpenGroup(isOpen ? null : section.label);
+                  }
+                }}
               >
                 <span className="menu-card__left">
                   <span className="menu-icon">
