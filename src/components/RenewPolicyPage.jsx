@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import { ActionIconButton } from "./ActionIcon";
+import FollowUpModal from "./FollowUpModal";
 import { formatDateDisplay } from "../utils/formatting";
 import FormLabel from "./FormLabel";
 import ResponsiveDataView from "./ResponsiveDataView";
@@ -100,12 +101,16 @@ export default function RenewPolicyPage() {
   const [lookupData, setLookupData] = useState({
     policies: []
   });
+  const [agents, setAgents] = useState([]);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingFollowUp, setSavingFollowUp] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [followUpError, setFollowUpError] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -113,16 +118,24 @@ export default function RenewPolicyPage() {
       setError("");
 
       try {
-        const response = await fetch(`${API_BASE}/policies/renew-form`);
+        const [response, agentsResponse] = await Promise.all([
+          fetch(`${API_BASE}/policies/renew-form`),
+          fetch(`${API_BASE}/masters/agents?limit=250`)
+        ]);
         const json = await readApiJson(response);
+        const agentsJson = await readApiJson(agentsResponse);
 
         if (!response.ok) {
           throw new Error(json.message || "Failed to load renewal form data.");
+        }
+        if (!agentsResponse.ok) {
+          throw new Error(agentsJson.message || "Failed to load agents.");
         }
 
         setLookupData({
           policies: json.data.policies || []
         });
+        setAgents(agentsJson.data || []);
       } catch (loadError) {
         setError(loadError.message);
       } finally {
@@ -175,6 +188,19 @@ export default function RenewPolicyPage() {
     setIsFormOpen(false);
   };
 
+  const openFollowUpModal = (policy) => {
+    setSelectedPolicy(policy);
+    setFollowUpError("");
+    setMessage("");
+    setIsFollowUpOpen(true);
+  };
+
+  const closeFollowUpModal = () => {
+    setSelectedPolicy(null);
+    setIsFollowUpOpen(false);
+    setFollowUpError("");
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -209,6 +235,34 @@ export default function RenewPolicyPage() {
       setError(saveError.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleFollowUpSubmit = async (payload) => {
+    setSavingFollowUp(true);
+    setFollowUpError("");
+    setMessage("");
+
+    try {
+      const response = await fetch(`${API_BASE}/follow-ups`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const json = await readApiJson(response);
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to save follow up.");
+      }
+
+      setMessage(json.message || "Follow up saved successfully.");
+      closeFollowUpModal();
+    } catch (saveError) {
+      setFollowUpError(saveError.message);
+    } finally {
+      setSavingFollowUp(false);
     }
   };
 
@@ -248,7 +302,7 @@ export default function RenewPolicyPage() {
           filterConfigs={filterConfigs}
           renderActions={(policy) => (
             <>
-              <ActionIconButton icon="followup" label="Followup" />
+              <ActionIconButton icon="followup" label="Followup" onClick={() => openFollowUpModal(policy)} />
               <ActionIconButton
                 icon="renew"
                 label="Renew"
@@ -446,6 +500,18 @@ export default function RenewPolicyPage() {
           </section>
         </div>
       ) : null}
+
+      <FollowUpModal
+        isOpen={isFollowUpOpen}
+        title="Renewal Follow Up"
+        policy={selectedPolicy}
+        policyType="Renewal"
+        agents={agents}
+        saving={savingFollowUp}
+        error={followUpError}
+        onClose={closeFollowUpModal}
+        onSubmit={handleFollowUpSubmit}
+      />
     </div>
   );
 }

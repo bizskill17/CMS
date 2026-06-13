@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import { ActionIconButton } from "./ActionIcon";
+import FollowUpModal from "./FollowUpModal";
 import FormLabel from "./FormLabel";
 import ResponsiveDataView from "./ResponsiveDataView";
 import { buildFilterOptions } from "../utils/dataView";
@@ -62,13 +63,17 @@ const columns = [
 export default function PendingPaymentsPage() {
   const [records, setRecords] = useState([]);
   const [agentAccounts, setAgentAccounts] = useState([]);
+  const [agents, setAgents] = useState([]);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
   const [formState, setFormState] = useState(initialFormState);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingFollowUp, setSavingFollowUp] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [followUpError, setFollowUpError] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -76,13 +81,15 @@ export default function PendingPaymentsPage() {
       setError("");
 
       try {
-        const [paymentsRes, agentsRes] = await Promise.all([
+        const [paymentsRes, agentsRes, followUpAgentsRes] = await Promise.all([
           fetch(`${API_BASE}/payments/pending-client?limit=100`),
-          fetch(`${API_BASE}/masters/agent-accounts?limit=250`)
+          fetch(`${API_BASE}/masters/agent-accounts?limit=250`),
+          fetch(`${API_BASE}/masters/agents?limit=250`)
         ]);
 
         const paymentsJson = await readApiJson(paymentsRes);
         const agentsJson = await readApiJson(agentsRes);
+        const followUpAgentsJson = await readApiJson(followUpAgentsRes);
 
         if (!paymentsRes.ok) {
           throw new Error(paymentsJson.message || "Failed to load pending payments.");
@@ -90,9 +97,13 @@ export default function PendingPaymentsPage() {
         if (!agentsRes.ok) {
           throw new Error(agentsJson.message || "Failed to load agent accounts.");
         }
+        if (!followUpAgentsRes.ok) {
+          throw new Error(followUpAgentsJson.message || "Failed to load agents.");
+        }
 
         setRecords(paymentsJson.data || []);
         setAgentAccounts(agentsJson.data || []);
+        setAgents(followUpAgentsJson.data || []);
       } catch (loadError) {
         setError(loadError.message);
       } finally {
@@ -118,6 +129,19 @@ export default function PendingPaymentsPage() {
       amount: policy.payment_pending_amount || ""
     });
     setIsModalOpen(true);
+  };
+
+  const openFollowUpModal = (policy) => {
+    setSelectedPolicy(policy);
+    setFollowUpError("");
+    setMessage("");
+    setIsFollowUpOpen(true);
+  };
+
+  const closeFollowUpModal = () => {
+    setSelectedPolicy(null);
+    setIsFollowUpOpen(false);
+    setFollowUpError("");
   };
 
   const handleChange = (name, value) => {
@@ -176,6 +200,34 @@ export default function PendingPaymentsPage() {
     }
   };
 
+  const handleFollowUpSubmit = async (payload) => {
+    setSavingFollowUp(true);
+    setFollowUpError("");
+    setMessage("");
+
+    try {
+      const response = await fetch(`${API_BASE}/follow-ups`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+      const json = await readApiJson(response);
+
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to save follow up.");
+      }
+
+      setMessage(json.message || "Follow up saved successfully.");
+      closeFollowUpModal();
+    } catch (saveError) {
+      setFollowUpError(saveError.message);
+    } finally {
+      setSavingFollowUp(false);
+    }
+  };
+
   const filterConfigs = useMemo(
     () => [
       { key: "company_name", label: "Company", options: buildFilterOptions(records, "company_name") },
@@ -205,7 +257,7 @@ export default function PendingPaymentsPage() {
           filterConfigs={filterConfigs}
           renderActions={(record) => (
             <>
-              <ActionIconButton icon="followup" label="Followup" />
+              <ActionIconButton icon="followup" label="Followup" onClick={() => openFollowUpModal(record)} />
               <ActionIconButton
                 icon="payment"
                 label="Update Client Payment"
@@ -371,6 +423,18 @@ export default function PendingPaymentsPage() {
           </section>
         </div>
       ) : null}
+
+      <FollowUpModal
+        isOpen={isFollowUpOpen}
+        title="Pending Payment Follow Up"
+        policy={selectedPolicy}
+        policyType="Payment"
+        agents={agents}
+        saving={savingFollowUp}
+        error={followUpError}
+        onClose={closeFollowUpModal}
+        onSubmit={handleFollowUpSubmit}
+      />
     </div>
   );
 }

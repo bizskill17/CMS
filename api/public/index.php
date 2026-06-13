@@ -801,6 +801,132 @@ try {
         }
     }
 
+    if ($path === '/api/follow-ups' && $method === 'POST') {
+        $pdo = Database::connection();
+        $payload = json_decode(file_get_contents('php://input') ?: '[]', true);
+
+        if (!is_array($payload)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Invalid JSON payload'
+            ], 422);
+            exit;
+        }
+
+        foreach (['policy_id', 'follow_up_type', 'follow_up_date', 'follow_up_by', 'follow_up_remarks', 'follow_up_mode', 'status'] as $requiredField) {
+            if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
+                Response::json([
+                    'status' => 'error',
+                    'message' => sprintf('Field "%s" is required.', $requiredField)
+                ], 422);
+                exit;
+            }
+        }
+
+        $policyId = (int) $payload['policy_id'];
+        $doneByAgentId = (int) $payload['follow_up_by'];
+
+        $policyStatement = $pdo->prepare('SELECT id FROM policies WHERE id = :id LIMIT 1');
+        $policyStatement->bindValue(':id', $policyId, PDO::PARAM_INT);
+        $policyStatement->execute();
+
+        if (!$policyStatement->fetch()) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Policy not found.'
+            ], 404);
+            exit;
+        }
+
+        $agentStatement = $pdo->prepare('SELECT id FROM agents WHERE id = :id LIMIT 1');
+        $agentStatement->bindValue(':id', $doneByAgentId, PDO::PARAM_INT);
+        $agentStatement->execute();
+
+        if (!$agentStatement->fetch()) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Selected follow up agent not found.'
+            ], 404);
+            exit;
+        }
+
+        $followUpAt = sprintf('%s 00:00:00', $payload['follow_up_date']);
+        $nextFollowUpAt = trim((string) ($payload['next_follow_up_date'] ?? '')) !== ''
+            ? sprintf('%s 00:00:00', $payload['next_follow_up_date'])
+            : null;
+        $remarks = trim((string) $payload['follow_up_remarks']);
+        $status = trim((string) $payload['status']);
+
+        $pdo->beginTransaction();
+
+        try {
+            $statement = $pdo->prepare(
+                'INSERT INTO follow_ups (
+                    policy_id,
+                    follow_up_type,
+                    follow_up_mode,
+                    follow_up_at,
+                    response_summary,
+                    next_follow_up_at,
+                    done_by_agent_id,
+                    outcome_status
+                 ) VALUES (
+                    :policy_id,
+                    :follow_up_type,
+                    :follow_up_mode,
+                    :follow_up_at,
+                    :response_summary,
+                    :next_follow_up_at,
+                    :done_by_agent_id,
+                    :outcome_status
+                 )'
+            );
+            $statement->bindValue(':policy_id', $policyId, PDO::PARAM_INT);
+            $statement->bindValue(':follow_up_type', trim((string) $payload['follow_up_type']));
+            $statement->bindValue(':follow_up_mode', trim((string) $payload['follow_up_mode']));
+            $statement->bindValue(':follow_up_at', $followUpAt);
+            $statement->bindValue(':response_summary', $remarks !== '' ? $remarks : null);
+            $statement->bindValue(':next_follow_up_at', $nextFollowUpAt, $nextFollowUpAt === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $statement->bindValue(':done_by_agent_id', $doneByAgentId, PDO::PARAM_INT);
+            $statement->bindValue(':outcome_status', $status);
+            $statement->execute();
+
+            $updatePolicy = $pdo->prepare(
+                'UPDATE policies
+                 SET last_follow_up_at = :last_follow_up_at,
+                     next_follow_up_at = :next_follow_up_at,
+                     last_client_response = :last_client_response,
+                     last_status = :last_status
+                 WHERE id = :id'
+            );
+            $updatePolicy->bindValue(':last_follow_up_at', $followUpAt);
+            $updatePolicy->bindValue(':next_follow_up_at', $nextFollowUpAt, $nextFollowUpAt === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $updatePolicy->bindValue(':last_client_response', $remarks !== '' ? $remarks : null);
+            $updatePolicy->bindValue(':last_status', $status);
+            $updatePolicy->bindValue(':id', $policyId, PDO::PARAM_INT);
+            $updatePolicy->execute();
+
+            $followUpId = (int) $pdo->lastInsertId();
+            $pdo->commit();
+
+            Response::json([
+                'status' => 'ok',
+                'message' => 'Follow up saved successfully.',
+                'data' => [
+                    'id' => $followUpId,
+                    'policy_id' => $policyId,
+                    'follow_up_at' => $followUpAt,
+                    'next_follow_up_at' => $nextFollowUpAt,
+                    'outcome_status' => $status
+                ]
+            ], 201);
+            exit;
+        } catch (Throwable $throwable) {
+            $pdo->rollBack();
+            throw $throwable;
+        }
+    }
+
     if ($path === '/api/policies/renew-form' && $method === 'GET') {
         $pdo = Database::connection();
 
