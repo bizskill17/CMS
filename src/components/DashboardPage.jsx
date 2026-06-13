@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ActionIconDisplay } from "./ActionIcon";
+import { Spinner } from "./Spinner";
 import { API_BASE } from "../config/api";
 import { downloadCsv } from "../utils/export";
 
@@ -132,7 +133,9 @@ export default function DashboardPage() {
         </div>
 
         {loading ? (
-          <div className="table-state">Loading dashboard...</div>
+          <div className="table-state">
+            <Spinner label="Loading dashboard..." />
+          </div>
         ) : error ? (
           <p className="feedback feedback--error">{error}</p>
         ) : (

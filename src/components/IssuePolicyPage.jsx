@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config/api";
 import FormLabel from "./FormLabel";
+import { ButtonSpinner, Spinner } from "./Spinner";
 
 function getTodayDateValue() {
   return new Date().toISOString().slice(0, 10);
@@ -260,7 +261,9 @@ export default function IssuePolicyPage() {
         </div>
 
         {loading ? (
-          <div className="table-state">Loading form data...</div>
+          <div className="table-state">
+            <Spinner label="Loading form data..." />
+          </div>
         ) : (
           <form className="issue-policy-form" onSubmit={handleSubmit}>
             <label className="form-field">
@@ -575,7 +578,7 @@ export default function IssuePolicyPage() {
                 Reset
               </button>
               <button type="submit" className="primary-button" disabled={saving}>
-                {saving ? "Saving..." : "Save Policy"}
+                {saving ? <ButtonSpinner label="Saving..." /> : "Save Policy"}
               </button>
             </div>
           </form>

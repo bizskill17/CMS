@@ -5,6 +5,7 @@ import FollowUpModal from "./FollowUpModal";
 import { formatDateDisplay } from "../utils/formatting";
 import FormLabel from "./FormLabel";
 import ResponsiveDataView from "./ResponsiveDataView";
+import { ButtonSpinner } from "./Spinner";
 import { buildFilterOptions } from "../utils/dataView";
 
 const initialFormState = {
@@ -514,7 +515,7 @@ export default function RenewPolicyPage() {
 
                 <div className="form-actions issue-policy-form__actions">
                   <button type="submit" className="primary-button" disabled={saving}>
-                    {saving ? "Saving..." : "Save Renewal"}
+                    {saving ? <ButtonSpinner label="Saving..." /> : "Save Renewal"}
                   </button>
                 </div>
               </form>

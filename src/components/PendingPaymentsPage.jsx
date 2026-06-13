@@ -4,6 +4,7 @@ import { ActionIconButton } from "./ActionIcon";
 import FollowUpModal from "./FollowUpModal";
 import FormLabel from "./FormLabel";
 import ResponsiveDataView from "./ResponsiveDataView";
+import { ButtonSpinner } from "./Spinner";
 import { buildFilterOptions } from "../utils/dataView";
 
 const initialFormState = {
@@ -436,7 +437,7 @@ export default function PendingPaymentsPage() {
 
                 <div className="form-actions">
                   <button type="submit" className="primary-button" disabled={saving}>
-                    {saving ? "Saving..." : "Save Client Payment"}
+                    {saving ? <ButtonSpinner label="Saving..." /> : "Save Client Payment"}
                   </button>
                 </div>
               </form>

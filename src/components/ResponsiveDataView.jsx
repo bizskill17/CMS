@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ActionIconDisplay } from "./ActionIcon";
 import MultiSelectFilter from "./MultiSelectFilter";
+import { Spinner } from "./Spinner";
 import { downloadCsv } from "../utils/export";
 import { filterRecords, getRecordValue, sortRecords } from "../utils/dataView";
 import { formatCellValue } from "../utils/formatting";
@@ -163,7 +164,9 @@ export default function ResponsiveDataView({
       ) : null}
 
       {loading ? (
-        <div className="table-state">{loadingMessage}</div>
+        <div className="table-state">
+          <Spinner label={loadingMessage} />
+        </div>
       ) : error ? (
         <p className="feedback feedback--error">{error}</p>
       ) : appliedView === "table" ? (

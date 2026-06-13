@@ -7,6 +7,7 @@ import { downloadCsv } from "../utils/export";
 import { formatCellValue } from "../utils/formatting";
 import FormLabel from "./FormLabel";
 import MultiSelectFilter from "./MultiSelectFilter";
+import { ButtonSpinner, Spinner } from "./Spinner";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -763,7 +764,9 @@ export default function MasterPage({ resourceKey }) {
           </div>
 
           {loading ? (
-            <div className="table-state">Loading records...</div>
+            <div className="table-state">
+              <Spinner label="Loading records..." />
+            </div>
           ) : (
             <>
               {isFiltersOpen ? (
@@ -1012,7 +1015,7 @@ export default function MasterPage({ resourceKey }) {
 
                 <div className="form-actions">
                   <button type="submit" className="primary-button" disabled={saving}>
-                    {saving ? "Saving..." : editingId ? "Update Record" : "Save Record"}
+                    {saving ? <ButtonSpinner label="Saving..." /> : editingId ? "Update Record" : "Save Record"}
                   </button>
                 </div>
               </form>
@@ -1051,7 +1054,7 @@ export default function MasterPage({ resourceKey }) {
 
                 <div className="form-actions">
                   <button type="submit" className="primary-button" disabled={bulkUploading}>
-                    {bulkUploading ? "Uploading..." : "Upload Bulk"}
+                    {bulkUploading ? <ButtonSpinner label="Uploading..." /> : "Upload Bulk"}
                   </button>
                 </div>
               </form>
@@ -1114,7 +1117,9 @@ export default function MasterPage({ resourceKey }) {
 
             <div className="master-modal__body">
               {relatedPoliciesModal.loading ? (
-                <div className="table-state">Loading related policies...</div>
+                <div className="table-state">
+                  <Spinner label="Loading related policies..." />
+                </div>
               ) : relatedPoliciesModal.error ? (
                 <p className="feedback feedback--error">{relatedPoliciesModal.error}</p>
               ) : (

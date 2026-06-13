@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import FormLabel from "./FormLabel";
+import { ButtonSpinner } from "./Spinner";
 
 const initialFormState = {
   follow_up_date: "",
@@ -160,7 +161,7 @@ export default function FollowUpModal({
 
             <div className="form-actions">
               <button type="submit" className="primary-button" disabled={saving}>
-                {saving ? "Saving..." : "Save Follow Up"}
+                {saving ? <ButtonSpinner label="Saving..." /> : "Save Follow Up"}
               </button>
             </div>
           </form>

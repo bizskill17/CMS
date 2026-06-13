@@ -3,6 +3,7 @@ import { API_BASE } from "../config/api";
 import { ActionIconButton } from "./ActionIcon";
 import FormLabel from "./FormLabel";
 import ResponsiveDataView from "./ResponsiveDataView";
+import { ButtonSpinner } from "./Spinner";
 import { buildFilterOptions } from "../utils/dataView";
 
 async function readApiJson(response) {
@@ -313,7 +314,7 @@ export default function AttachDocumentsPage() {
 
                 <div className="form-actions">
                   <button type="submit" className="primary-button" disabled={uploading}>
-                    {uploading ? "Uploading..." : "Upload Document"}
+                    {uploading ? <ButtonSpinner label="Uploading..." /> : "Upload Document"}
                   </button>
                 </div>
               </form>
