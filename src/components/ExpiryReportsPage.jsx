@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 const monthlyReports = [
   { label: "April", path: "/reports/expiry-reports/month/4" },
@@ -56,8 +56,14 @@ function ExpirySection({ title, items, compact = false, onOpen }) {
 
 export default function ExpiryReportsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { sectionId } = useParams();
-  const activeSection = sectionId ? expirySections[sectionId] : null;
+  const inferredSectionId =
+    sectionId ||
+    (location.pathname.includes("/reports/expiry-reports/section/")
+      ? location.pathname.split("/").filter(Boolean).at(-1)
+      : "");
+  const activeSection = inferredSectionId ? expirySections[inferredSectionId] : null;
 
   return (
     <div className="page-shell issue-policy-page">
