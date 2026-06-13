@@ -52,6 +52,7 @@ export const menuSections = [
       { label: "Policies Added", path: "/reports/policies-added" },
       { label: "Policies This Week", path: "/reports/policies-this-week" },
       { label: "Policies This Month", path: "/reports/policies-this-month" },
+      { label: "Expiry Reports", path: "/reports/expiry-reports" },
       { label: "Pending Payments from Clients", path: "/reports/pending-payments", countKey: "pending-payments" },
       { label: "Pending Document Uploads", path: "/reports/pending-document-uploads", countKey: "attach-documents" }
     ]

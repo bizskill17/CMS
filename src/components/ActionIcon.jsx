@@ -92,7 +92,7 @@ export function ActionIconDisplay({
       type="button"
       aria-label={label}
       title={label}
-      className={`icon-toggle-button icon-toggle-button--${variant} ${active ? "is-active" : ""}`}
+      className={`icon-toggle-button icon-toggle-button--${variant} icon-toggle-button--${icon} ${active ? "is-active" : ""}`}
       onClick={onClick}
     >
       <IconSvg name={icon} />

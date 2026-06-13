@@ -3,6 +3,7 @@ import AllPoliciesPage from "./components/AllPoliciesPage";
 import AttachDocumentsPage from "./components/AttachDocumentsPage";
 import AppLayout from "./components/AppLayout";
 import DashboardPage from "./components/DashboardPage";
+import ExpiryReportsPage from "./components/ExpiryReportsPage";
 import IssuePolicyPage from "./components/IssuePolicyPage";
 import MasterPage from "./components/MasterPage";
 import PendingPaymentsPage from "./components/PendingPaymentsPage";
@@ -32,6 +33,8 @@ function buildRoutes(items) {
           <PendingPaymentsPage />
         ) : item.path === "/reports/pending-document-uploads" ? (
           <AttachDocumentsPage />
+        ) : item.path === "/reports/expiry-reports" ? (
+          <ExpiryReportsPage />
         ) : [
           "/reports/policies-added",
           "/reports/policies-this-week",

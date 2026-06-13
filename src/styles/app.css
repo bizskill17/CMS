@@ -621,6 +621,38 @@ button {
   line-height: 1;
 }
 
+.icon-toggle-button--excel {
+  color: #4d5eff;
+}
+
+.icon-toggle-button--excel svg {
+  color: #22b14c;
+}
+
+.icon-toggle-button--filter {
+  color: #6b5cff;
+}
+
+.icon-toggle-button--cards,
+.icon-toggle-button--table {
+  min-width: 42px;
+  padding: 0 10px;
+}
+
+.icon-toggle-button--cards:not(.is-active),
+.icon-toggle-button--table:not(.is-active) {
+  border-color: #d8ddf0;
+  color: #7b8398;
+  box-shadow: none;
+}
+
+.icon-toggle-button--cards.is-active,
+.icon-toggle-button--table.is-active {
+  background: #eef2ff;
+  border-color: #b8c4ff;
+  color: #5a66ff;
+}
+
 .icon-toggle-button svg,
 .icon-action-button svg {
   width: 18px;
@@ -823,6 +855,45 @@ button {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 16px;
+}
+
+.expiry-reports {
+  margin-top: 24px;
+}
+
+.expiry-reports__section + .expiry-reports__section {
+  margin-top: 28px;
+}
+
+.expiry-reports__section h3 {
+  margin: 0 0 18px;
+  text-align: center;
+  color: #6f7d63;
+  font-size: 24px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.expiry-reports__grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 24px 18px;
+}
+
+.expiry-reports__grid--compact {
+  grid-template-columns: minmax(260px, 420px);
+  justify-content: center;
+}
+
+.expiry-reports__button {
+  min-height: 42px;
+  border: none;
+  background: #78846a;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 2px;
+  cursor: pointer;
 }
 
 .master-modal {
@@ -1119,6 +1190,10 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .expiry-reports__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .dashboard-tile__content {
     align-items: flex-start;
     flex-direction: column;
@@ -1181,6 +1256,16 @@ button {
 
   .dashboard-tile {
     grid-template-columns: 1fr;
+  }
+
+  .expiry-reports__section h3 {
+    font-size: 20px;
+  }
+
+  .expiry-reports__grid,
+  .expiry-reports__grid--compact {
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .master-modal {
