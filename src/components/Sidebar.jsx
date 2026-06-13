@@ -3,6 +3,14 @@ import { NavLink, useLocation } from "react-router-dom";
 import { menuSections } from "../data/menu";
 import { API_BASE } from "../config/api";
 
+function matchesMenuPath(currentPath, item) {
+  if (currentPath === item.path) {
+    return true;
+  }
+
+  return (item.matchPrefixes || []).some((prefix) => currentPath.startsWith(prefix));
+}
+
 function Icon({ name }) {
   const icons = {
     dashboard: (
@@ -46,7 +54,7 @@ export default function Sidebar({ isOpen }) {
 
   const defaultOpenKey = useMemo(() => {
     const matched = menuSections.find((section) =>
-      section.items.some((item) => item.path === location.pathname)
+      section.items.some((item) => matchesMenuPath(location.pathname, item))
     );
     return matched?.standalone ? null : matched?.label ?? "Masters";
   }, [location.pathname]);
@@ -120,8 +128,8 @@ export default function Sidebar({ isOpen }) {
                   <NavLink
                     key={item.path}
                     to={item.path}
-                    className={({ isActive }) =>
-                      `submenu-item ${isActive ? "is-current" : ""}`
+                    className={() =>
+                      `submenu-item ${matchesMenuPath(location.pathname, item) ? "is-current" : ""}`
                     }
                   >
                     <span>{item.label}</span>

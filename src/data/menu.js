@@ -52,9 +52,35 @@ export const menuSections = [
       { label: "Policies Added Today", path: "/reports/policies-added", countKey: "policies-added" },
       { label: "Policies This Week", path: "/reports/policies-this-week", countKey: "policies-this-week" },
       { label: "Policies This Month", path: "/reports/policies-this-month", countKey: "policies-this-month" },
-      { label: "Expiry Reports", path: "/reports/expiry-reports", countKey: "expiry-reports" },
       { label: "Pending Payments from Clients", path: "/reports/pending-payments", countKey: "pending-payments" },
       { label: "Pending Document Uploads", path: "/reports/pending-document-uploads", countKey: "attach-documents" }
+    ]
+  },
+  {
+    label: "Expiry Reports",
+    path: "/reports/expiry-reports",
+    icon: "reports",
+    items: [
+      {
+        label: "Monthly Expiry Reports",
+        path: "/reports/expiry-reports/section/monthly",
+        matchPrefixes: ["/reports/expiry-reports/month/"]
+      },
+      {
+        label: "Daily Expiry Reports",
+        path: "/reports/expiry-reports/section/daily",
+        matchPrefixes: ["/reports/expiry-reports/day/"]
+      },
+      {
+        label: "Weekly Expiry Reports",
+        path: "/reports/expiry-reports/section/weekly",
+        matchPrefixes: ["/reports/expiry-reports/week/"]
+      },
+      {
+        label: "Yearly Expiry Reports",
+        path: "/reports/expiry-reports/section/yearly",
+        matchPrefixes: ["/reports/expiry-reports/year/"]
+      }
     ]
   }
 ];

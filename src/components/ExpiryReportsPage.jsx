@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 const monthlyReports = [
   { label: "April", path: "/reports/expiry-reports/month/4" },
@@ -27,9 +28,9 @@ const yearlyReports = [
   { label: "Future Financial Years", path: "/reports/expiry-reports/year/future" }
 ];
 
-function ExpirySection({ title, items, compact = false, onOpen }) {
+function ExpirySection({ title, items, compact = false, onOpen, sectionRef, sectionId }) {
   return (
-    <section className="expiry-reports__section">
+    <section className="expiry-reports__section" id={sectionId} ref={sectionRef}>
       <h3>{title}</h3>
       <div className={`expiry-reports__grid ${compact ? "expiry-reports__grid--compact" : ""}`}>
         {items.map((item) => (
@@ -49,14 +50,55 @@ function ExpirySection({ title, items, compact = false, onOpen }) {
 
 export default function ExpiryReportsPage() {
   const navigate = useNavigate();
+  const { sectionId } = useParams();
+  const sectionRefs = {
+    monthly: useRef(null),
+    daily: useRef(null),
+    weekly: useRef(null),
+    yearly: useRef(null)
+  };
+
+  useEffect(() => {
+    if (!sectionId || !sectionRefs[sectionId]?.current) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    sectionRefs[sectionId].current.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [sectionId]);
 
   return (
     <div className="page-shell issue-policy-page">
       <section className="master-card issue-policy-card expiry-reports">
-        <ExpirySection title="Monthly Expiry Reports" items={monthlyReports} onOpen={navigate} />
-        <ExpirySection title="Daily Expiry Reports" items={dailyReports} onOpen={navigate} />
-        <ExpirySection title="Weekly Expiry Reports" items={weeklyReports} compact onOpen={navigate} />
-        <ExpirySection title="Yearly Expiry Reports" items={yearlyReports} onOpen={navigate} />
+        <ExpirySection
+          title="Monthly Expiry Reports"
+          items={monthlyReports}
+          onOpen={navigate}
+          sectionId="monthly"
+          sectionRef={sectionRefs.monthly}
+        />
+        <ExpirySection
+          title="Daily Expiry Reports"
+          items={dailyReports}
+          onOpen={navigate}
+          sectionId="daily"
+          sectionRef={sectionRefs.daily}
+        />
+        <ExpirySection
+          title="Weekly Expiry Reports"
+          items={weeklyReports}
+          compact
+          onOpen={navigate}
+          sectionId="weekly"
+          sectionRef={sectionRefs.weekly}
+        />
+        <ExpirySection
+          title="Yearly Expiry Reports"
+          items={yearlyReports}
+          onOpen={navigate}
+          sectionId="yearly"
+          sectionRef={sectionRefs.yearly}
+        />
       </section>
     </div>
   );

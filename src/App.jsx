@@ -71,6 +71,7 @@ export default function App() {
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/reports/payments-received" element={<Navigate to="/payments/received" replace />} />
+        <Route path="/reports/expiry-reports/section/:sectionId" element={<ExpiryReportsPage />} />
         <Route path="/reports/expiry-reports/:reportType/:reportValue" element={<ExpiryReportDetailPage />} />
         {buildRoutes(allRoutes)}
       </Route>
