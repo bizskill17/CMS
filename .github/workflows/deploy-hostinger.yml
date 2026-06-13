@@ -62,30 +62,19 @@ jobs:
             port_part=":$HOSTINGER_PORT"
           fi
 
+          common_cmds="set cmd:fail-exit yes; set net:timeout 30; set net:max-retries 2; set net:reconnect-interval-base 5; set net:reconnect-interval-max 10; set xfer:clobber on; set ftp:passive-mode yes; set ssl:verify-certificate no;"
+
           attempt_deploy() {
             protocol="$1"
             target_url="${protocol}://$HOSTINGER_SERVER${port_part}"
 
             echo "Trying deploy with protocol: $protocol"
 
-            timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" <<EOF
-            set cmd:fail-exit yes
-            set net:timeout 30
-            set net:max-retries 2
-            set net:reconnect-interval-base 5
-            set net:reconnect-interval-max 10
-            set xfer:clobber on
-            set ftp:passive-mode yes
-            set ssl:verify-certificate no
-            $(if [ "$protocol" = "ftps" ]; then
-                echo "set ftp:ssl-allow yes"
-                echo "set ftp:ssl-force yes"
-              else
-                echo "set ftp:ssl-allow no"
-              fi)
-            mirror -R ./deploy/ "$HOSTINGER_TARGET_DIR" --verbose
-            bye
-EOF
+            if [ "$protocol" = "ftps" ]; then
+              timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" -e "$common_cmds set ftp:ssl-allow yes; set ftp:ssl-force yes; mirror -R ./deploy/ \"$HOSTINGER_TARGET_DIR\" --verbose; bye"
+            else
+              timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" -e "$common_cmds set ftp:ssl-allow no; mirror -R ./deploy/ \"$HOSTINGER_TARGET_DIR\" --verbose; bye"
+            fi
           }
 
           if [ -n "${HOSTINGER_PROTOCOL:-}" ]; then
