@@ -144,6 +144,54 @@ function parseCheckboxValue(value) {
   return null;
 }
 
+function getFieldLabel(config, fieldName) {
+  return config.fields.find((field) => field.name === fieldName)?.label || fieldName;
+}
+
+function formatBulkServerError(config, payload, message) {
+  const duplicateMatch = String(message || "").match(/Duplicate entry '(.+)' for key '([^']+)'/i);
+  if (!duplicateMatch) {
+    return {
+      field: "Row",
+      value: "",
+      message: message || "Failed to import this row."
+    };
+  }
+
+  const duplicateValue = duplicateMatch[1];
+  const rawKey = duplicateMatch[2];
+  const keyName = rawKey.split(".").pop()?.replace(/[^a-zA-Z0-9_]/g, "") || rawKey;
+
+  const matchedField =
+    config.fields.find((field) => field.name === keyName) ||
+    config.fields.find((field) => String(payload[field.name] ?? "") === duplicateValue) ||
+    config.fields.find((field) => keyName.toLowerCase().includes(field.name.toLowerCase()));
+
+  const label = matchedField ? getFieldLabel(config, matchedField.name) : "Value";
+  const displayValue = matchedField ? payload[matchedField.name] ?? duplicateValue : duplicateValue;
+
+  return {
+    field: label,
+    value: displayValue,
+    message: `Duplicate ${label} - ${displayValue}`
+  };
+}
+
+function formatMasterServerError(config, payload, message) {
+  const formatted = formatBulkServerError(config, payload, message);
+  if (formatted.message !== (message || "Failed to import this row.")) {
+    return formatted.message;
+  }
+
+  const notNullMatch = String(message || "").match(/Column '([^']+)' cannot be null/i);
+  if (notNullMatch) {
+    const fieldName = notNullMatch[1];
+    return `${getFieldLabel(config, fieldName)} is required.`;
+  }
+
+  return message || "Request failed.";
+}
+
 function EditIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -389,7 +437,7 @@ export default function MasterPage({ resourceKey }) {
 
       const json = await readApiJson(response);
       if (!response.ok) {
-        throw new Error(json.message || "Save failed.");
+        throw new Error(formatMasterServerError(config, formState, json.message || "Save failed."));
       }
 
       setMessage(json.message || "Saved successfully.");
@@ -426,7 +474,7 @@ export default function MasterPage({ resourceKey }) {
       const json = await readApiJson(response);
 
       if (!response.ok) {
-        throw new Error(json.message || "Delete failed.");
+        throw new Error(formatMasterServerError(config, record, json.message || "Delete failed."));
       }
 
       setRecords((current) => current.filter((item) => item.id !== record.id));
@@ -613,22 +661,28 @@ export default function MasterPage({ resourceKey }) {
           const json = await readApiJson(response);
 
           if (!response.ok) {
+            const formattedError = formatBulkServerError(
+              config,
+              payload,
+              json.message || "Failed to import this row."
+            );
             uploadErrors.push({
               row: rowIndex + 2,
-              field: "Row",
-              value: "",
-              message: json.message || "Failed to import this row."
+              field: formattedError.field,
+              value: formattedError.value,
+              message: formattedError.message
             });
             continue;
           }
 
           successCount += 1;
         } catch (uploadError) {
+          const formattedError = formatBulkServerError(config, payload, uploadError.message);
           uploadErrors.push({
             row: rowIndex + 2,
-            field: "Row",
-            value: "",
-            message: uploadError.message
+            field: formattedError.field,
+            value: formattedError.value,
+            message: formattedError.message
           });
         }
       }
