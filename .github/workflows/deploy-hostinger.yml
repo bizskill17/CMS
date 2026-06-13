@@ -23,36 +23,6 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Validate deploy secrets
-        shell: bash
-        env:
-          HOSTINGER_DB_HOST: ${{ secrets.HOSTINGER_DB_HOST }}
-          HOSTINGER_DB_NAME: ${{ secrets.HOSTINGER_DB_NAME || secrets.HOSTINGER_DB_DATABASE }}
-          HOSTINGER_DB_USER: ${{ secrets.HOSTINGER_DB_USER || secrets.HOSTINGER_DB_USERNAME }}
-          HOSTINGER_DB_PASSWORD: ${{ secrets.HOSTINGER_DB_PASSWORD }}
-          HOSTINGER_FTP_SERVER: ${{ secrets.HOSTINGER_FTP_SERVER }}
-          HOSTINGER_FTP_USERNAME: ${{ secrets.HOSTINGER_FTP_USERNAME }}
-          HOSTINGER_FTP_PASSWORD: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
-          HOSTINGER_TARGET_DIR: ${{ secrets.HOSTINGER_TARGET_DIR }}
-          HOSTINGER_FTP_PROTOCOL: ${{ secrets.HOSTINGER_FTP_PROTOCOL }}
-          HOSTINGER_FTP_PORT: ${{ secrets.HOSTINGER_FTP_PORT }}
-        run: |
-          missing=()
-          [[ -n "$HOSTINGER_DB_HOST" ]] || missing+=("HOSTINGER_DB_HOST")
-          [[ -n "$HOSTINGER_DB_NAME" ]] || missing+=("HOSTINGER_DB_NAME or HOSTINGER_DB_DATABASE")
-          [[ -n "$HOSTINGER_DB_USER" ]] || missing+=("HOSTINGER_DB_USER or HOSTINGER_DB_USERNAME")
-          [[ -n "$HOSTINGER_DB_PASSWORD" ]] || missing+=("HOSTINGER_DB_PASSWORD")
-          [[ -n "$HOSTINGER_FTP_SERVER" ]] || missing+=("HOSTINGER_FTP_SERVER")
-          [[ -n "$HOSTINGER_FTP_USERNAME" ]] || missing+=("HOSTINGER_FTP_USERNAME")
-          [[ -n "$HOSTINGER_FTP_PASSWORD" ]] || missing+=("HOSTINGER_FTP_PASSWORD")
-          [[ -n "$HOSTINGER_TARGET_DIR" ]] || missing+=("HOSTINGER_TARGET_DIR")
-
-          if (( ${#missing[@]} > 0 )); then
-            printf 'Missing required GitHub Actions secrets:\n' >&2
-            printf ' - %s\n' "${missing[@]}" >&2
-            exit 1
-          fi
-
       - name: Install dependencies
         run: npm ci
 
@@ -73,6 +43,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y lftp
 
       - name: Deploy files over FTP
+        shell: bash
         env:
           HOSTINGER_SERVER: ${{ secrets.HOSTINGER_FTP_SERVER }}
           HOSTINGER_USERNAME: ${{ secrets.HOSTINGER_FTP_USERNAME }}
@@ -81,25 +52,45 @@ jobs:
           HOSTINGER_PROTOCOL: ${{ secrets.HOSTINGER_FTP_PROTOCOL }}
           HOSTINGER_PORT: ${{ secrets.HOSTINGER_FTP_PORT }}
         run: |
-          protocol="${HOSTINGER_PROTOCOL:-ftps}"
+          if [ -z "${HOSTINGER_SERVER:-}" ] || [ -z "${HOSTINGER_USERNAME:-}" ] || [ -z "${HOSTINGER_PASSWORD:-}" ] || [ -z "${HOSTINGER_TARGET_DIR:-}" ]; then
+            echo "FTP deploy secrets are missing. Check HOSTINGER_FTP_SERVER, HOSTINGER_FTP_USERNAME, HOSTINGER_FTP_PASSWORD, and HOSTINGER_TARGET_DIR." >&2
+            exit 1
+          fi
+
           port_part=""
           if [ -n "${HOSTINGER_PORT:-}" ]; then
             port_part=":$HOSTINGER_PORT"
           fi
-          target_url="${protocol}://$HOSTINGER_SERVER${port_part}"
 
-          echo "Deploying with protocol: $protocol"
-          timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" <<EOF
-          set cmd:fail-exit yes
-          set net:timeout 30
-          set net:max-retries 2
-          set net:reconnect-interval-base 5
-          set net:reconnect-interval-max 10
-          set xfer:clobber on
-          set ftp:passive-mode yes
-          set ftp:ssl-allow yes
-          set ftp:ssl-force yes
-          set ssl:verify-certificate no
-          mirror -R ./deploy/ "$HOSTINGER_TARGET_DIR" --verbose
-          bye
-          EOF
+          attempt_deploy() {
+            protocol="$1"
+            target_url="${protocol}://$HOSTINGER_SERVER${port_part}"
+
+            echo "Trying deploy with protocol: $protocol"
+
+            timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" <<EOF
+            set cmd:fail-exit yes
+            set net:timeout 30
+            set net:max-retries 2
+            set net:reconnect-interval-base 5
+            set net:reconnect-interval-max 10
+            set xfer:clobber on
+            set ftp:passive-mode yes
+            set ssl:verify-certificate no
+            $(if [ "$protocol" = "ftps" ]; then
+                echo "set ftp:ssl-allow yes"
+                echo "set ftp:ssl-force yes"
+              else
+                echo "set ftp:ssl-allow no"
+              fi)
+            mirror -R ./deploy/ "$HOSTINGER_TARGET_DIR" --verbose
+            bye
+EOF
+          }
+
+          if [ -n "${HOSTINGER_PROTOCOL:-}" ]; then
+            attempt_deploy "$HOSTINGER_PROTOCOL"
+            exit 0
+          fi
+
+          attempt_deploy "ftps" || attempt_deploy "ftp"
