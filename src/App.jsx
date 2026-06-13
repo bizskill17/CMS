@@ -7,6 +7,7 @@ import IssuePolicyPage from "./components/IssuePolicyPage";
 import MasterPage from "./components/MasterPage";
 import PendingPaymentsPage from "./components/PendingPaymentsPage";
 import PagePlaceholder from "./components/PagePlaceholder";
+import ReportsTablePage from "./components/ReportsTablePage";
 import RenewPolicyPage from "./components/RenewPolicyPage";
 import { menuSections } from "./data/menu";
 import { masterConfigs } from "./data/masterConfigs";
@@ -25,6 +26,17 @@ function buildRoutes(items) {
           <PendingPaymentsPage />
         ) : item.path === "/policies/attach-documents" ? (
           <AttachDocumentsPage />
+        ) : item.path === "/reports/pending-payments" ? (
+          <PendingPaymentsPage />
+        ) : item.path === "/reports/pending-document-uploads" ? (
+          <AttachDocumentsPage />
+        ) : [
+          "/reports/policies-added",
+          "/reports/policies-this-week",
+          "/reports/policies-this-month",
+          "/reports/payments-received"
+        ].includes(item.path) ? (
+          <ReportsTablePage reportKey={item.path.replace("/reports/", "")} />
         ) : item.path === "/policies/issue" ? (
           <IssuePolicyPage />
         ) : item.path === "/policies/renew" ? (

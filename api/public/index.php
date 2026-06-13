@@ -202,6 +202,87 @@ try {
         exit;
     }
 
+    if (in_array($path, [
+        '/api/reports/policies-added',
+        '/api/reports/policies-this-week',
+        '/api/reports/policies-this-month',
+    ], true) && $method === 'GET') {
+        $pdo = Database::connection();
+        $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
+
+        $dateCondition = match ($path) {
+            '/api/reports/policies-added' => 'date(p.created_at) = curdate()',
+            '/api/reports/policies-this-week' => 'yearweek(p.created_at, 1) = yearweek(curdate(), 1)',
+            '/api/reports/policies-this-month' => 'year(p.created_at) = year(curdate()) and month(p.created_at) = month(curdate())',
+        };
+
+        $statement = $pdo->prepare(
+            "SELECT
+                p.id,
+                p.policy_number,
+                p.policy_type,
+                p.business_type,
+                p.gross_premium,
+                p.net_premium,
+                p.issue_date,
+                c.full_name AS customer_name,
+                cg.group_name AS customer_group_name,
+                ic.company_name,
+                ip.product_name
+             FROM policies p
+             LEFT JOIN customers c ON c.id = p.customer_id
+             LEFT JOIN customer_groups cg ON cg.id = c.group_id
+             LEFT JOIN insurance_companies ic ON ic.id = p.company_id
+             LEFT JOIN insurance_products ip ON ip.id = p.product_id
+             WHERE $dateCondition
+             ORDER BY p.created_at DESC, p.id DESC
+             LIMIT :limit"
+        );
+        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $statement->execute();
+
+        Response::json([
+            'status' => 'ok',
+            'data' => $statement->fetchAll(),
+            'meta' => ['limit' => $limit]
+        ]);
+        exit;
+    }
+
+    if ($path === '/api/reports/payments-received' && $method === 'GET') {
+        $pdo = Database::connection();
+        $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
+
+        $statement = $pdo->prepare(
+            'SELECT
+                cp.id,
+                cp.payment_date,
+                cp.amount,
+                cp.payment_mode,
+                cp.payment_status,
+                cp.reference_number,
+                cp.remarks,
+                p.policy_number,
+                c.full_name AS customer_name,
+                ic.company_name
+             FROM client_payments cp
+             INNER JOIN policies p ON p.id = cp.policy_id
+             LEFT JOIN customers c ON c.id = p.customer_id
+             LEFT JOIN insurance_companies ic ON ic.id = p.company_id
+             ORDER BY cp.payment_date DESC, cp.id DESC
+             LIMIT :limit'
+        );
+        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $statement->execute();
+
+        Response::json([
+            'status' => 'ok',
+            'data' => $statement->fetchAll(),
+            'meta' => ['limit' => $limit]
+        ]);
+        exit;
+    }
+
     if ($path === '/api/dashboard/policy-summary' && $method === 'GET') {
         $pdo = Database::connection();
 
