@@ -1,35 +1,45 @@
 function IconSvg({ name }) {
   const icons = {
-    cards: <path d="M4 5h7v6H4V5Zm9 0h7v4h-7V5ZM4 13h5v6H4v-6Zm7 0h9v6h-9v-6Z" />,
+    cards: (
+      <>
+        <rect x="4" y="4" width="6" height="6" rx="1.5" />
+        <rect x="14" y="4" width="6" height="6" rx="1.5" />
+        <rect x="4" y="14" width="6" height="6" rx="1.5" />
+        <rect x="14" y="14" width="6" height="6" rx="1.5" />
+      </>
+    ),
     table: (
       <>
-        <path d="M4 6h16v12H4V6Zm0 4h16M9 6v12M15 6v12" />
+        <rect x="3.5" y="5" width="17" height="14" rx="1.5" />
+        <path d="M3.5 10h17M3.5 14.5h17M9 5v14M15 5v14" />
       </>
     ),
     followup: (
       <>
-        <path d="M12 3a8 8 0 1 0 8 8" />
-        <path d="M12 7v5l3 2" />
-        <path d="M19 3v5h-5" />
+        <path d="M7.5 5.5h9a2.5 2.5 0 0 1 2.5 2.5v5a2.5 2.5 0 0 1-2.5 2.5H12l-4.5 3v-3H7.5A2.5 2.5 0 0 1 5 13V8a2.5 2.5 0 0 1 2.5-2.5Z" />
+        <path d="M9 10h6M9 12.75h4" />
       </>
     ),
     payment: (
       <>
-        <path d="M3 7h18v10H3V7Zm2 2v6h14V9H5Z" />
-        <path d="M15 5V3M9 5V3M7 12h4" />
+        <path d="M4 7.5h16a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 15V9A1.5 1.5 0 0 1 4 7.5Z" />
+        <path d="M2.5 10.5h19" />
+        <circle cx="16.5" cy="13.5" r="1.5" />
+        <path d="M6.5 14h4" />
       </>
     ),
     upload: (
       <>
-        <path d="M12 15V5" />
-        <path d="m8 9 4-4 4 4" />
-        <path d="M5 17v2h14v-2" />
+        <path d="M7.5 3.5h6l3 3V18a2 2 0 0 1-2 2h-7A2.5 2.5 0 0 1 5 17.5V6a2.5 2.5 0 0 1 2.5-2.5Z" />
+        <path d="M13.5 3.5V7h3" />
+        <path d="M11 10v5" />
+        <path d="m8.5 12.5 2.5-2.5 2.5 2.5" />
       </>
     ),
     renew: (
       <>
-        <path d="M6 8a7 7 0 1 1-1 7" />
-        <path d="M6 3v5h5" />
+        <path d="M6 8a7 7 0 1 1 1.8 8.9" />
+        <path d="M6 4v5h5" />
       </>
     )
   };
