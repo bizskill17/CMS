@@ -610,6 +610,7 @@ button {
   justify-content: space-between;
   text-align: left;
   cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(109, 125, 255, 0.12);
 }
 
 .multi-filter__summary {
@@ -623,7 +624,7 @@ button {
   height: 8px;
   border-right: 1.8px solid #6d7dff;
   border-bottom: 1.8px solid #6d7dff;
-  transform: rotate(45deg);
+  transform: rotate(225deg);
   flex: 0 0 auto;
 }
 
@@ -636,33 +637,58 @@ button {
   border: 1px solid #d5dfec;
   border-radius: 16px;
   background: #fff;
-  padding: 12px;
+  padding: 10px;
   box-shadow: 0 16px 32px rgba(38, 60, 89, 0.16);
 }
 
 .multi-filter__actions {
-  display: flex;
-  justify-content: flex-end;
-  margin: 8px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0 12px;
+}
+
+.multi-filter__action-button {
+  min-height: 38px;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.multi-filter__action-button--all {
+  border: 1px solid #b9c6ff;
+  color: #586dff;
+}
+
+.multi-filter__action-button--clear {
+  border: 1px solid #ffc0c0;
+  color: #ef4a4a;
 }
 
 .multi-filter__options {
   max-height: 240px;
   overflow: auto;
   display: grid;
-  gap: 8px;
+  gap: 0;
 }
 
 .multi-filter__option {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   font-size: 14px;
+  padding: 12px 10px;
+  border-top: 1px solid #eef1f7;
 }
 
 .multi-filter__option input {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
+  accent-color: #6d7dff;
 }
 
 .multi-filter__empty {

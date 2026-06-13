@@ -35,6 +35,10 @@ export default function MultiSelectFilter({
         ? options.find((option) => option.value === selectedValues[0])?.label || `1 selected`
         : `${selectedValues.length} selected`;
 
+  const handleSelectAll = () => {
+    onChange(options.map((option) => option.value));
+  };
+
   const toggleValue = (value) => {
     if (selectedValues.includes(value)) {
       onChange(selectedValues.filter((item) => item !== value));
@@ -61,12 +65,15 @@ export default function MultiSelectFilter({
           <input
             type="search"
             className="multi-filter__search"
-            placeholder={`Search ${label}`}
+            placeholder="Search..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
           <div className="multi-filter__actions">
-            <button type="button" className="text-button" onClick={() => onChange([])}>
+            <button type="button" className="multi-filter__action-button multi-filter__action-button--all" onClick={handleSelectAll}>
+              All
+            </button>
+            <button type="button" className="multi-filter__action-button multi-filter__action-button--clear" onClick={() => onChange([])}>
               Clear
             </button>
           </div>
