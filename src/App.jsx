@@ -34,7 +34,7 @@ function buildRoutes(items) {
           <PendingPaymentsPage />
         ) : item.path === "/reports/pending-document-uploads" ? (
           <AttachDocumentsPage />
-        ) : item.path === "/reports/expiry-reports" ? (
+        ) : item.path === "/reports/expiry-reports" || item.path.startsWith("/reports/expiry-reports/section/") ? (
           <ExpiryReportsPage />
         ) : [
           "/reports/policies-added",
