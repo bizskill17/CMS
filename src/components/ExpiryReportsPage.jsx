@@ -34,10 +34,10 @@ const expirySections = {
   yearly: { title: "Yearly Expiry Reports", items: yearlyReports }
 };
 
-function ExpirySection({ title, items, compact = false, onOpen }) {
+function ExpirySection({ title, items, compact = false, onOpen, hideTitle = false }) {
   return (
     <section className="expiry-reports__section">
-      <h3>{title}</h3>
+      {!hideTitle ? <h3>{title}</h3> : null}
       <div className={`expiry-reports__grid ${compact ? "expiry-reports__grid--compact" : ""}`}>
         {items.map((item) => (
           <button
@@ -74,6 +74,7 @@ export default function ExpiryReportsPage() {
             items={activeSection.items}
             compact={activeSection.compact}
             onOpen={navigate}
+            hideTitle
           />
         ) : (
           <>
