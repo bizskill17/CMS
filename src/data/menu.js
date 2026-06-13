@@ -40,7 +40,8 @@ export const menuSections = [
     path: "/payments",
     icon: "payments",
     items: [
-      { label: "Pending Payments from Clients", path: "/payments/pending", countKey: "pending-payments" }
+      { label: "Pending Payments from Clients", path: "/payments/pending", countKey: "pending-payments" },
+      { label: "Payments Received", path: "/payments/received" }
     ]
   },
   {
@@ -52,8 +53,7 @@ export const menuSections = [
       { label: "Policies This Week", path: "/reports/policies-this-week" },
       { label: "Policies This Month", path: "/reports/policies-this-month" },
       { label: "Pending Payments from Clients", path: "/reports/pending-payments", countKey: "pending-payments" },
-      { label: "Pending Document Uploads", path: "/reports/pending-document-uploads", countKey: "attach-documents" },
-      { label: "Payments Received", path: "/reports/payments-received" }
+      { label: "Pending Document Uploads", path: "/reports/pending-document-uploads", countKey: "attach-documents" }
     ]
   }
 ];

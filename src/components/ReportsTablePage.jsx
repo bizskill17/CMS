@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import { reportConfigs } from "../data/reportConfigs";
-import { formatCellValue } from "../utils/formatting";
+import ResponsiveDataView from "./ResponsiveDataView";
+import { buildFilterOptions } from "../utils/dataView";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -36,31 +37,6 @@ export default function ReportsTablePage({ reportKey }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
-
-  const handleSort = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-  };
-
-  const sortedRecords = useMemo(() => {
-    if (!sortConfig.key) return records;
-
-    return [...records].sort((a, b) => {
-      const aVal = a[sortConfig.key];
-      const bVal = b[sortConfig.key];
-
-      if (aVal === bVal) return 0;
-      if (aVal === null || aVal === undefined) return 1;
-      if (bVal === null || bVal === undefined) return -1;
-
-      const result = aVal < bVal ? -1 : 1;
-      return sortConfig.direction === "asc" ? result : -result;
-    });
-  }, [records, sortConfig]);
 
   useEffect(() => {
     if (!config) {
@@ -92,6 +68,16 @@ export default function ReportsTablePage({ reportKey }) {
     load();
   }, [config]);
 
+  const filterConfigs = useMemo(() => {
+    if (!config) return [];
+
+    return (config.filters || []).map((filter) => ({
+      key: filter.key,
+      label: filter.label,
+      options: buildFilterOptions(records, filter.key)
+    }));
+  }, [config, records]);
+
   if (!config) {
     return (
       <div className="page-shell issue-policy-page">
@@ -105,58 +91,20 @@ export default function ReportsTablePage({ reportKey }) {
   return (
     <div className="page-shell issue-policy-page">
       <section className="master-card issue-policy-card">
-        <div className="master-card__header">
-          <span>{config.title}</span>
-          <span>{records.length} records</span>
-        </div>
-
-        {loading ? (
-          <div className="table-state">{config.loadingMessage}</div>
-        ) : error ? (
-          <p className="feedback feedback--error">{error}</p>
-        ) : (
-          <div className="table-wrap">
-            <table className="master-table">
-              <thead>
-                <tr>
-                  <th>Sl.No.</th>
-                  {config.columns.map((col) => (
-                    <th
-                      key={col.key}
-                      onClick={() => handleSort(col.key)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {col.label}
-                      {sortConfig.key === col.key && (
-                        <span>{sortConfig.direction === "asc" ? " ^" : " v"}</span>
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sortedRecords.length === 0 ? (
-                  <tr>
-                    <td colSpan={config.columns.length + 1} className="table-state">
-                      {config.emptyMessage}
-                    </td>
-                  </tr>
-                ) : (
-                  sortedRecords.map((record, index) => (
-                    <tr key={record.id ?? `${reportKey}-${index}`}>
-                      <td>{index + 1}</td>
-                      {config.columns.map((col) => (
-                        <td key={col.key} className={col.highlight ? "text-blue" : undefined}>
-                          {formatCellValue(record[col.key])}
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <ResponsiveDataView
+          title={config.title}
+          records={records}
+          columns={config.columns}
+          loading={loading}
+          error={error}
+          loadingMessage={config.loadingMessage}
+          emptyMessage={config.emptyMessage}
+          searchKeys={config.searchKeys}
+          filterConfigs={filterConfigs}
+          cardTitle={(record) => record.policy_number || record.customer_name || config.title}
+          cardSubtitle={(record) => record.customer_name || record.company_name || ""}
+          cardFields={config.cardFields || config.columns.slice(0, 5)}
+        />
       </section>
     </div>
   );

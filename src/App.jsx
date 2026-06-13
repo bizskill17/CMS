@@ -26,6 +26,8 @@ function buildRoutes(items) {
           <PendingPaymentsPage />
         ) : item.path === "/policies/attach-documents" ? (
           <AttachDocumentsPage />
+        ) : item.path === "/payments/received" ? (
+          <ReportsTablePage reportKey="payments-received" />
         ) : item.path === "/reports/pending-payments" ? (
           <PendingPaymentsPage />
         ) : item.path === "/reports/pending-document-uploads" ? (
@@ -33,8 +35,7 @@ function buildRoutes(items) {
         ) : [
           "/reports/policies-added",
           "/reports/policies-this-week",
-          "/reports/policies-this-month",
-          "/reports/payments-received"
+          "/reports/policies-this-month"
         ].includes(item.path) ? (
           <ReportsTablePage reportKey={item.path.replace("/reports/", "")} />
         ) : item.path === "/policies/issue" ? (
@@ -65,6 +66,7 @@ export default function App() {
     <Routes>
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route path="/reports/payments-received" element={<Navigate to="/payments/received" replace />} />
         {buildRoutes(allRoutes)}
       </Route>
     </Routes>

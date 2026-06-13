@@ -4,6 +4,19 @@ export const reportConfigs = {
     endpoint: "/reports/policies-added",
     emptyMessage: "No policies added today.",
     loadingMessage: "Loading policies added...",
+    searchKeys: [
+      "policy_number",
+      "customer_name",
+      "customer_group_name",
+      "company_name",
+      "product_name",
+      "policy_type"
+    ],
+    filters: [
+      { key: "company_name", label: "Company" },
+      { key: "policy_type", label: "Policy Type" },
+      { key: "business_type", label: "Business Type" }
+    ],
     columns: [
       { key: "policy_number", label: "Policy No." },
       { key: "customer_name", label: "Customer", highlight: true },
@@ -13,6 +26,13 @@ export const reportConfigs = {
       { key: "policy_type", label: "Policy Type" },
       { key: "business_type", label: "Business Type" },
       { key: "gross_premium", label: "Gross Premium" },
+      { key: "net_premium", label: "Net Premium" },
+      { key: "issue_date", label: "Issue Date" }
+    ],
+    cardFields: [
+      { key: "customer_group_name", label: "Customer Group", highlight: true },
+      { key: "policy_type", label: "Policy Type" },
+      { key: "business_type", label: "Business Type" },
       { key: "net_premium", label: "Net Premium" },
       { key: "issue_date", label: "Issue Date" }
     ]
@@ -22,6 +42,19 @@ export const reportConfigs = {
     endpoint: "/reports/policies-this-week",
     emptyMessage: "No policies found for this week.",
     loadingMessage: "Loading weekly policies...",
+    searchKeys: [
+      "policy_number",
+      "customer_name",
+      "customer_group_name",
+      "company_name",
+      "product_name",
+      "policy_type"
+    ],
+    filters: [
+      { key: "company_name", label: "Company" },
+      { key: "policy_type", label: "Policy Type" },
+      { key: "business_type", label: "Business Type" }
+    ],
     columns: [
       { key: "policy_number", label: "Policy No." },
       { key: "customer_name", label: "Customer", highlight: true },
@@ -31,6 +64,13 @@ export const reportConfigs = {
       { key: "policy_type", label: "Policy Type" },
       { key: "business_type", label: "Business Type" },
       { key: "gross_premium", label: "Gross Premium" },
+      { key: "net_premium", label: "Net Premium" },
+      { key: "issue_date", label: "Issue Date" }
+    ],
+    cardFields: [
+      { key: "customer_group_name", label: "Customer Group", highlight: true },
+      { key: "policy_type", label: "Policy Type" },
+      { key: "business_type", label: "Business Type" },
       { key: "net_premium", label: "Net Premium" },
       { key: "issue_date", label: "Issue Date" }
     ]
@@ -40,6 +80,19 @@ export const reportConfigs = {
     endpoint: "/reports/policies-this-month",
     emptyMessage: "No policies found for this month.",
     loadingMessage: "Loading monthly policies...",
+    searchKeys: [
+      "policy_number",
+      "customer_name",
+      "customer_group_name",
+      "company_name",
+      "product_name",
+      "policy_type"
+    ],
+    filters: [
+      { key: "company_name", label: "Company" },
+      { key: "policy_type", label: "Policy Type" },
+      { key: "business_type", label: "Business Type" }
+    ],
     columns: [
       { key: "policy_number", label: "Policy No." },
       { key: "customer_name", label: "Customer", highlight: true },
@@ -51,6 +104,13 @@ export const reportConfigs = {
       { key: "gross_premium", label: "Gross Premium" },
       { key: "net_premium", label: "Net Premium" },
       { key: "issue_date", label: "Issue Date" }
+    ],
+    cardFields: [
+      { key: "customer_group_name", label: "Customer Group", highlight: true },
+      { key: "policy_type", label: "Policy Type" },
+      { key: "business_type", label: "Business Type" },
+      { key: "net_premium", label: "Net Premium" },
+      { key: "issue_date", label: "Issue Date" }
     ]
   },
   "payments-received": {
@@ -58,6 +118,19 @@ export const reportConfigs = {
     endpoint: "/reports/payments-received",
     emptyMessage: "No payments received found.",
     loadingMessage: "Loading received payments...",
+    searchKeys: [
+      "policy_number",
+      "customer_name",
+      "company_name",
+      "payment_mode",
+      "payment_status",
+      "reference_number"
+    ],
+    filters: [
+      { key: "company_name", label: "Company" },
+      { key: "payment_mode", label: "Payment Mode" },
+      { key: "payment_status", label: "Payment Status" }
+    ],
     columns: [
       { key: "payment_date", label: "Payment Date" },
       { key: "policy_number", label: "Policy No." },
@@ -68,6 +141,13 @@ export const reportConfigs = {
       { key: "amount", label: "Amount" },
       { key: "reference_number", label: "Reference No." },
       { key: "remarks", label: "Remarks" }
+    ],
+    cardFields: [
+      { key: "company_name", label: "Company", highlight: true },
+      { key: "payment_mode", label: "Payment Mode" },
+      { key: "payment_status", label: "Payment Status" },
+      { key: "amount", label: "Amount" },
+      { key: "payment_date", label: "Payment Date" }
     ]
   }
 };

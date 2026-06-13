@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config/api";
 
 const dashboardItems = [
@@ -6,25 +7,29 @@ const dashboardItems = [
     key: "renewals_next_7_days",
     label: "Policies Pending for Renewal in next 7 days",
     tone: "warning",
-    icon: "renewalSoon"
+    icon: "renewalSoon",
+    path: "/policies/renew"
   },
   {
     key: "pending_document_uploads",
     label: "Policies Pending for Document Upload",
     tone: "info",
-    icon: "documents"
+    icon: "documents",
+    path: "/policies/attach-documents"
   },
   {
     key: "renewals_overdue",
     label: "Renewals Pending beyond due date",
     tone: "danger",
-    icon: "renewalOverdue"
+    icon: "renewalOverdue",
+    path: "/policies/renew"
   },
   {
     key: "pending_client_collections",
     label: "Pending for Payment Collection from Client",
     tone: "success",
-    icon: "payments"
+    icon: "payments",
+    path: "/payments/pending"
   }
 ];
 
@@ -95,6 +100,7 @@ async function readApiJson(response) {
 }
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const [summary, setSummary] = useState({
     renewals_next_7_days: 0,
     pending_document_uploads: 0,
@@ -146,34 +152,26 @@ export default function DashboardPage() {
         ) : error ? (
           <p className="feedback feedback--error">{error}</p>
         ) : (
-          <div className="table-wrap">
-            <table className="master-table dashboard-table">
-              <thead>
-                <tr>
-                  <th>Sl. No.</th>
-                  <th>Policy Dashboard Item</th>
-                  <th>Count</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dashboardItems.map((item, index) => (
-                  <tr key={item.key}>
-                    <td className="dashboard-table__serial">{index + 1}</td>
-                    <td>
-                      <div className="dashboard-table__item">
-                        <DashboardIcon name={item.icon} />
-                        <span>{item.label}</span>
-                      </div>
-                    </td>
-                    <td className="dashboard-table__count-cell">
-                      <span className={`dashboard-table__count dashboard-table__count--${item.tone}`}>
-                        {summary[item.key]}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="dashboard-list">
+            {dashboardItems.map((item, index) => (
+              <button
+                key={item.key}
+                type="button"
+                className="dashboard-tile"
+                onClick={() => navigate(item.path)}
+              >
+                <span className="dashboard-tile__serial">{index + 1}</span>
+                <span className="dashboard-tile__content">
+                  <span className="dashboard-table__item">
+                    <DashboardIcon name={item.icon} />
+                    <span>{item.label}</span>
+                  </span>
+                  <span className={`dashboard-table__count dashboard-table__count--${item.tone}`}>
+                    {summary[item.key]}
+                  </span>
+                </span>
+              </button>
+            ))}
           </div>
         )}
       </section>

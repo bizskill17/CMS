@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
-import { formatCellValue } from "../utils/formatting";
 import FormLabel from "./FormLabel";
+import ResponsiveDataView from "./ResponsiveDataView";
+import { buildFilterOptions } from "../utils/dataView";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -31,6 +32,17 @@ async function readApiJson(response) {
   }
 }
 
+const columns = [
+  { key: "policy_number", label: "Policy No." },
+  { key: "customer_name", label: "Customer", highlight: true },
+  { key: "customer_group_name", label: "Group Name", highlight: true },
+  { key: "company_name", label: "Insurance Company", highlight: true },
+  { key: "product_name", label: "Product Name", highlight: true },
+  { key: "policy_type", label: "Policy Type" },
+  { key: "issue_date", label: "Issue Date" },
+  { key: "risk_end_date", label: "Risk Expiry Date" }
+];
+
 export default function AttachDocumentsPage() {
   const [records, setRecords] = useState([]);
   const [documentTypes, setDocumentTypes] = useState([]);
@@ -40,7 +52,6 @@ export default function AttachDocumentsPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [formState, setFormState] = useState({
     document_type_id: "",
     document_number: "",
@@ -49,30 +60,6 @@ export default function AttachDocumentsPage() {
     remarks: "",
     file: null
   });
-
-  const handleSort = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-  };
-
-  const sortedRecords = useMemo(() => {
-    if (!sortConfig.key) return records;
-
-    return [...records].sort((a, b) => {
-      const aVal = a[sortConfig.key];
-      const bVal = b[sortConfig.key];
-
-      if (aVal === bVal) return 0;
-      if (aVal === null || aVal === undefined) return 1;
-      if (bVal === null || bVal === undefined) return -1;
-
-      const result = aVal < bVal ? -1 : 1;
-      return sortConfig.direction === "asc" ? result : -result;
-    });
-  }, [records, sortConfig]);
 
   const policyDocumentTypes = documentTypes.filter(
     (documentType) => String(documentType.entity_level || "").toLowerCase() === "policy"
@@ -176,85 +163,55 @@ export default function AttachDocumentsPage() {
     }
   };
 
+  const filterConfigs = useMemo(
+    () => [
+      { key: "company_name", label: "Company", options: buildFilterOptions(records, "company_name") },
+      { key: "product_name", label: "Product", options: buildFilterOptions(records, "product_name") },
+      { key: "policy_type", label: "Policy Type", options: buildFilterOptions(records, "policy_type") },
+      { key: "customer_group_name", label: "Group", options: buildFilterOptions(records, "customer_group_name") }
+    ],
+    [records]
+  );
+
   return (
     <div className="page-shell issue-policy-page">
       <section className="master-card issue-policy-card">
-        <div className="master-card__header">
-          <span></span>
-          <span>{records.length} records</span>
-        </div>
-
-        {loading ? (
-          <div className="table-state">Loading pending policies...</div>
-        ) : error ? (
-          <p className="feedback feedback--error">{error}</p>
-        ) : (
-          <div className="table-wrap">
-            <table className="master-table">
-              <thead>
-                <tr>
-                  <th>Sl.No.</th>
-                  {[
-                    { key: "policy_number", label: "Policy No." },
-                    { key: "customer_name", label: "Customer" },
-                    { key: "customer_group_name", label: "Group Name" },
-                    { key: "company_name", label: "Insurance Company" },
-                    { key: "product_name", label: "Product Name" },
-                    { key: "policy_type", label: "Policy Type" },
-                    { key: "issue_date", label: "Issue Date" },
-                    { key: "risk_end_date", label: "Risk Expiry Date" }
-                  ].map((col) => (
-                    <th
-                      key={col.key}
-                      onClick={() => handleSort(col.key)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {col.label}
-                      {sortConfig.key === col.key && (
-                        <span>{sortConfig.direction === "asc" ? " ▲" : " ▼"}</span>
-                      )}
-                    </th>
-                  ))}
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedRecords.length === 0 ? (
-                  <tr>
-                    <td colSpan="11" className="table-state">
-                      No policies are pending document upload.
-                    </td>
-                  </tr>
-                ) : (
-                  sortedRecords.map((record, index) => (
-                    <tr key={record.id}>
-                      <td>{index + 1}</td>
-                      <td>{formatCellValue(record.policy_number)}</td>
-                      <td className="text-blue">{formatCellValue(record.customer_name)}</td>
-                      <td className="text-blue">{formatCellValue(record.customer_group_name)}</td>
-                      <td className="text-blue">{formatCellValue(record.company_name)}</td>
-                      <td className="text-blue">{formatCellValue(record.product_name)}</td>
-                      <td>{formatCellValue(record.policy_type)}</td>
-                      <td>{formatCellValue(record.issue_date)}</td>
-                      <td>{formatCellValue(record.risk_end_date)}</td>
-                      <td>Pending Upload</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="secondary-button"
-                          onClick={() => handleOpenUpload(record)}
-                        >
-                          Upload Document
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <ResponsiveDataView
+          title="Pending Document Uploads"
+          records={records}
+          columns={columns}
+          loading={loading}
+          error={error && !isModalOpen ? error : ""}
+          loadingMessage="Loading pending policies..."
+          emptyMessage="No policies are pending document upload."
+          searchKeys={[
+            "policy_number",
+            "customer_name",
+            "customer_group_name",
+            "company_name",
+            "product_name",
+            "policy_type"
+          ]}
+          filterConfigs={filterConfigs}
+          renderActions={(record) => (
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => handleOpenUpload(record)}
+            >
+              Upload Document
+            </button>
+          )}
+          cardTitle={(record) => record.policy_number || "Policy"}
+          cardSubtitle={(record) => `${record.customer_name || "-"} • ${record.company_name || "-"}`}
+          cardFields={[
+            { key: "customer_group_name", label: "Group", highlight: true },
+            { key: "product_name", label: "Product", highlight: true },
+            { key: "policy_type", label: "Policy Type" },
+            { key: "issue_date", label: "Issue Date" },
+            { key: "risk_end_date", label: "Risk Expiry Date" }
+          ]}
+        />
 
         {message ? <p className="feedback feedback--success">{message}</p> : null}
       </section>

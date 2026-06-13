@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
-import { formatCellValue } from "../utils/formatting";
 import FormLabel from "./FormLabel";
+import ResponsiveDataView from "./ResponsiveDataView";
+import { buildFilterOptions } from "../utils/dataView";
 
 const initialFormState = {
   payment_date: "",
@@ -44,6 +45,19 @@ async function readApiJson(response) {
   }
 }
 
+const columns = [
+  { key: "policy_number", label: "Policy No." },
+  { key: "customer_name", label: "Customer", highlight: true },
+  { key: "company_name", label: "Company", highlight: true },
+  { key: "policy_type", label: "Policy Type" },
+  { key: "issue_date", label: "Issue Date" },
+  { key: "paid_by_type", label: "Payment By" },
+  { key: "net_premium", label: "Net Premium" },
+  { key: "payment_received_amount", label: "Received" },
+  { key: "payment_pending_amount", label: "Pending" },
+  { key: "client_payment_status", label: "Client Payment Status" }
+];
+
 export default function PendingPaymentsPage() {
   const [records, setRecords] = useState([]);
   const [agentAccounts, setAgentAccounts] = useState([]);
@@ -52,33 +66,8 @@ export default function PendingPaymentsPage() {
   const [formState, setFormState] = useState(initialFormState);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
-  const handleSort = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-  };
-
-  const sortedRecords = useMemo(() => {
-    if (!sortConfig.key) return records;
-
-    return [...records].sort((a, b) => {
-      const aVal = a[sortConfig.key];
-      const bVal = b[sortConfig.key];
-
-      if (aVal === bVal) return 0;
-      if (aVal === null || aVal === undefined) return 1;
-      if (bVal === null || bVal === undefined) return -1;
-
-      const result = aVal < bVal ? -1 : 1;
-      return sortConfig.direction === "asc" ? result : -result;
-    });
-  }, [records, sortConfig]);
 
   useEffect(() => {
     const load = async () => {
@@ -186,96 +175,57 @@ export default function PendingPaymentsPage() {
     }
   };
 
+  const filterConfigs = useMemo(
+    () => [
+      { key: "company_name", label: "Company", options: buildFilterOptions(records, "company_name") },
+      { key: "policy_type", label: "Policy Type", options: buildFilterOptions(records, "policy_type") },
+      {
+        key: "client_payment_status",
+        label: "Payment Status",
+        options: buildFilterOptions(records, "client_payment_status")
+      },
+      { key: "paid_by_type", label: "Payment By", options: buildFilterOptions(records, "paid_by_type") }
+    ],
+    [records]
+  );
+
   return (
     <div className="page-shell issue-policy-page">
       <section className="master-card issue-policy-card">
-        <div className="master-card__header">
-          <span></span>
-          <span>{records.length} records</span>
-        </div>
-
-        {loading ? (
-          <div className="table-state">Loading pending payments...</div>
-        ) : error && !isModalOpen ? (
-          <p className="feedback feedback--error">{error}</p>
-        ) : (
-          <div className="table-wrap">
-            <table className="master-table">
-              <thead>
-                <tr>
-                  <th>Sl.No.</th>
-                  {[
-                    { key: "policy_number", label: "Policy No." },
-                    { key: "customer_name", label: "Customer" },
-                    { key: "company_name", label: "Company" },
-                    { key: "policy_type", label: "Policy Type" },
-                    { key: "issue_date", label: "Issue Date" },
-                    { key: "paid_by_type", label: "Payment By" },
-                    { key: "net_premium", label: "Net Premium" },
-                    { key: "payment_received_amount", label: "Received" },
-                    { key: "payment_pending_amount", label: "Pending" },
-                    { key: "client_payment_status", label: "Client Payment Status" }
-                  ].map((col) => (
-                    <th
-                      key={col.key}
-                      onClick={() => handleSort(col.key)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {col.label}
-                      {sortConfig.key === col.key && (
-                        <span>{sortConfig.direction === "asc" ? " ▲" : " ▼"}</span>
-                      )}
-                    </th>
-                  ))}
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedRecords.length === 0 ? (
-                  <tr>
-                    <td colSpan="12" className="table-state">
-                      No pending payments from clients found.
-                    </td>
-                  </tr>
-                ) : (
-                  sortedRecords.map((record, index) => (
-                    <tr key={record.id}>
-                      <td>{index + 1}</td>
-                      <td>{formatCellValue(record.policy_number)}</td>
-                      <td className="text-blue">{formatCellValue(record.customer_name)}</td>
-                      <td className="text-blue">{formatCellValue(record.company_name)}</td>
-                      <td>{formatCellValue(record.policy_type)}</td>
-                      <td>{formatCellValue(record.issue_date)}</td>
-                      <td>{formatCellValue(record.paid_by_type)}</td>
-                      <td>{formatCellValue(record.net_premium)}</td>
-                      <td>{formatCellValue(record.payment_received_amount)}</td>
-                      <td>{formatCellValue(record.payment_pending_amount)}</td>
-                      <td>{formatCellValue(record.client_payment_status)}</td>
-                      <td>
-                        <div className="table-actions">
-                          <button
-                            type="button"
-                            className="secondary-button"
-                            onClick={() => console.log("Followup for payment record:", record.id)}
-                          >
-                            Followup
-                          </button>
-                          <button
-                            type="button"
-                            className="primary-button"
-                            onClick={() => openModal(record)}
-                          >
-                            Update Client Payment
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <ResponsiveDataView
+          title="Pending Payments from Clients"
+          records={records}
+          columns={columns}
+          loading={loading}
+          error={error && !isModalOpen ? error : ""}
+          loadingMessage="Loading pending payments..."
+          emptyMessage="No pending payments from clients found."
+          searchKeys={["policy_number", "customer_name", "company_name", "policy_type"]}
+          filterConfigs={filterConfigs}
+          renderActions={(record) => (
+            <>
+              <button type="button" className="secondary-button">
+                Followup
+              </button>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() => openModal(record)}
+              >
+                Update Client Payment
+              </button>
+            </>
+          )}
+          cardTitle={(record) => record.policy_number || "Policy"}
+          cardSubtitle={(record) => `${record.customer_name || "-"} • ${record.company_name || "-"}`}
+          cardFields={[
+            { key: "policy_type", label: "Policy Type" },
+            { key: "net_premium", label: "Net Premium" },
+            { key: "payment_received_amount", label: "Received" },
+            { key: "payment_pending_amount", label: "Pending" },
+            { key: "client_payment_status", label: "Status", highlight: true }
+          ]}
+        />
 
         {message ? <p className="feedback feedback--success">{message}</p> : null}
       </section>
