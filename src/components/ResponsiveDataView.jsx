@@ -56,9 +56,18 @@ export default function ResponsiveDataView({
   return (
     <>
       <div className="master-card__header">
-        <span>{title}</span>
+        <span className="hide-mobile">{title}</span>
         <div className="master-card__actions master-card__actions--header">
-          <span>{sortedRecords.length} records</span>
+          <div className="master-list-toolbar__search">
+            <input
+              type="search"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+          </div>
+
+          <span className="hide-mobile">{sortedRecords.length} records</span>
           {filterConfigs.length > 0 ? (
             <ActionIconDisplay
               icon="filter"
@@ -72,6 +81,7 @@ export default function ResponsiveDataView({
             icon="excel"
             label="Download Excel"
             showLabel
+            className="hide-mobile"
             variant="toolbar"
             onClick={() =>
               downloadCsv({
@@ -86,15 +96,6 @@ export default function ResponsiveDataView({
 
       {isFiltersOpen ? (
         <div className="data-toolbar">
-          <div className="data-toolbar__search">
-            <input
-              type="search"
-              placeholder={`Search ${title}`}
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-            />
-          </div>
-
           <div className="data-toolbar__filters">
             {filterConfigs.map((filter) => (
               <MultiSelectFilter

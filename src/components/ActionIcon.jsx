@@ -47,6 +47,12 @@ function IconSvg({ name }) {
         <path d="M10 18h4" />
       </>
     ),
+    search: (
+      <>
+        <circle cx="11" cy="11" r="6.5" />
+        <path d="m16 16 3.5 3.5" />
+      </>
+    ),
     excel: (
       <>
         <path d="M14 3.5h-6A2.5 2.5 0 0 0 5.5 6v12A2.5 2.5 0 0 0 8 20.5h8A2.5 2.5 0 0 0 18.5 18V8Z" />
@@ -64,13 +70,13 @@ function IconSvg({ name }) {
   );
 }
 
-export function ActionIconButton({ icon, label, tone = "secondary", ...props }) {
+export function ActionIconButton({ icon, label, tone = "secondary", className = "", ...props }) {
   return (
     <button
       type="button"
       aria-label={label}
       title={label}
-      className={`icon-action-button icon-action-button--${tone}`}
+      className={`icon-action-button icon-action-button--${tone} ${className}`}
       {...props}
     >
       <IconSvg name={icon} />
@@ -84,14 +90,15 @@ export function ActionIconDisplay({
   active = false,
   onClick,
   variant = "icon",
-  showLabel = false
+  showLabel = false,
+  className = ""
 }) {
   return (
     <button
       type="button"
       aria-label={label}
       title={label}
-      className={`icon-toggle-button icon-toggle-button--${variant} icon-toggle-button--${icon} ${active ? "is-active" : ""}`}
+      className={`icon-toggle-button icon-toggle-button--${variant} icon-toggle-button--${icon} ${active ? "is-active" : ""} ${className}`}
       onClick={onClick}
     >
       <IconSvg name={icon} />

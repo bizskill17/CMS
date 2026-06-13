@@ -1270,6 +1270,27 @@ button {
   color: #fff;
 }
 
+.master-card__actions .master-list-toolbar__search {
+  flex: 1;
+  min-width: 140px;
+  max-width: 200px;
+}
+
+.master-card__actions--header .master-list-toolbar__search input {
+  min-height: 40px;
+  padding: 8px 14px;
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transition: all 0.2s ease;
+}
+
+.master-card__actions--header .master-list-toolbar__search input:focus {
+  background: #fff;
+  border-color: #2d57d7;
+  box-shadow: 0 0 0 3px rgba(45, 87, 215, 0.1);
+  outline: none;
+}
+
 @media (max-width: 900px) {
   .app-shell {
     display: block;
@@ -1395,6 +1416,14 @@ button {
 }
 
 @media (max-width: 640px) {
+  .hide-mobile {
+    display: none !important;
+  }
+
+  .master-card__actions .master-list-toolbar__search {
+    max-width: none;
+  }
+
   .sidebar {
     width: calc(100vw - 20px);
     max-width: calc(100vw - 20px);
@@ -1405,28 +1434,28 @@ button {
   }
 
   .master-card__header {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
   }
 
   .master-card__actions {
-    align-items: stretch;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
+    width: auto;
+    gap: 8px;
   }
 
   .master-card__actions--header {
-    width: 100%;
+    width: auto;
+    flex: 1;
+    justify-content: flex-end;
   }
 
   .master-card__actions--header .primary-button {
-    order: -1;
-  }
-
-  .master-card__actions--header {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: flex-start;
+    order: 0;
+    padding: 10px 14px;
+    font-size: 14px;
   }
 
   .dashboard-table__item {

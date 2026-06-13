@@ -837,12 +837,32 @@ export default function MasterPage({ resourceKey }) {
       <div className="master-grid master-grid--list-only">
         <section className="master-card master-card--table">
           <div className="master-card__header">
-            <span>{sortedRecords.length} records</span>
+            <span className="hide-mobile">{sortedRecords.length} records</span>
             <div className="master-card__actions master-card__actions--header">
+              <div className="master-list-toolbar__search">
+                <input
+                  type="search"
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                />
+              </div>
+
+              {filterConfigs.length > 0 ? (
+                <ActionIconDisplay
+                  icon="filter"
+                  label="Filters"
+                  active={isFiltersOpen}
+                  onClick={() => setIsFiltersOpen((current) => !current)}
+                  variant="toolbar"
+                />
+              ) : null}
+
               <ActionIconDisplay
                 icon="excel"
                 label="Download Excel"
                 variant="toolbar"
+                className="hide-mobile"
                 onClick={() =>
                   downloadCsv({
                     title: config.title,
@@ -860,39 +880,21 @@ export default function MasterPage({ resourceKey }) {
               />
               <button
                 type="button"
-                className="secondary-button secondary-button--template"
+                className="secondary-button secondary-button--template hide-mobile"
                 onClick={handleDownloadTemplate}
               >
                 Download Template
               </button>
-              <button type="button" className="secondary-button secondary-button--upload" onClick={openBulkUpload}>
+              <button
+                type="button"
+                className="secondary-button secondary-button--upload hide-mobile"
+                onClick={openBulkUpload}
+              >
                 Upload
               </button>
               <button type="button" className="primary-button primary-button--add" onClick={handleAdd}>
                 + Add
               </button>
-            </div>
-          </div>
-
-          <div className="master-list-toolbar">
-            <div className="master-list-toolbar__search">
-              <input
-                type="search"
-                placeholder={`Search ${config.title}`}
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-              />
-            </div>
-            <div className="master-list-toolbar__actions">
-              {filterConfigs.length > 0 ? (
-                <ActionIconDisplay
-                  icon="filter"
-                  label="Filters"
-                  active={isFiltersOpen}
-                  onClick={() => setIsFiltersOpen((current) => !current)}
-                  variant="toolbar"
-                />
-              ) : null}
             </div>
           </div>
 
