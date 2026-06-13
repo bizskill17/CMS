@@ -586,7 +586,10 @@ button {
 }
 
 .icon-toggle-button--excel {
-  color: #4d5eff;
+  border-color: #8bd4a5;
+  background: #f1fff5;
+  color: #1b7f46;
+  box-shadow: 0 0 0 2px rgba(139, 212, 165, 0.18);
 }
 
 .icon-toggle-button--excel svg {
@@ -594,6 +597,8 @@ button {
 }
 
 .icon-toggle-button--filter {
+  border-color: #cfd7ff;
+  background: #f5f7ff;
   color: #6b5cff;
 }
 
@@ -996,12 +1001,26 @@ button {
   font-weight: 700;
 }
 
+.primary-button--add {
+  background: #3d5afe;
+}
+
 .secondary-button {
   border-radius: 9px;
   background: #ebf2ff;
   color: #2d57d7;
   padding: 9px 12px;
   font-weight: 700;
+}
+
+.secondary-button--template {
+  background: #eef2ff;
+  color: #3d5afe;
+}
+
+.secondary-button--upload {
+  background: #e8f3ff;
+  color: #1b74d8;
 }
 
 .danger-button {

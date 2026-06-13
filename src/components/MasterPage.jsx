@@ -746,13 +746,17 @@ export default function MasterPage({ resourceKey }) {
                   })
                 }
               />
-              <button type="button" className="secondary-button" onClick={handleDownloadTemplate}>
+              <button
+                type="button"
+                className="secondary-button secondary-button--template"
+                onClick={handleDownloadTemplate}
+              >
                 Download Template
               </button>
-              <button type="button" className="secondary-button" onClick={openBulkUpload}>
+              <button type="button" className="secondary-button secondary-button--upload" onClick={openBulkUpload}>
                 Upload
               </button>
-              <button type="button" className="primary-button" onClick={handleAdd}>
+              <button type="button" className="primary-button primary-button--add" onClick={handleAdd}>
                 + Add
               </button>
             </div>
