@@ -586,20 +586,20 @@ button {
 }
 
 .icon-toggle-button--excel {
-  border-color: #8bd4a5;
-  background: #f1fff5;
-  color: #1b7f46;
-  box-shadow: 0 0 0 2px rgba(139, 212, 165, 0.18);
+  border-color: #2d57d7;
+  background: #2d57d7;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(45, 87, 215, 0.16);
 }
 
 .icon-toggle-button--excel svg {
-  color: #22b14c;
+  color: #fff;
 }
 
 .icon-toggle-button--filter {
-  border-color: #cfd7ff;
-  background: #f5f7ff;
-  color: #6b5cff;
+  border-color: #2d57d7;
+  background: #2d57d7;
+  color: #fff;
 }
 
 .icon-toggle-button--cards,
@@ -1002,25 +1002,25 @@ button {
 }
 
 .primary-button--add {
-  background: #3d5afe;
+  background: #2d57d7;
 }
 
 .secondary-button {
   border-radius: 9px;
-  background: #ebf2ff;
-  color: #2d57d7;
+  background: #2d57d7;
+  color: #fff;
   padding: 9px 12px;
   font-weight: 700;
 }
 
 .secondary-button--template {
-  background: #eef2ff;
-  color: #3d5afe;
+  background: #2d57d7;
+  color: #fff;
 }
 
 .secondary-button--upload {
-  background: #e8f3ff;
-  color: #1b74d8;
+  background: #2d57d7;
+  color: #fff;
 }
 
 .danger-button {
