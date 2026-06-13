@@ -596,6 +596,10 @@ button {
   color: #fff;
 }
 
+.icon-toggle-button--excel span {
+  color: #fff;
+}
+
 .icon-toggle-button--filter {
   border-color: #2d57d7;
   background: #2d57d7;
