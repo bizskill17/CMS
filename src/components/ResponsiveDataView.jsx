@@ -100,6 +100,20 @@ export default function ResponsiveDataView({
               }
             />
           ))}
+          {filterConfigs.length > 0 ? (
+            <div className="data-toolbar__clear">
+              <button
+                type="button"
+                className="clear-filters-button"
+                onClick={() => {
+                  setSearchTerm("");
+                  setActiveFilters(Object.fromEntries(filterConfigs.map((filter) => [filter.key, []])));
+                }}
+              >
+                Clear Filters
+              </button>
+            </div>
+          ) : null}
         </div>
 
         <div className="view-toggle" aria-label="View switcher">

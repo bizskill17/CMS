@@ -46,13 +46,14 @@ export default function MultiSelectFilter({
 
   return (
     <div className="multi-filter" ref={rootRef}>
+      <label className="multi-filter__field-label">{label}</label>
       <button
         type="button"
         className={`multi-filter__trigger ${isOpen ? "is-open" : ""}`}
         onClick={() => setIsOpen((current) => !current)}
       >
-        <span className="multi-filter__label">{label}</span>
         <span className="multi-filter__summary">{summary}</span>
+        <span className="multi-filter__chevron" aria-hidden="true"></span>
       </button>
 
       {isOpen ? (
