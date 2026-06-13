@@ -858,6 +858,20 @@ button {
   font-weight: 700;
   border-radius: 2px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px;
+  text-align: left;
+}
+
+.expiry-reports__count {
+  min-width: 24px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 800;
+  color: #f6fbff;
 }
 
 .master-modal {

@@ -297,6 +297,66 @@ try {
         exit;
     }
 
+    if ($path === '/api/reports/expiry-counts' && $method === 'GET') {
+        $pdo = Database::connection();
+
+        $monthlyRaw = $pdo->query(
+            'SELECT month(risk_end_date) AS bucket, count(*) AS total
+             FROM policies
+             WHERE risk_end_date IS NOT NULL
+             GROUP BY month(risk_end_date)'
+        )->fetchAll();
+        $monthly = [];
+        foreach ($monthlyRaw as $row) {
+            $monthly[(string) $row['bucket']] = (int) $row['total'];
+        }
+
+        $daily = [
+            'today' => (int) $pdo->query(
+                'SELECT count(*) FROM policies WHERE risk_end_date IS NOT NULL AND date(risk_end_date) = curdate()'
+            )->fetchColumn(),
+            'tomorrow' => (int) $pdo->query(
+                'SELECT count(*) FROM policies WHERE risk_end_date IS NOT NULL AND date(risk_end_date) = date_add(curdate(), interval 1 day)'
+            )->fetchColumn(),
+            'day-after-tomorrow' => (int) $pdo->query(
+                'SELECT count(*) FROM policies WHERE risk_end_date IS NOT NULL AND date(risk_end_date) = date_add(curdate(), interval 2 day)'
+            )->fetchColumn(),
+        ];
+
+        $weekly = [
+            '7-days' => (int) $pdo->query(
+                'SELECT count(*) FROM policies
+                 WHERE risk_end_date IS NOT NULL
+                   AND risk_end_date >= curdate()
+                   AND risk_end_date <= date_add(curdate(), interval 7 day)'
+            )->fetchColumn(),
+        ];
+
+        $yearly = [
+            'current' => (int) $pdo->query(
+                'SELECT count(*) FROM policies
+                 WHERE risk_end_date IS NOT NULL
+                   AND coalesce(fiscal_year_ending, year(curdate())) = year(curdate())'
+            )->fetchColumn(),
+            'future' => (int) $pdo->query(
+                'SELECT count(*) FROM policies
+                 WHERE risk_end_date IS NOT NULL
+                   AND coalesce(fiscal_year_ending, year(curdate())) > year(curdate())'
+            )->fetchColumn(),
+        ];
+
+        Response::json([
+            'status' => 'ok',
+            'data' => [
+                'monthly' => $monthly,
+                'daily' => $daily,
+                'weekly' => $weekly,
+                'yearly' => $yearly,
+            ]
+        ]);
+        exit;
+    }
+
     if ($path === '/api/reports/expiring-policies' && $method === 'GET') {
         $pdo = Database::connection();
         $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
