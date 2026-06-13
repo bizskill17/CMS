@@ -63,7 +63,7 @@ const columns = [
 export default function PendingPaymentsPage() {
   const [records, setRecords] = useState([]);
   const [agentAccounts, setAgentAccounts] = useState([]);
-  const [agents, setAgents] = useState([]);
+  const [users, setUsers] = useState([]);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
@@ -81,15 +81,15 @@ export default function PendingPaymentsPage() {
       setError("");
 
       try {
-        const [paymentsRes, agentsRes, followUpAgentsRes] = await Promise.all([
+        const [paymentsRes, agentsRes, usersRes] = await Promise.all([
           fetch(`${API_BASE}/payments/pending-client?limit=100`),
           fetch(`${API_BASE}/masters/agent-accounts?limit=250`),
-          fetch(`${API_BASE}/masters/agents?limit=250`)
+          fetch(`${API_BASE}/masters/users?limit=250`)
         ]);
 
         const paymentsJson = await readApiJson(paymentsRes);
         const agentsJson = await readApiJson(agentsRes);
-        const followUpAgentsJson = await readApiJson(followUpAgentsRes);
+        const usersJson = await readApiJson(usersRes);
 
         if (!paymentsRes.ok) {
           throw new Error(paymentsJson.message || "Failed to load pending payments.");
@@ -97,13 +97,13 @@ export default function PendingPaymentsPage() {
         if (!agentsRes.ok) {
           throw new Error(agentsJson.message || "Failed to load agent accounts.");
         }
-        if (!followUpAgentsRes.ok) {
-          throw new Error(followUpAgentsJson.message || "Failed to load agents.");
+        if (!usersRes.ok) {
+          throw new Error(usersJson.message || "Failed to load users.");
         }
 
         setRecords(paymentsJson.data || []);
         setAgentAccounts(agentsJson.data || []);
-        setAgents(followUpAgentsJson.data || []);
+        setUsers(usersJson.data || []);
       } catch (loadError) {
         setError(loadError.message);
       } finally {
@@ -429,7 +429,7 @@ export default function PendingPaymentsPage() {
         title="Pending Payment Follow Up"
         policy={selectedPolicy}
         policyType="Payment"
-        agents={agents}
+        users={users}
         saving={savingFollowUp}
         error={followUpError}
         onClose={closeFollowUpModal}

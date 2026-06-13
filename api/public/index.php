@@ -824,7 +824,7 @@ try {
         }
 
         $policyId = (int) $payload['policy_id'];
-        $doneByAgentId = (int) $payload['follow_up_by'];
+        $followUpByUserId = (int) $payload['follow_up_by'];
 
         $policyStatement = $pdo->prepare('SELECT id FROM policies WHERE id = :id LIMIT 1');
         $policyStatement->bindValue(':id', $policyId, PDO::PARAM_INT);
@@ -838,15 +838,30 @@ try {
             exit;
         }
 
-        $agentStatement = $pdo->prepare('SELECT id FROM agents WHERE id = :id LIMIT 1');
-        $agentStatement->bindValue(':id', $doneByAgentId, PDO::PARAM_INT);
-        $agentStatement->execute();
+        $userStatement = $pdo->prepare(
+            'SELECT id, full_name, linked_agent_id
+             FROM users
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $userStatement->bindValue(':id', $followUpByUserId, PDO::PARAM_INT);
+        $userStatement->execute();
+        $user = $userStatement->fetch();
 
-        if (!$agentStatement->fetch()) {
+        if (!$user) {
             Response::json([
                 'status' => 'error',
-                'message' => 'Selected follow up agent not found.'
+                'message' => 'Selected follow up user not found.'
             ], 404);
+            exit;
+        }
+
+        $doneByAgentId = isset($user['linked_agent_id']) ? (int) $user['linked_agent_id'] : 0;
+        if ($doneByAgentId <= 0) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Selected user is not linked to an agent. Link the user with an agent first to save this follow up.'
+            ], 422);
             exit;
         }
 

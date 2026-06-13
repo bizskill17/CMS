@@ -18,7 +18,7 @@ export default function FollowUpModal({
   title = "Follow Up Form",
   policy,
   policyType,
-  agents = [],
+  users = [],
   saving = false,
   error = "",
   onClose,
@@ -100,9 +100,9 @@ export default function FollowUpModal({
                 onChange={(event) => handleChange("follow_up_by", event.target.value)}
               >
                 <option value="">Select Follow Up By</option>
-                {agents.map((agent) => (
-                  <option key={agent.id} value={agent.id}>
-                    {agent.agent_name}
+                {users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.full_name}
                   </option>
                 ))}
               </select>

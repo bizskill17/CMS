@@ -101,7 +101,7 @@ export default function RenewPolicyPage() {
   const [lookupData, setLookupData] = useState({
     policies: []
   });
-  const [agents, setAgents] = useState([]);
+  const [users, setUsers] = useState([]);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
@@ -118,24 +118,24 @@ export default function RenewPolicyPage() {
       setError("");
 
       try {
-        const [response, agentsResponse] = await Promise.all([
+        const [response, usersResponse] = await Promise.all([
           fetch(`${API_BASE}/policies/renew-form`),
-          fetch(`${API_BASE}/masters/agents?limit=250`)
+          fetch(`${API_BASE}/masters/users?limit=250`)
         ]);
         const json = await readApiJson(response);
-        const agentsJson = await readApiJson(agentsResponse);
+        const usersJson = await readApiJson(usersResponse);
 
         if (!response.ok) {
           throw new Error(json.message || "Failed to load renewal form data.");
         }
-        if (!agentsResponse.ok) {
-          throw new Error(agentsJson.message || "Failed to load agents.");
+        if (!usersResponse.ok) {
+          throw new Error(usersJson.message || "Failed to load users.");
         }
 
         setLookupData({
           policies: json.data.policies || []
         });
-        setAgents(agentsJson.data || []);
+        setUsers(usersJson.data || []);
       } catch (loadError) {
         setError(loadError.message);
       } finally {
@@ -506,7 +506,7 @@ export default function RenewPolicyPage() {
         title="Renewal Follow Up"
         policy={selectedPolicy}
         policyType="Renewal"
-        agents={agents}
+        users={users}
         saving={savingFollowUp}
         error={followUpError}
         onClose={closeFollowUpModal}
