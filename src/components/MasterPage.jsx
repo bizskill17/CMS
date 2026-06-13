@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import { masterConfigs } from "../data/masterConfigs";
+import { buildFilterOptions, filterRecords, sortRecords } from "../utils/dataView";
 import { formatCellValue } from "../utils/formatting";
 import FormLabel from "./FormLabel";
+import MultiSelectFilter from "./MultiSelectFilter";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -16,7 +18,7 @@ async function readApiJson(response) {
 
   try {
     return JSON.parse(rawText);
-  } catch (parseError) {
+  } catch {
     const looksLikeHtml =
       contentType.includes("text/html") || /^\s*<!doctype html|^\s*<html/i.test(rawText);
 
@@ -105,6 +107,8 @@ export default function MasterPage({ resourceKey }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeFilters, setActiveFilters] = useState({});
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [relatedPoliciesModal, setRelatedPoliciesModal] = useState({
@@ -123,24 +127,44 @@ export default function MasterPage({ resourceKey }) {
     setSortConfig({ key, direction });
   };
 
-  const sortedRecords = useMemo(() => {
-    if (!sortConfig.key) return records;
-
-    return [...records].sort((a, b) => {
-      const aVal = a[sortConfig.key];
-      const bVal = b[sortConfig.key];
-
-      if (aVal === bVal) return 0;
-
-      const result = aVal < bVal ? -1 : 1;
-      return sortConfig.direction === "asc" ? result : -result;
-    });
-  }, [records, sortConfig]);
-
   const dependencies = useMemo(
     () =>
       [...new Set(config.fields.filter((field) => field.optionsFrom).map((field) => field.optionsFrom))],
     [config.fields]
+  );
+
+  const filterableColumns = useMemo(
+    () =>
+      config.tableColumns.filter(
+        (column) => column.type !== "boolean" && !["notes", "description"].includes(column.key)
+      ),
+    [config.tableColumns]
+  );
+
+  const filterConfigs = useMemo(
+    () =>
+      filterableColumns.map((column) => ({
+        key: column.key,
+        label: column.label,
+        options: buildFilterOptions(records, column.key)
+      })),
+    [filterableColumns, records]
+  );
+
+  const searchKeys = useMemo(() => config.tableColumns.map((column) => column.key), [config.tableColumns]);
+
+  useEffect(() => {
+    setActiveFilters(Object.fromEntries(filterConfigs.map((filter) => [filter.key, []])));
+  }, [filterConfigs]);
+
+  const filteredRecords = useMemo(
+    () => filterRecords(records, { searchTerm, searchKeys, activeFilters }),
+    [records, searchTerm, searchKeys, activeFilters]
+  );
+
+  const sortedRecords = useMemo(
+    () => sortRecords(filteredRecords, sortConfig),
+    [filteredRecords, sortConfig]
   );
 
   useEffect(() => {
@@ -169,7 +193,7 @@ export default function MasterPage({ resourceKey }) {
           })
         );
 
-        setRecords(recordJson.data);
+        setRecords(recordJson.data || []);
         setOptionsMap(Object.fromEntries(optionEntries));
       } catch (loadError) {
         setError(loadError.message);
@@ -262,7 +286,7 @@ export default function MasterPage({ resourceKey }) {
       if (!refresh.ok) {
         throw new Error(refreshJson.message || "Refresh failed.");
       }
-      setRecords(refreshJson.data);
+      setRecords(refreshJson.data || []);
     } catch (saveError) {
       setError(saveError.message);
     } finally {
@@ -354,7 +378,7 @@ export default function MasterPage({ resourceKey }) {
           <div className="master-card__header">
             <span></span>
             <div className="master-card__actions">
-              <span>{records.length} records</span>
+              <span>{sortedRecords.length} records</span>
               <button type="button" className="primary-button" onClick={handleAdd}>
                 + Add
               </button>
@@ -364,92 +388,140 @@ export default function MasterPage({ resourceKey }) {
           {loading ? (
             <div className="table-state">Loading records...</div>
           ) : (
-            <div className="table-wrap">
-              <table className="master-table">
-                <thead>
-                  <tr>
-                    <th>Sl.No.</th>
-                    {config.tableColumns.map((column) => (
-                      <th
-                        key={column.key}
-                        onClick={() => handleSort(column.key)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        {column.label}
-                        {sortConfig.key === column.key && (
-                          <span>{sortConfig.direction === "asc" ? " ▲" : " ▼"}</span>
-                        )}
-                      </th>
-                    ))}
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedRecords.length === 0 ? (
-                    <tr>
-                      <td colSpan={config.tableColumns.length + 2} className="table-state">
-                        No records yet.
-                      </td>
-                    </tr>
-                  ) : (
-                    sortedRecords.map((record, index) => (
-                      <tr key={record.id}>
-                        <td>{index + 1}</td>
-                        {config.tableColumns.map((column) => {
-                          const isName = column.key.toLowerCase().includes("name") || 
-                                       column.key.toLowerCase().includes("customer") || 
-                                       column.key.toLowerCase().includes("company") ||
-                                       column.key.toLowerCase().includes("agent");
-                          
-                          return (
-                            <td key={`${record.id}-${column.key}`} className={isName ? "text-blue" : ""}>
-                              {column.type === "boolean"
-                                ? record[column.key]
-                                  ? "Yes"
-                                  : "No"
-                                : formatCellValue(record[column.key])}
-                            </td>
+            <>
+              <div className="data-toolbar">
+                <div className="data-toolbar__search">
+                  <input
+                    type="search"
+                    placeholder={`Search ${config.title}`}
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                  />
+                </div>
+
+                <div className="data-toolbar__filters">
+                  {filterConfigs.map((filter) => (
+                    <MultiSelectFilter
+                      key={filter.key}
+                      label={filter.label}
+                      options={filter.options}
+                      selectedValues={activeFilters[filter.key] || []}
+                      onChange={(values) =>
+                        setActiveFilters((current) => ({
+                          ...current,
+                          [filter.key]: values
+                        }))
+                      }
+                    />
+                  ))}
+
+                  {filterConfigs.length > 0 ? (
+                    <div className="data-toolbar__clear">
+                      <button
+                        type="button"
+                        className="clear-filters-button"
+                        onClick={() => {
+                          setSearchTerm("");
+                          setActiveFilters(
+                            Object.fromEntries(filterConfigs.map((filter) => [filter.key, []]))
                           );
-                        })}
-                        <td>
-                          <div className="table-actions">
-                            {resourceKey === "customers" ? (
-                              <button
-                                type="button"
-                                className="icon-button icon-button--view"
-                                onClick={() => handleViewRelatedPolicies(record)}
-                                aria-label="View related policies"
-                                title="View related policies"
-                              >
-                                <ViewIcon />
-                              </button>
-                            ) : null}
-                            <button
-                              type="button"
-                              className="icon-button icon-button--edit"
-                              onClick={() => handleEdit(record)}
-                              aria-label="Edit record"
-                              title="Edit"
-                            >
-                              <EditIcon />
-                            </button>
-                            <button
-                              type="button"
-                              className="icon-button icon-button--delete"
-                              onClick={() => handleDelete(record)}
-                              aria-label="Delete record"
-                              title="Delete"
-                            >
-                              <DeleteIcon />
-                            </button>
-                          </div>
+                        }}
+                      >
+                        Clear Filters
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="table-wrap">
+                <table className="master-table">
+                  <thead>
+                    <tr>
+                      <th>Sl.No.</th>
+                      {config.tableColumns.map((column) => (
+                        <th
+                          key={column.key}
+                          onClick={() => handleSort(column.key)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {column.label}
+                          {sortConfig.key === column.key && (
+                            <span>{sortConfig.direction === "asc" ? " ^" : " v"}</span>
+                          )}
+                        </th>
+                      ))}
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedRecords.length === 0 ? (
+                      <tr>
+                        <td colSpan={config.tableColumns.length + 2} className="table-state">
+                          No records yet.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    ) : (
+                      sortedRecords.map((record, index) => (
+                        <tr key={record.id}>
+                          <td>{index + 1}</td>
+                          {config.tableColumns.map((column) => {
+                            const isName =
+                              column.key.toLowerCase().includes("name") ||
+                              column.key.toLowerCase().includes("customer") ||
+                              column.key.toLowerCase().includes("company") ||
+                              column.key.toLowerCase().includes("agent");
+
+                            return (
+                              <td key={`${record.id}-${column.key}`} className={isName ? "text-blue" : ""}>
+                                {column.type === "boolean"
+                                  ? record[column.key]
+                                    ? "Yes"
+                                    : "No"
+                                  : formatCellValue(record[column.key])}
+                              </td>
+                            );
+                          })}
+                          <td>
+                            <div className="table-actions">
+                              {resourceKey === "customers" ? (
+                                <button
+                                  type="button"
+                                  className="icon-button icon-button--view"
+                                  onClick={() => handleViewRelatedPolicies(record)}
+                                  aria-label="View related policies"
+                                  title="View related policies"
+                                >
+                                  <ViewIcon />
+                                </button>
+                              ) : null}
+                              <button
+                                type="button"
+                                className="icon-button icon-button--edit"
+                                onClick={() => handleEdit(record)}
+                                aria-label="Edit record"
+                                title="Edit"
+                              >
+                                <EditIcon />
+                              </button>
+                              <button
+                                type="button"
+                                className="icon-button icon-button--delete"
+                                onClick={() => handleDelete(record)}
+                                aria-label="Delete record"
+                                title="Delete"
+                              >
+                                <DeleteIcon />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
 
           {message ? <p className="feedback feedback--success">{message}</p> : null}

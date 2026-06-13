@@ -644,7 +644,7 @@ button {
   height: 8px;
   border-right: 1.8px solid #6d7dff;
   border-bottom: 1.8px solid #6d7dff;
-  transform: rotate(225deg);
+  transform: rotate(45deg);
   flex: 0 0 auto;
 }
 

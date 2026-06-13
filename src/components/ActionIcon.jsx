@@ -22,10 +22,9 @@ function IconSvg({ name }) {
     ),
     payment: (
       <>
-        <path d="M4 7.5h16a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 15V9A1.5 1.5 0 0 1 4 7.5Z" />
-        <path d="M2.5 10.5h19" />
-        <circle cx="16.5" cy="13.5" r="1.5" />
-        <path d="M6.5 14h4" />
+        <path d="M7 6h9" />
+        <path d="M7 10h9" />
+        <path d="M7 6c4 0 6 1.7 6 4s-2 4-6 4h2l6 4" />
       </>
     ),
     upload: (
