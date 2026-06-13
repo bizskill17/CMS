@@ -37,8 +37,7 @@ function IconSvg({ name }) {
     ),
     renew: (
       <>
-        <path d="M6 8a7 7 0 1 1 1.8 8.9" />
-        <path d="M6 4v5h5" />
+        <path d="M5.5 12.5 9.5 16.5 18.5 7.5" />
       </>
     ),
     filter: (

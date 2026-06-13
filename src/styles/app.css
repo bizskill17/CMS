@@ -1082,6 +1082,10 @@ button {
   vertical-align: top;
 }
 
+.master-table td.table-cell--follow-up {
+  background: #8fe9ff;
+}
+
 .table-state {
   color: var(--text-soft);
   font-size: 14px;

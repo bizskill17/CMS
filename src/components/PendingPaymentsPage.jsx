@@ -58,12 +58,12 @@ const columns = [
   { key: "payment_received_amount", label: "Received" },
   { key: "payment_pending_amount", label: "Pending" },
   { key: "client_payment_status", label: "Client Payment Status" },
-  { key: "follow_up_at", label: "Follow Up Date" },
-  { key: "follow_up_by_name", label: "Follow Up By" },
-  { key: "follow_up_mode", label: "Follow Up Mode" },
-  { key: "next_follow_up_at", label: "Next Follow Up Date" },
-  { key: "follow_up_status", label: "Follow Up Status" },
-  { key: "follow_up_remarks", label: "Follow Up Remarks" }
+  { key: "follow_up_at", label: "Follow Up Date", className: "table-cell--follow-up" },
+  { key: "follow_up_by_name", label: "Follow Up By", className: "table-cell--follow-up" },
+  { key: "follow_up_mode", label: "Follow Up Mode", className: "table-cell--follow-up" },
+  { key: "next_follow_up_at", label: "Next Follow Up Date", className: "table-cell--follow-up" },
+  { key: "follow_up_status", label: "Follow Up Status", className: "table-cell--follow-up" },
+  { key: "follow_up_remarks", label: "Follow Up Remarks", className: "table-cell--follow-up" }
 ];
 
 export default function PendingPaymentsPage() {

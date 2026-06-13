@@ -195,7 +195,10 @@ export default function ResponsiveDataView({
                   <tr key={record[rowKey] ?? index}>
                     <td>{index + 1}</td>
                     {columns.map((col) => (
-                      <td key={col.key} className={col.highlight ? "text-blue" : undefined}>
+                      <td
+                        key={col.key}
+                        className={[col.highlight ? "text-blue" : "", col.className || ""].filter(Boolean).join(" ")}
+                      >
                         {formatCellValue(getRecordValue(record, col.key))}
                       </td>
                     ))}
