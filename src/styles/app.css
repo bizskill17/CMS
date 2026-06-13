@@ -39,6 +39,7 @@ button {
 .app-shell {
   display: flex;
   min-height: 100vh;
+  position: relative;
 }
 
 .sidebar {
@@ -51,6 +52,7 @@ button {
   overflow: hidden;
   transition: width 0.25s ease, flex-basis 0.25s ease, opacity 0.2s ease,
     border-color 0.2s ease;
+  z-index: 30;
 }
 
 .sidebar--collapsed {
@@ -58,6 +60,15 @@ button {
   flex-basis: 0;
   border-right-color: transparent;
   opacity: 0;
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  border: none;
+  background: rgba(18, 28, 43, 0.36);
+  backdrop-filter: blur(3px);
+  z-index: 20;
 }
 
 .brand-panel {
@@ -262,6 +273,12 @@ button {
   align-items: center;
   gap: 18px;
   margin-bottom: 18px;
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  padding: 8px 0 12px;
+  background: linear-gradient(180deg, rgba(221, 230, 240, 0.98) 0%, rgba(221, 230, 240, 0.9) 75%, rgba(221, 230, 240, 0) 100%);
+  backdrop-filter: blur(8px);
 }
 
 .content-topbar__title {
@@ -269,6 +286,17 @@ button {
   font-size: 34px;
   font-weight: 700;
   color: var(--text-dark);
+}
+
+.content-topbar__copy {
+  min-width: 0;
+}
+
+.content-topbar__subtitle {
+  margin: 4px 0 0;
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .sidebar-toggle {
@@ -1224,25 +1252,72 @@ button {
 
 @media (max-width: 900px) {
   .app-shell {
-    flex-direction: column;
+    display: block;
   }
 
   .sidebar {
-    width: 100%;
+    width: min(340px, calc(100vw - 28px));
+    max-width: calc(100vw - 28px);
+    height: calc(100vh - 24px);
+    position: fixed;
+    top: 12px;
+    left: 12px;
     flex-basis: auto;
+    border-right: none;
+    border: 1px solid rgba(22, 33, 45, 0.12);
+    border-radius: 26px;
+    box-shadow: 0 22px 50px rgba(18, 28, 43, 0.22);
+    transform: translateX(0);
+    opacity: 1;
   }
 
   .sidebar--collapsed {
-    width: 0;
-    flex-basis: 0;
-  }
-
-  .content-area {
-    padding: 24px;
+    width: min(340px, calc(100vw - 28px));
+    flex-basis: auto;
+    opacity: 0;
+    transform: translateX(-24px);
+    pointer-events: none;
   }
 
   .content-topbar__title {
     font-size: 28px;
+  }
+
+  .brand-panel {
+    min-height: 96px;
+    padding: 20px 22px;
+    border-bottom: 1px solid rgba(22, 33, 45, 0.14);
+  }
+
+  .menu {
+    padding: 12px 12px 18px;
+  }
+
+  .menu-card {
+    border-width: 1px;
+    border-color: rgba(22, 33, 45, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 10px 22px rgba(45, 87, 215, 0.14);
+  }
+
+  .submenu {
+    margin: 8px 4px 0;
+    border-width: 1px;
+    border-color: rgba(22, 33, 45, 0.14);
+    border-radius: 16px;
+  }
+
+  .submenu-item {
+    padding: 11px 12px;
+  }
+
+  .sidebar-footer {
+    padding: 16px 16px 18px;
+    border-top: 1px solid rgba(22, 33, 45, 0.12);
+  }
+
+  .content-area {
+    padding: 18px;
   }
 
   .master-grid {
@@ -1262,6 +1337,19 @@ button {
     justify-content: space-between;
   }
 
+  .page-shell,
+  .dashboard-page,
+  .issue-policy-page,
+  .master-page {
+    max-width: 100%;
+  }
+
+  .master-card {
+    padding: 18px;
+    border-radius: 20px;
+    box-shadow: 0 14px 28px rgba(38, 60, 89, 0.09);
+  }
+
   .data-toolbar {
     grid-template-columns: 1fr;
   }
@@ -1277,6 +1365,15 @@ button {
 }
 
 @media (max-width: 640px) {
+  .sidebar {
+    width: calc(100vw - 20px);
+    max-width: calc(100vw - 20px);
+    left: 10px;
+    top: 10px;
+    height: calc(100vh - 20px);
+    border-radius: 22px;
+  }
+
   .master-card__header {
     align-items: flex-start;
     flex-direction: column;
@@ -1305,7 +1402,22 @@ button {
   }
 
   .content-area {
-    padding: 16px;
+    padding: 14px;
+  }
+
+  .content-topbar {
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 6px 0 10px;
+  }
+
+  .content-topbar__title {
+    font-size: 26px;
+    line-height: 1.15;
+  }
+
+  .content-topbar__subtitle {
+    font-size: 12px;
   }
 
   .data-toolbar__filters {
@@ -1319,10 +1431,21 @@ button {
 
   .view-toggle {
     width: auto;
+    align-self: flex-start;
   }
 
   .record-card__body {
     grid-template-columns: 1fr;
+  }
+
+  .record-card {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .record-card__field {
+    padding: 11px 12px;
+    border-radius: 12px;
   }
 
   .dashboard-tile {
@@ -1345,7 +1468,8 @@ button {
 
   .master-modal__panel {
     max-height: calc(100vh - 24px);
-    padding: 18px;
+    padding: 16px;
+    border-radius: 20px;
   }
 
   .master-modal__body {

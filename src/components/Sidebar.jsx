@@ -37,7 +37,7 @@ function Icon({ name }) {
   );
 }
 
-export default function Sidebar({ isOpen }) {
+export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }) {
   const location = useLocation();
   const [counts, setCounts] = useState({});
 
@@ -90,7 +90,9 @@ export default function Sidebar({ isOpen }) {
   }, [defaultOpenKey]);
 
   return (
-    <aside className={`sidebar ${isOpen ? "" : "sidebar--collapsed"}`}>
+    <>
+      {isMobile && isOpen ? <button type="button" className="sidebar-backdrop" onClick={onClose} aria-label="Close menu" /> : null}
+      <aside className={`sidebar ${isOpen ? "" : "sidebar--collapsed"} ${isMobile ? "sidebar--mobile" : ""}`}>
       <div className="brand-panel">
         <div className="brand-icon">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -113,7 +115,12 @@ export default function Sidebar({ isOpen }) {
                 className={({ isActive }) =>
                   `menu-card menu-card--link ${isActive ? "is-active" : ""}`
                 }
-                onClick={() => setOpenGroup(null)}
+                onClick={() => {
+                  setOpenGroup(null);
+                  if (isMobile) {
+                    onClose();
+                  }
+                }}
               >
                 <span className="menu-card__left">
                   <span className="menu-icon">
@@ -155,6 +162,11 @@ export default function Sidebar({ isOpen }) {
                     className={() =>
                       `submenu-item ${matchesMenuPath(location.pathname, item) ? "is-current" : ""}`
                     }
+                    onClick={() => {
+                      if (isMobile) {
+                        onClose();
+                      }
+                    }}
                   >
                     <span>{item.label}</span>
                     {item.countKey && counts[item.countKey] !== undefined && (
@@ -181,6 +193,7 @@ export default function Sidebar({ isOpen }) {
           <span>Logout</span>
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
