@@ -421,42 +421,6 @@ button {
   min-width: 0;
 }
 
-.dashboard-table__icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-}
-
-.dashboard-table__icon svg {
-  width: 34px;
-  height: 34px;
-  fill: currentColor;
-}
-
-.dashboard-table__icon--renewalSoon {
-  background: #fff1dd;
-  color: #f28a06;
-}
-
-.dashboard-table__icon--documents {
-  background: #e5efff;
-  color: #225ee9;
-}
-
-.dashboard-table__icon--renewalOverdue {
-  background: #ffe5e8;
-  color: #d91b2f;
-}
-
-.dashboard-table__icon--payments {
-  background: #def7e5;
-  color: #1f9d45;
-}
-
 .dashboard-table__count-cell {
   text-align: center;
 }
@@ -1221,11 +1185,6 @@ button {
 
   .dashboard-table__item {
     gap: 14px;
-  }
-
-  .dashboard-table__icon {
-    width: 52px;
-    height: 52px;
   }
 
   .dashboard-table__count {
