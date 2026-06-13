@@ -508,6 +508,8 @@ button {
   justify-content: space-between;
   gap: 16px;
   width: 100%;
+  color: #2d57d7;
+  font-weight: 600;
 }
 
 .data-toolbar {
@@ -1471,10 +1473,11 @@ button {
 
   .master-list-toolbar {
     gap: 10px;
+    flex-wrap: nowrap;
   }
 
   .master-list-toolbar__actions {
-    width: 100%;
+    width: auto;
     justify-content: flex-end;
   }
 

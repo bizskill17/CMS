@@ -299,17 +299,6 @@ export default function PendingPaymentsPage() {
               />
             </>
           )}
-          cardTitle={(record) => record.policy_number || "Policy"}
-          cardSubtitle={(record) => `${record.customer_name || "-"} • ${record.company_name || "-"}`}
-          cardFields={[
-            { key: "policy_type", label: "Policy Type" },
-            { key: "net_premium", label: "Net Premium" },
-            { key: "payment_received_amount", label: "Received" },
-            { key: "payment_pending_amount", label: "Pending" },
-            { key: "client_payment_status", label: "Status", highlight: true },
-            { key: "follow_up_status", label: "Follow Up Status", highlight: true },
-            { key: "next_follow_up_at", label: "Next Follow Up Date" }
-          ]}
         />
 
         {message ? <p className="feedback feedback--success">{message}</p> : null}

@@ -101,9 +101,6 @@ export default function ReportsTablePage({ reportKey }) {
           emptyMessage={config.emptyMessage}
           searchKeys={config.searchKeys}
           filterConfigs={filterConfigs}
-          cardTitle={(record) => record.policy_number || record.customer_name || config.title}
-          cardSubtitle={(record) => record.customer_name || record.company_name || ""}
-          cardFields={config.cardFields || config.columns.slice(0, 5)}
         />
       </section>
     </div>

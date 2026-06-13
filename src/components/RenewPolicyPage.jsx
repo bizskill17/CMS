@@ -379,17 +379,6 @@ export default function RenewPolicyPage() {
               />
             </>
           )}
-          cardTitle={(policy) => policy.policy_number || "Policy"}
-          cardSubtitle={(policy) => `${policy.customer_name || "-"} • ${policy.company_name || "-"}`}
-          cardFields={[
-            { key: "risk_end_date", label: "Expiry Date" },
-            { key: "customer_mobile", label: "Mobile" },
-            { key: "customer_group_name", label: "Group", highlight: true },
-            { key: "product_name", label: "Product", highlight: true },
-            { key: "registration_no", label: "Registration No." },
-            { key: "follow_up_status", label: "Follow Up Status", highlight: true },
-            { key: "next_follow_up_at", label: "Next Follow Up Date" }
-          ]}
         />
 
         {message ? <p className="feedback feedback--success">{message}</p> : null}

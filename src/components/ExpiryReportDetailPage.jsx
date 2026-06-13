@@ -183,15 +183,6 @@ export default function ExpiryReportDetailPage() {
             "policy_type"
           ]}
           filterConfigs={filterConfigs}
-          cardTitle={(record) => record.policy_number || "Policy"}
-          cardSubtitle={(record) => `${record.customer_name || "-"} - ${record.company_name || "-"}`}
-          cardFields={[
-            { key: "risk_end_date", label: "Expiry Date" },
-            { key: "customer_group_name", label: "Customer Group", highlight: true },
-            { key: "product_name", label: "Product Name", highlight: true },
-            { key: "net_premium", label: "Net Premium" },
-            { key: "policy_status", label: "Status" }
-          ]}
         />
       </section>
     </div>

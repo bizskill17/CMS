@@ -202,15 +202,6 @@ export default function AttachDocumentsPage() {
               onClick={() => handleOpenUpload(record)}
             />
           )}
-          cardTitle={(record) => record.policy_number || "Policy"}
-          cardSubtitle={(record) => `${record.customer_name || "-"} • ${record.company_name || "-"}`}
-          cardFields={[
-            { key: "customer_group_name", label: "Group", highlight: true },
-            { key: "product_name", label: "Product", highlight: true },
-            { key: "policy_type", label: "Policy Type" },
-            { key: "issue_date", label: "Issue Date" },
-            { key: "risk_end_date", label: "Risk Expiry Date" }
-          ]}
         />
 
         {message ? <p className="feedback feedback--success">{message}</p> : null}

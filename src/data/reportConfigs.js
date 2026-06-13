@@ -28,13 +28,6 @@ export const reportConfigs = {
       { key: "gross_premium", label: "Gross Premium" },
       { key: "net_premium", label: "Net Premium" },
       { key: "issue_date", label: "Issue Date" }
-    ],
-    cardFields: [
-      { key: "customer_group_name", label: "Customer Group", highlight: true },
-      { key: "policy_type", label: "Policy Type" },
-      { key: "business_type", label: "Business Type" },
-      { key: "net_premium", label: "Net Premium" },
-      { key: "issue_date", label: "Issue Date" }
     ]
   },
   "policies-this-week": {
@@ -64,13 +57,6 @@ export const reportConfigs = {
       { key: "policy_type", label: "Policy Type" },
       { key: "business_type", label: "Business Type" },
       { key: "gross_premium", label: "Gross Premium" },
-      { key: "net_premium", label: "Net Premium" },
-      { key: "issue_date", label: "Issue Date" }
-    ],
-    cardFields: [
-      { key: "customer_group_name", label: "Customer Group", highlight: true },
-      { key: "policy_type", label: "Policy Type" },
-      { key: "business_type", label: "Business Type" },
       { key: "net_premium", label: "Net Premium" },
       { key: "issue_date", label: "Issue Date" }
     ]
@@ -104,13 +90,6 @@ export const reportConfigs = {
       { key: "gross_premium", label: "Gross Premium" },
       { key: "net_premium", label: "Net Premium" },
       { key: "issue_date", label: "Issue Date" }
-    ],
-    cardFields: [
-      { key: "customer_group_name", label: "Customer Group", highlight: true },
-      { key: "policy_type", label: "Policy Type" },
-      { key: "business_type", label: "Business Type" },
-      { key: "net_premium", label: "Net Premium" },
-      { key: "issue_date", label: "Issue Date" }
     ]
   },
   "payments-received": {
@@ -141,13 +120,6 @@ export const reportConfigs = {
       { key: "amount", label: "Amount" },
       { key: "reference_number", label: "Reference No." },
       { key: "remarks", label: "Remarks" }
-    ],
-    cardFields: [
-      { key: "company_name", label: "Company", highlight: true },
-      { key: "payment_mode", label: "Payment Mode" },
-      { key: "payment_status", label: "Payment Status" },
-      { key: "amount", label: "Amount" },
-      { key: "payment_date", label: "Payment Date" }
     ]
   }
 };

@@ -110,15 +110,6 @@ export default function AllPoliciesPage() {
             "registration_no"
           ]}
           filterConfigs={filterConfigs}
-          cardTitle={(record) => record.policy_number || "Policy"}
-          cardSubtitle={(record) => `${record.customer_name || "-"} • ${record.company_name || "-"}`}
-          cardFields={[
-            { key: "policy_type", label: "Policy Type" },
-            { key: "business_type", label: "Business Type" },
-            { key: "net_premium", label: "Net Premium" },
-            { key: "issue_date", label: "Issue Date" },
-            { key: "policy_status", label: "Status", highlight: true }
-          ]}
         />
       </section>
     </div>

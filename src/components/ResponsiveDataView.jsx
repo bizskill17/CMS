@@ -6,18 +6,6 @@ import { downloadCsv } from "../utils/export";
 import { filterRecords, getRecordValue, sortRecords } from "../utils/dataView";
 import { formatCellValue } from "../utils/formatting";
 
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 640);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 640);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  return isMobile;
-}
-
 export default function ResponsiveDataView({
   title,
   records,
@@ -29,28 +17,17 @@ export default function ResponsiveDataView({
   searchKeys,
   filterConfigs = [],
   renderActions,
-  cardTitle,
-  cardSubtitle,
-  cardFields,
   rowKey = "id",
   initialSort = null,
   customFilterContent = null,
   onClearCustomFilters = null
 }) {
-  const isMobile = useIsMobile();
-  const [preferredView, setPreferredView] = useState("auto");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState(initialSort);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState(() =>
     Object.fromEntries(filterConfigs.map((filter) => [filter.key, []]))
   );
-
-  useEffect(() => {
-    if (isMobile) {
-      setPreferredView("auto");
-    }
-  }, [isMobile]);
 
   useEffect(() => {
     setActiveFilters(Object.fromEntries(filterConfigs.map((filter) => [filter.key, []])));
@@ -66,8 +43,6 @@ export default function ResponsiveDataView({
     [filteredRecords, sortConfig]
   );
 
-  const appliedView = preferredView === "auto" ? (isMobile ? "card" : "table") : preferredView;
-
   const handleSort = (key) => {
     setSortConfig((current) => {
       if (current?.key === key && current.direction === "asc") {
@@ -77,8 +52,6 @@ export default function ResponsiveDataView({
       return { key, direction: "asc" };
     });
   };
-
-  const visibleCardFields = cardFields || columns.slice(0, 5);
 
   return (
     <>
@@ -108,22 +81,6 @@ export default function ResponsiveDataView({
               })
             }
           />
-          <div className="view-toggle" aria-label="View switcher">
-            <ActionIconDisplay
-              icon="cards"
-              label="Cards"
-              active={appliedView === "card"}
-              onClick={() => setPreferredView("card")}
-              variant="toolbar"
-            />
-            <ActionIconDisplay
-              icon="table"
-              label="Table"
-              active={appliedView === "table"}
-              onClick={() => setPreferredView("table")}
-              variant="toolbar"
-            />
-          </div>
         </div>
       </div>
 
@@ -179,7 +136,7 @@ export default function ResponsiveDataView({
         </div>
       ) : error ? (
         <p className="feedback feedback--error">{error}</p>
-      ) : appliedView === "table" ? (
+      ) : (
         <div className="table-wrap">
           <table className="master-table">
             <thead>
@@ -207,14 +164,27 @@ export default function ResponsiveDataView({
                 sortedRecords.map((record, index) => (
                   <tr key={record[rowKey] ?? index}>
                     <td>{index + 1}</td>
-                    {columns.map((col) => (
-                      <td
-                        key={col.key}
-                        className={[col.highlight ? "text-blue" : "", col.className || ""].filter(Boolean).join(" ")}
-                      >
-                        {formatCellValue(getRecordValue(record, col.key))}
-                      </td>
-                    ))}
+                    {columns.map((col) => {
+                      const isName =
+                        col.key.toLowerCase().includes("name") ||
+                        col.key.toLowerCase().includes("customer") ||
+                        col.key.toLowerCase().includes("company") ||
+                        col.key.toLowerCase().includes("agent");
+
+                      return (
+                        <td
+                          key={col.key}
+                          className={[
+                            col.highlight || isName ? "text-blue" : "",
+                            col.className || ""
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                        >
+                          {formatCellValue(getRecordValue(record, col.key))}
+                        </td>
+                      );
+                    })}
                     {renderActions ? (
                       <td>
                         <div className="table-actions">{renderActions(record)}</div>
@@ -225,35 +195,6 @@ export default function ResponsiveDataView({
               )}
             </tbody>
           </table>
-        </div>
-      ) : sortedRecords.length === 0 ? (
-        <div className="table-state">{emptyMessage}</div>
-      ) : (
-        <div className="record-cards">
-          {sortedRecords.map((record, index) => (
-            <article className="record-card" key={record[rowKey] ?? index}>
-              <div className="record-card__header">
-                <div>
-                  <p className="record-card__eyebrow">#{index + 1}</p>
-                  <h3>{cardTitle ? cardTitle(record) : formatCellValue(getRecordValue(record, columns[0].key))}</h3>
-                  {cardSubtitle ? <p className="record-card__subtitle">{cardSubtitle(record)}</p> : null}
-                </div>
-              </div>
-
-              <div className="record-card__body">
-                {visibleCardFields.map((field) => (
-                  <div className="record-card__field" key={field.key}>
-                    <span>{field.label}</span>
-                    <strong className={field.highlight ? "text-blue" : undefined}>
-                      {formatCellValue(getRecordValue(record, field.key))}
-                    </strong>
-                  </div>
-                ))}
-              </div>
-
-              {renderActions ? <div className="record-card__actions">{renderActions(record)}</div> : null}
-            </article>
-          ))}
         </div>
       )}
     </>

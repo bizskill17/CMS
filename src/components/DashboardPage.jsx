@@ -125,7 +125,7 @@ export default function DashboardPage() {
               >
                 <span className="dashboard-tile__content">
                   <span className="dashboard-table__item">
-                    <span>{item.label}</span>
+                    <span className="text-blue">{item.label}</span>
                   </span>
                   <span className={`dashboard-table__count dashboard-table__count--${item.tone}`}>
                     {summary[item.key]}
