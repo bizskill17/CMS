@@ -105,7 +105,10 @@ async function readApiJson(response) {
 
 export default function ExpiryReportDetailPage() {
   const { reportType, reportValue } = useParams();
-  const config = getExpiryConfig(reportType, reportValue);
+  const config = useMemo(
+    () => getExpiryConfig(reportType, reportValue),
+    [reportType, reportValue]
+  );
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
