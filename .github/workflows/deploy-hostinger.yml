@@ -57,39 +57,14 @@ jobs:
             exit 1
           fi
 
-          port_part=""
-          if [ -n "${HOSTINGER_PORT:-}" ]; then
-            port_part=":$HOSTINGER_PORT"
+          protocol="${HOSTINGER_PROTOCOL:-ftps}"
+          if [ "$protocol" != "ftps" ]; then
+            echo "For this deployment workflow, use HOSTINGER_FTP_PROTOCOL=ftps." >&2
+            exit 1
           fi
 
-          common_cmds="set cmd:fail-exit yes; set net:timeout 30; set net:max-retries 2; set net:reconnect-interval-base 5; set net:reconnect-interval-max 10; set xfer:clobber on; set ftp:passive-mode yes; set ssl:verify-certificate no;"
+          port="${HOSTINGER_PORT:-21}"
+          target_url="ftp://$HOSTINGER_SERVER:$port"
 
-          attempt_deploy() {
-            protocol="$1"
-            target_scheme="$protocol"
-            ssl_cmd="set ftp:ssl-allow no;"
-
-            if [ "$protocol" = "ftps" ]; then
-              target_scheme="ftp"
-              ssl_cmd="set ftp:ssl-allow yes; set ftp:ssl-force yes;"
-            fi
-
-            target_url="${target_scheme}://$HOSTINGER_SERVER${port_part}"
-
-            echo "Trying deploy with protocol: $protocol via $target_url"
-
-            if [ "$protocol" = "ftps" ]; then
-              timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" -e "$common_cmds $ssl_cmd mirror -R ./deploy/ \"$HOSTINGER_TARGET_DIR\" --verbose; bye"
-            elif [ "$protocol" = "ftp" ]; then
-              timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" -e "$common_cmds $ssl_cmd mirror -R ./deploy/ \"$HOSTINGER_TARGET_DIR\" --verbose; bye"
-            else
-              timeout 8m lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" -e "$common_cmds set sftp:auto-confirm yes; mirror -R ./deploy/ \"$HOSTINGER_TARGET_DIR\" --verbose; bye"
-            fi
-          }
-
-          if [ -n "${HOSTINGER_PROTOCOL:-}" ]; then
-            attempt_deploy "$HOSTINGER_PROTOCOL"
-            exit 0
-          fi
-
-          attempt_deploy "ftps" || attempt_deploy "ftp" || attempt_deploy "sftp"
+          echo "Trying deploy with protocol: ftps via $target_url"
+          timeout 90s lftp -d -u "$HOSTINGER_USERNAME","$HOSTINGER_PASSWORD" "$target_url" -e "set cmd:fail-exit yes; set net:timeout 12; set net:max-retries 1; set net:reconnect-interval-base 3; set net:reconnect-interval-max 3; set xfer:clobber on; set ftp:passive-mode yes; set ftp:ssl-allow yes; set ftp:ssl-force yes; set ssl:verify-certificate no; mirror -R ./deploy/ \"$HOSTINGER_TARGET_DIR\" --verbose; bye"
