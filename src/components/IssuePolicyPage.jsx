@@ -141,14 +141,16 @@ export default function IssuePolicyPage() {
     return lookupData.products.filter((product) => {
       const matchesCompany =
         !formState.company_id || String(product.company_id || "") === formState.company_id;
+      const matchesPolicyType =
+        !formState.policy_type || String(product.category_id || "") === formState.policy_type;
       const matchesQuery =
         !query ||
         product.product_name.toLowerCase().includes(query) ||
         String(product.company_name || "").toLowerCase().includes(query);
 
-      return matchesCompany && matchesQuery;
+      return matchesCompany && matchesPolicyType && matchesQuery;
     });
-  }, [productQuery, formState.company_id, lookupData.products]);
+  }, [productQuery, formState.company_id, formState.policy_type, lookupData.products]);
 
   const selectedCustomer = useMemo(
     () => lookupData.customers.find((customer) => String(customer.id) === formState.customer_id),
@@ -184,6 +186,11 @@ export default function IssuePolicyPage() {
       }
 
       if (name === "company_id" && current.company_id !== value) {
+        next.product_id = "";
+        setProductQuery("");
+      }
+
+      if (name === "policy_type" && current.policy_type !== value) {
         next.product_id = "";
         setProductQuery("");
       }

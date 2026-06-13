@@ -33,7 +33,9 @@ export default function ResponsiveDataView({
   cardSubtitle,
   cardFields,
   rowKey = "id",
-  initialSort = null
+  initialSort = null,
+  customFilterContent = null,
+  onClearCustomFilters = null
 }) {
   const isMobile = useIsMobile();
   const [preferredView, setPreferredView] = useState("auto");
@@ -43,6 +45,12 @@ export default function ResponsiveDataView({
   const [activeFilters, setActiveFilters] = useState(() =>
     Object.fromEntries(filterConfigs.map((filter) => [filter.key, []]))
   );
+
+  useEffect(() => {
+    if (isMobile) {
+      setPreferredView("auto");
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     setActiveFilters(Object.fromEntries(filterConfigs.map((filter) => [filter.key, []])));
@@ -145,7 +153,8 @@ export default function ResponsiveDataView({
                 }
               />
             ))}
-            {filterConfigs.length > 0 ? (
+            {customFilterContent}
+            {filterConfigs.length > 0 || customFilterContent ? (
               <div className="data-toolbar__clear">
                 <button
                   type="button"
@@ -153,6 +162,7 @@ export default function ResponsiveDataView({
                   onClick={() => {
                     setSearchTerm("");
                     setActiveFilters(Object.fromEntries(filterConfigs.map((filter) => [filter.key, []])));
+                    onClearCustomFilters?.();
                   }}
                 >
                   Clear Filters

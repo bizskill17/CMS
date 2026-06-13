@@ -42,15 +42,39 @@ export default function Sidebar({ isOpen }) {
   const [counts, setCounts] = useState({});
 
   useEffect(() => {
-    fetch(`${API_BASE}/menu/counts`)
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.status === "ok") {
-          setCounts(json.data || {});
-        }
-      })
-      .catch((err) => console.error("Failed to fetch menu counts", err));
-  }, []);
+    let isActive = true;
+
+    const loadCounts = () => {
+      fetch(`${API_BASE}/menu/counts`)
+        .then((res) => res.json())
+        .then((json) => {
+          if (isActive && json.status === "ok") {
+            setCounts(json.data || {});
+          }
+        })
+        .catch((err) => console.error("Failed to fetch menu counts", err));
+    };
+
+    const handleFocus = () => {
+      loadCounts();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadCounts();
+      }
+    };
+
+    loadCounts();
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      isActive = false;
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [location.pathname]);
 
   const defaultOpenKey = useMemo(() => {
     const matched = menuSections.find((section) =>

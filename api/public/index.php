@@ -899,6 +899,18 @@ try {
             }
         }
 
+        if (($payload['payment_mode'] ?? '') === 'Cheque') {
+            foreach (['cheque_number', 'cheque_date'] as $requiredField) {
+                if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
+                    Response::json([
+                        'status' => 'error',
+                        'message' => sprintf('Field "%s" is required when Payment Mode is Cheque.', $requiredField)
+                    ], 422);
+                    exit;
+                }
+            }
+        }
+
         $policyId = (int) $payload['policy_id'];
         $followUpByUserId = (int) $payload['follow_up_by'];
 

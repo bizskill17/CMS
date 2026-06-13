@@ -755,6 +755,14 @@ button {
   align-items: end;
 }
 
+.data-toolbar__date-field {
+  margin: 0;
+}
+
+.data-toolbar__date-field input {
+  width: 100%;
+}
+
 .clear-filters-button {
   width: 100%;
   min-height: 46px;

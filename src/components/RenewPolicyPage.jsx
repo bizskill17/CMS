@@ -118,6 +118,8 @@ export default function RenewPolicyPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [followUpError, setFollowUpError] = useState("");
+  const [expiryDateFrom, setExpiryDateFrom] = useState("");
+  const [expiryDateTo, setExpiryDateTo] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -290,6 +292,25 @@ export default function RenewPolicyPage() {
   };
 
   const records = lookupData.policies || [];
+  const dateFilteredRecords = useMemo(() => {
+    return records.filter((record) => {
+      const expiryDate = String(record.risk_end_date || "").slice(0, 10);
+
+      if (!expiryDate) {
+        return !expiryDateFrom && !expiryDateTo;
+      }
+
+      if (expiryDateFrom && expiryDate < expiryDateFrom) {
+        return false;
+      }
+
+      if (expiryDateTo && expiryDate > expiryDateTo) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [records, expiryDateFrom, expiryDateTo]);
 
   const filterConfigs = useMemo(
     () => [
@@ -306,7 +327,7 @@ export default function RenewPolicyPage() {
       <section className="master-card issue-policy-card">
         <ResponsiveDataView
           title="Renew Policy"
-          records={records}
+          records={dateFilteredRecords}
           columns={columns}
           loading={loading}
           error={error && !isFormOpen ? error : ""}
@@ -323,6 +344,30 @@ export default function RenewPolicyPage() {
             "registration_no"
           ]}
           filterConfigs={filterConfigs}
+          customFilterContent={
+            <>
+              <label className="form-field data-toolbar__date-field">
+                <FormLabel>Expiry Date From</FormLabel>
+                <input
+                  type="date"
+                  value={expiryDateFrom}
+                  onChange={(event) => setExpiryDateFrom(event.target.value)}
+                />
+              </label>
+              <label className="form-field data-toolbar__date-field">
+                <FormLabel>Expiry Date To</FormLabel>
+                <input
+                  type="date"
+                  value={expiryDateTo}
+                  onChange={(event) => setExpiryDateTo(event.target.value)}
+                />
+              </label>
+            </>
+          }
+          onClearCustomFilters={() => {
+            setExpiryDateFrom("");
+            setExpiryDateTo("");
+          }}
           renderActions={(policy) => (
             <>
               <ActionIconButton icon="followup" label="Followup" onClick={() => openFollowUpModal(policy)} />

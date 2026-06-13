@@ -9,6 +9,18 @@ import FormLabel from "./FormLabel";
 import MultiSelectFilter from "./MultiSelectFilter";
 import { ButtonSpinner, Spinner } from "./Spinner";
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 640);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 640);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return isMobile;
+}
+
 async function readApiJson(response) {
   const rawText = await response.text();
   const contentType = response.headers.get("content-type") || "";
@@ -219,6 +231,7 @@ function ViewIcon() {
 
 export default function MasterPage({ resourceKey }) {
   const config = masterConfigs[resourceKey];
+  const isMobile = useIsMobile();
   const [records, setRecords] = useState([]);
   const [optionsMap, setOptionsMap] = useState({});
   const [formState, setFormState] = useState(() => emptyState(config));
@@ -232,6 +245,7 @@ export default function MasterPage({ resourceKey }) {
   const [activeFilters, setActiveFilters] = useState({});
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [preferredView, setPreferredView] = useState("auto");
   const [relatedPoliciesModal, setRelatedPoliciesModal] = useState({
     isOpen: false,
     customer: null,
@@ -296,6 +310,13 @@ export default function MasterPage({ resourceKey }) {
     () => sortRecords(filteredRecords, sortConfig),
     [filteredRecords, sortConfig]
   );
+  const appliedView = preferredView === "auto" ? (isMobile ? "card" : "table") : preferredView;
+
+  useEffect(() => {
+    if (isMobile) {
+      setPreferredView("auto");
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     setMessage("");
@@ -304,6 +325,7 @@ export default function MasterPage({ resourceKey }) {
     setIsFiltersOpen(false);
     setIsFormOpen(false);
     setEditingId(null);
+    setPreferredView("auto");
     setFormState(emptyState(config));
     setIsBulkUploadOpen(false);
     setBulkUploadFile(null);
@@ -784,6 +806,40 @@ export default function MasterPage({ resourceKey }) {
     }
   };
 
+  const renderRowActions = (record) => (
+    <div className="table-actions">
+      {resourceKey === "customers" ? (
+        <button
+          type="button"
+          className="icon-button icon-button--view"
+          onClick={() => handleViewRelatedPolicies(record)}
+          aria-label="View related policies"
+          title="View related policies"
+        >
+          <ViewIcon />
+        </button>
+      ) : null}
+      <button
+        type="button"
+        className="icon-button icon-button--edit"
+        onClick={() => handleEdit(record)}
+        aria-label="Edit record"
+        title="Edit"
+      >
+        <EditIcon />
+      </button>
+      <button
+        type="button"
+        className="icon-button icon-button--delete"
+        onClick={() => handleDelete(record)}
+        aria-label="Delete record"
+        title="Delete"
+      >
+        <DeleteIcon />
+      </button>
+    </div>
+  );
+
   return (
     <div className="master-page">
       <div className="master-grid master-grid--list-only">
@@ -821,6 +877,22 @@ export default function MasterPage({ resourceKey }) {
                   })
                 }
               />
+              <div className="view-toggle" aria-label="View switcher">
+                <ActionIconDisplay
+                  icon="cards"
+                  label="Cards"
+                  active={appliedView === "card"}
+                  onClick={() => setPreferredView("card")}
+                  variant="toolbar"
+                />
+                <ActionIconDisplay
+                  icon="table"
+                  label="Table"
+                  active={appliedView === "table"}
+                  onClick={() => setPreferredView("table")}
+                  variant="toolbar"
+                />
+              </div>
               <button
                 type="button"
                 className="secondary-button secondary-button--template"
@@ -890,93 +962,117 @@ export default function MasterPage({ resourceKey }) {
                 </div>
               ) : null}
 
-              <div className="table-wrap">
-                <table className="master-table">
-                  <thead>
-                    <tr>
-                      <th>Sl.No.</th>
-                      {config.tableColumns.map((column) => (
-                        <th
-                          key={column.key}
-                          onClick={() => handleSort(column.key)}
-                          style={{ cursor: "pointer" }}
-                        >
-                          {column.label}
-                          {sortConfig.key === column.key && (
-                            <span>{sortConfig.direction === "asc" ? " ^" : " v"}</span>
-                          )}
-                        </th>
-                      ))}
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedRecords.length === 0 ? (
+              {appliedView === "table" ? (
+                <div className="table-wrap">
+                  <table className="master-table">
+                    <thead>
                       <tr>
-                        <td colSpan={config.tableColumns.length + 2} className="table-state">
-                          No records yet.
-                        </td>
+                        <th>Sl.No.</th>
+                        {config.tableColumns.map((column) => (
+                          <th
+                            key={column.key}
+                            onClick={() => handleSort(column.key)}
+                            style={{ cursor: "pointer" }}
+                          >
+                            {column.label}
+                            {sortConfig.key === column.key && (
+                              <span>{sortConfig.direction === "asc" ? " ^" : " v"}</span>
+                            )}
+                          </th>
+                        ))}
+                        <th>Action</th>
                       </tr>
-                    ) : (
-                      sortedRecords.map((record, index) => (
-                        <tr key={record.id}>
-                          <td>{index + 1}</td>
-                          {config.tableColumns.map((column) => {
-                            const isName =
-                              column.key.toLowerCase().includes("name") ||
-                              column.key.toLowerCase().includes("customer") ||
-                              column.key.toLowerCase().includes("company") ||
-                              column.key.toLowerCase().includes("agent");
+                    </thead>
+                    <tbody>
+                      {sortedRecords.length === 0 ? (
+                        <tr>
+                          <td colSpan={config.tableColumns.length + 2} className="table-state">
+                            No records yet.
+                          </td>
+                        </tr>
+                      ) : (
+                        sortedRecords.map((record, index) => (
+                          <tr key={record.id}>
+                            <td>{index + 1}</td>
+                            {config.tableColumns.map((column) => {
+                              const isName =
+                                column.key.toLowerCase().includes("name") ||
+                                column.key.toLowerCase().includes("customer") ||
+                                column.key.toLowerCase().includes("company") ||
+                                column.key.toLowerCase().includes("agent");
 
-                            return (
-                              <td key={`${record.id}-${column.key}`} className={isName ? "text-blue" : ""}>
+                              return (
+                                <td key={`${record.id}-${column.key}`} className={isName ? "text-blue" : ""}>
+                                  {column.type === "boolean"
+                                    ? record[column.key]
+                                      ? "Yes"
+                                      : "No"
+                                    : formatCellValue(record[column.key])}
+                                </td>
+                              );
+                            })}
+                            <td>{renderRowActions(record)}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              ) : sortedRecords.length === 0 ? (
+                <div className="table-state">No records yet.</div>
+              ) : (
+                <div className="record-cards">
+                  {sortedRecords.map((record, index) => {
+                    const titleColumn =
+                      config.tableColumns.find((column) => column.key.toLowerCase().includes("name")) ||
+                      config.tableColumns[0];
+                    const subtitleColumn =
+                      config.tableColumns.find(
+                        (column) => column.key !== titleColumn.key && !column.key.toLowerCase().includes("active")
+                      ) || null;
+
+                    return (
+                      <article className="record-card" key={record.id ?? index}>
+                        <div className="record-card__header">
+                          <div>
+                            <p className="record-card__eyebrow">#{index + 1}</p>
+                            <h3>{formatCellValue(record[titleColumn.key])}</h3>
+                            {subtitleColumn ? (
+                              <p className="record-card__subtitle">{formatCellValue(record[subtitleColumn.key])}</p>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className="record-card__body">
+                          {config.tableColumns.map((column) => (
+                            <div className="record-card__field" key={`${record.id}-${column.key}`}>
+                              <span>{column.label}</span>
+                              <strong
+                                className={
+                                  column.key.toLowerCase().includes("name") ||
+                                  column.key.toLowerCase().includes("customer") ||
+                                  column.key.toLowerCase().includes("company") ||
+                                  column.key.toLowerCase().includes("agent")
+                                    ? "text-blue"
+                                    : undefined
+                                }
+                              >
                                 {column.type === "boolean"
                                   ? record[column.key]
                                     ? "Yes"
                                     : "No"
                                   : formatCellValue(record[column.key])}
-                              </td>
-                            );
-                          })}
-                          <td>
-                            <div className="table-actions">
-                              {resourceKey === "customers" ? (
-                                <button
-                                  type="button"
-                                  className="icon-button icon-button--view"
-                                  onClick={() => handleViewRelatedPolicies(record)}
-                                  aria-label="View related policies"
-                                  title="View related policies"
-                                >
-                                  <ViewIcon />
-                                </button>
-                              ) : null}
-                              <button
-                                type="button"
-                                className="icon-button icon-button--edit"
-                                onClick={() => handleEdit(record)}
-                                aria-label="Edit record"
-                                title="Edit"
-                              >
-                                <EditIcon />
-                              </button>
-                              <button
-                                type="button"
-                                className="icon-button icon-button--delete"
-                                onClick={() => handleDelete(record)}
-                                aria-label="Delete record"
-                                title="Delete"
-                              >
-                                <DeleteIcon />
-                              </button>
+                              </strong>
                             </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                          ))}
+                        </div>
+
+                        <div className="record-card__actions">{renderRowActions(record)}</div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
             </>
           )}
 

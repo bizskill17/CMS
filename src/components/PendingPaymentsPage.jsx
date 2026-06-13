@@ -81,6 +81,7 @@ export default function PendingPaymentsPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [followUpError, setFollowUpError] = useState("");
+  const showChequeFields = formState.payment_mode === "Cheque";
 
   useEffect(() => {
     const load = async () => {
@@ -152,10 +153,20 @@ export default function PendingPaymentsPage() {
   };
 
   const handleChange = (name, value) => {
-    setFormState((current) => ({
-      ...current,
-      [name]: value
-    }));
+    setFormState((current) => {
+      const next = {
+        ...current,
+        [name]: value
+      };
+
+      if (name === "payment_mode" && value !== "Cheque") {
+        next.cheque_number = "";
+        next.cheque_date = "";
+        next.clearing_date = "";
+      }
+
+      return next;
+    });
   };
 
   const handleSubmit = async (event) => {
@@ -390,32 +401,38 @@ export default function PendingPaymentsPage() {
                   </select>
                 </label>
 
-                <label className="form-field">
-                  <FormLabel>Cheque Number</FormLabel>
-                  <input
-                    type="text"
-                    value={formState.cheque_number}
-                    onChange={(event) => handleChange("cheque_number", event.target.value)}
-                  />
-                </label>
+                {showChequeFields ? (
+                  <>
+                    <label className="form-field">
+                      <FormLabel required>Cheque Number</FormLabel>
+                      <input
+                        type="text"
+                        required
+                        value={formState.cheque_number}
+                        onChange={(event) => handleChange("cheque_number", event.target.value)}
+                      />
+                    </label>
 
-                <label className="form-field">
-                  <FormLabel>Cheque Date</FormLabel>
-                  <input
-                    type="date"
-                    value={formState.cheque_date}
-                    onChange={(event) => handleChange("cheque_date", event.target.value)}
-                  />
-                </label>
+                    <label className="form-field">
+                      <FormLabel required>Cheque Date</FormLabel>
+                      <input
+                        type="date"
+                        required
+                        value={formState.cheque_date}
+                        onChange={(event) => handleChange("cheque_date", event.target.value)}
+                      />
+                    </label>
 
-                <label className="form-field">
-                  <FormLabel>Clearing Date</FormLabel>
-                  <input
-                    type="date"
-                    value={formState.clearing_date}
-                    onChange={(event) => handleChange("clearing_date", event.target.value)}
-                  />
-                </label>
+                    <label className="form-field">
+                      <FormLabel>Clearing Date</FormLabel>
+                      <input
+                        type="date"
+                        value={formState.clearing_date}
+                        onChange={(event) => handleChange("clearing_date", event.target.value)}
+                      />
+                    </label>
+                  </>
+                ) : null}
 
                 <label className="form-field">
                   <FormLabel>Reference Number</FormLabel>
