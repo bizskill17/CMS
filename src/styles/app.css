@@ -777,20 +777,27 @@ button {
 
 .record-cards {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .record-card {
-  border: 1px solid #d5dfec;
-  border-radius: 18px;
-  background: #fff;
+  border: 1px solid #c7d6f4;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
   padding: 18px;
-  box-shadow: 0 14px 30px rgba(38, 60, 89, 0.08);
+  box-shadow: 0 16px 34px rgba(38, 60, 89, 0.1);
+  overflow: hidden;
+}
+
+.record-card__header {
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e1eaf8;
 }
 
 .record-card__header h3 {
   margin: 0;
   font-size: 18px;
+  line-height: 1.35;
 }
 
 .record-card__eyebrow {
@@ -806,6 +813,7 @@ button {
   margin: 6px 0 0;
   color: var(--text-soft);
   font-size: 14px;
+  line-height: 1.5;
 }
 
 .record-card__body {
@@ -817,7 +825,12 @@ button {
 
 .record-card__field {
   display: grid;
-  gap: 4px;
+  gap: 5px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #dfe8f7;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .record-card__field span {
@@ -829,6 +842,8 @@ button {
 .record-card__field strong {
   color: var(--text-dark);
   font-size: 14px;
+  line-height: 1.45;
+  word-break: break-word;
 }
 
 .record-card__actions {
@@ -836,6 +851,8 @@ button {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #e1eaf8;
 }
 
 .expiry-reports {
