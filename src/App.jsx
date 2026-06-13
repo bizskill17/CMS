@@ -4,6 +4,7 @@ import AttachDocumentsPage from "./components/AttachDocumentsPage";
 import AppLayout from "./components/AppLayout";
 import DashboardPage from "./components/DashboardPage";
 import ExpiryReportsPage from "./components/ExpiryReportsPage";
+import ExpiryReportDetailPage from "./components/ExpiryReportDetailPage";
 import IssuePolicyPage from "./components/IssuePolicyPage";
 import MasterPage from "./components/MasterPage";
 import PendingPaymentsPage from "./components/PendingPaymentsPage";
@@ -70,6 +71,7 @@ export default function App() {
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/reports/payments-received" element={<Navigate to="/payments/received" replace />} />
+        <Route path="/reports/expiry-reports/:reportType/:reportValue" element={<ExpiryReportDetailPage />} />
         {buildRoutes(allRoutes)}
       </Route>
     </Routes>

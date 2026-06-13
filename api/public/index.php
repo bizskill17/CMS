@@ -283,6 +283,103 @@ try {
         exit;
     }
 
+    if ($path === '/api/reports/expiring-policies' && $method === 'GET') {
+        $pdo = Database::connection();
+        $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
+        $mode = trim((string) ($_GET['mode'] ?? ''));
+        $value = trim((string) ($_GET['value'] ?? ''));
+
+        $whereClause = 'p.risk_end_date IS NOT NULL';
+        $bindings = [];
+
+        if ($mode === 'month') {
+            $month = (int) $value;
+            if ($month < 1 || $month > 12) {
+                Response::json([
+                    'status' => 'error',
+                    'message' => 'Invalid month report value.'
+                ], 422);
+                exit;
+            }
+
+            $whereClause .= ' AND month(p.risk_end_date) = :month_value';
+            $bindings[':month_value'] = [$month, PDO::PARAM_INT];
+        } elseif ($mode === 'day') {
+            $offsetMap = [
+                'today' => 0,
+                'tomorrow' => 1,
+                'day-after-tomorrow' => 2,
+            ];
+
+            if (!array_key_exists($value, $offsetMap)) {
+                Response::json([
+                    'status' => 'error',
+                    'message' => 'Invalid day report value.'
+                ], 422);
+                exit;
+            }
+
+            $whereClause .= ' AND date(p.risk_end_date) = date_add(curdate(), interval :day_offset day)';
+            $bindings[':day_offset'] = [$offsetMap[$value], PDO::PARAM_INT];
+        } elseif ($mode === 'week') {
+            $whereClause .= ' AND p.risk_end_date >= curdate() AND p.risk_end_date <= date_add(curdate(), interval 7 day)';
+        } elseif ($mode === 'year') {
+            if ($value === 'current') {
+                $whereClause .= ' AND coalesce(p.fiscal_year_ending, year(curdate())) = year(curdate())';
+            } elseif ($value === 'future') {
+                $whereClause .= ' AND coalesce(p.fiscal_year_ending, year(curdate())) > year(curdate())';
+            } else {
+                Response::json([
+                    'status' => 'error',
+                    'message' => 'Invalid yearly report value.'
+                ], 422);
+                exit;
+            }
+        } else {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Invalid expiry report mode.'
+            ], 422);
+            exit;
+        }
+
+        $statement = $pdo->prepare(
+            "SELECT
+                p.id,
+                p.policy_number,
+                p.policy_type,
+                p.business_type,
+                p.net_premium,
+                p.risk_end_date,
+                p.policy_status,
+                c.full_name AS customer_name,
+                cg.group_name AS customer_group_name,
+                ic.company_name,
+                ip.product_name
+             FROM policies p
+             LEFT JOIN customers c ON c.id = p.customer_id
+             LEFT JOIN customer_groups cg ON cg.id = c.group_id
+             LEFT JOIN insurance_companies ic ON ic.id = p.company_id
+             LEFT JOIN insurance_products ip ON ip.id = p.product_id
+             WHERE $whereClause
+             ORDER BY p.risk_end_date ASC, p.policy_number ASC
+             LIMIT :limit"
+        );
+
+        foreach ($bindings as $bindingName => [$bindingValue, $bindingType]) {
+            $statement->bindValue($bindingName, $bindingValue, $bindingType);
+        }
+        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $statement->execute();
+
+        Response::json([
+            'status' => 'ok',
+            'data' => $statement->fetchAll(),
+            'meta' => ['limit' => $limit]
+        ]);
+        exit;
+    }
+
     if ($path === '/api/dashboard/policy-summary' && $method === 'GET') {
         $pdo = Database::connection();
 
