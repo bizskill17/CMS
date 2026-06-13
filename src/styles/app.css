@@ -1056,6 +1056,10 @@ button {
   color: #147a45;
 }
 
+.bulk-upload-results {
+  margin-top: 18px;
+}
+
 .feedback--error {
   color: #bd1e2d;
 }

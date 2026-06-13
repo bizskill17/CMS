@@ -74,6 +74,75 @@ function validateField(field, value) {
   return "";
 }
 
+function normalizeLookupValue(value) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function parseCsv(text) {
+  const rows = [];
+  let current = "";
+  let row = [];
+  let inQuotes = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const nextChar = text[index + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === "," && !inQuotes) {
+      row.push(current);
+      current = "";
+      continue;
+    }
+
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && nextChar === "\n") {
+        index += 1;
+      }
+      row.push(current);
+      if (row.some((cell) => String(cell).trim() !== "")) {
+        rows.push(row);
+      }
+      row = [];
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  row.push(current);
+  if (row.some((cell) => String(cell).trim() !== "")) {
+    rows.push(row);
+  }
+
+  return rows;
+}
+
+function buildTemplateColumns(config) {
+  return config.fields.map((field) => ({
+    key: field.name,
+    label: field.label
+  }));
+}
+
+function parseCheckboxValue(value) {
+  const normalized = normalizeLookupValue(value);
+  if (!normalized) return true;
+  if (["true", "yes", "1", "active"].includes(normalized)) return true;
+  if (["false", "no", "0", "inactive"].includes(normalized)) return false;
+  return null;
+}
+
 function EditIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -120,6 +189,15 @@ export default function MasterPage({ resourceKey }) {
     policies: [],
     loading: false,
     error: ""
+  });
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [bulkUploadFile, setBulkUploadFile] = useState(null);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkUploadResult, setBulkUploadResult] = useState({
+    processed: 0,
+    successCount: 0,
+    failureCount: 0,
+    errors: []
   });
 
   const handleSort = (key) => {
@@ -220,6 +298,38 @@ export default function MasterPage({ resourceKey }) {
     setMessage("");
     setError("");
     setIsFormOpen(true);
+  };
+
+  const handleDownloadTemplate = () => {
+    downloadCsv({
+      title: `${config.title} Template`,
+      columns: buildTemplateColumns(config),
+      records: [],
+      fileSuffix: "template"
+    });
+  };
+
+  const resetBulkUpload = () => {
+    setBulkUploadFile(null);
+    setBulkUploadResult({
+      processed: 0,
+      successCount: 0,
+      failureCount: 0,
+      errors: []
+    });
+    setBulkUploading(false);
+  };
+
+  const openBulkUpload = () => {
+    setMessage("");
+    setError("");
+    resetBulkUpload();
+    setIsBulkUploadOpen(true);
+  };
+
+  const closeBulkUpload = () => {
+    setIsBulkUploadOpen(false);
+    resetBulkUpload();
   };
 
   const handleChange = (field, value) => {
@@ -329,6 +439,231 @@ export default function MasterPage({ resourceKey }) {
     }
   };
 
+  const resolveSelectValue = (field, rawValue, currentPayload) => {
+    const normalized = String(rawValue ?? "").trim();
+    if (!normalized) {
+      return { value: "", error: "" };
+    }
+
+    if (field.staticOptions) {
+      const option = field.staticOptions.find((item) => {
+        return (
+          normalizeLookupValue(item.value) === normalizeLookupValue(normalized) ||
+          normalizeLookupValue(item.label) === normalizeLookupValue(normalized)
+        );
+      });
+
+      if (!option) {
+        return { value: "", error: `Invalid ${field.label}.` };
+      }
+
+      return { value: option.value, error: "" };
+    }
+
+    const options = (optionsMap[field.optionsFrom] || []).filter((option) => {
+      if (!field.dependsOn || !field.dependsOnKey) {
+        return true;
+      }
+
+      const parentValue = currentPayload[field.dependsOn];
+      if (!parentValue) {
+        return false;
+      }
+
+      return String(option[field.dependsOnKey] ?? "") === String(parentValue);
+    });
+
+    const option = options.find((item) => {
+      const optionValue = String(getOptionValue(field, item) ?? "");
+      const optionLabel = String(
+        field.optionLabelKey ? item[field.optionLabelKey] : getOptionLabel(field.optionsFrom, item)
+      );
+
+      return (
+        normalizeLookupValue(optionValue) === normalizeLookupValue(normalized) ||
+        normalizeLookupValue(optionLabel) === normalizeLookupValue(normalized)
+      );
+    });
+
+    if (!option) {
+      return { value: "", error: `Invalid ${field.label}.` };
+    }
+
+    return { value: getOptionValue(field, option), error: "" };
+  };
+
+  const handleBulkUpload = async (event) => {
+    event.preventDefault();
+
+    if (!bulkUploadFile) {
+      setBulkUploadResult({
+        processed: 0,
+        successCount: 0,
+        failureCount: 1,
+        errors: [{ row: "-", field: "File", value: "", message: "Please choose a CSV file." }]
+      });
+      return;
+    }
+
+    setBulkUploading(true);
+
+    try {
+      const text = await bulkUploadFile.text();
+      const csvRows = parseCsv(text.replace(/^\uFEFF/, ""));
+
+      if (csvRows.length === 0) {
+        setBulkUploadResult({
+          processed: 0,
+          successCount: 0,
+          failureCount: 1,
+          errors: [{ row: "-", field: "File", value: "", message: "The uploaded CSV is empty." }]
+        });
+        return;
+      }
+
+      const [headerRow, ...dataRows] = csvRows;
+      const headerIndexMap = new Map(
+        headerRow.map((header, index) => [normalizeLookupValue(header), index])
+      );
+      const fieldHeaderMap = new Map();
+
+      for (const field of config.fields) {
+        const byName = headerIndexMap.get(normalizeLookupValue(field.name));
+        const byLabel = headerIndexMap.get(normalizeLookupValue(field.label));
+        if (byName !== undefined) fieldHeaderMap.set(field.name, byName);
+        else if (byLabel !== undefined) fieldHeaderMap.set(field.name, byLabel);
+      }
+
+      const uploadErrors = [];
+      let successCount = 0;
+
+      for (let rowIndex = 0; rowIndex < dataRows.length; rowIndex += 1) {
+        const rowValues = dataRows[rowIndex];
+        const payload = emptyState(config);
+        const rowErrors = [];
+
+        for (const field of config.fields) {
+          const headerIndex = fieldHeaderMap.get(field.name);
+          const rawValue = headerIndex === undefined ? "" : rowValues[headerIndex] ?? "";
+
+          if (field.type === "checkbox") {
+            const checkboxValue = parseCheckboxValue(rawValue);
+            if (checkboxValue === null) {
+              rowErrors.push({
+                row: rowIndex + 2,
+                field: field.label,
+                value: rawValue,
+                message: `Invalid ${field.label}. Use Yes/No or True/False.`
+              });
+            } else {
+              payload[field.name] = checkboxValue;
+            }
+            continue;
+          }
+
+          if (field.type === "select") {
+            const resolved = resolveSelectValue(field, rawValue, payload);
+            if (resolved.error) {
+              rowErrors.push({
+                row: rowIndex + 2,
+                field: field.label,
+                value: rawValue,
+                message: resolved.error
+              });
+            }
+            payload[field.name] = resolved.value;
+          } else {
+            payload[field.name] = String(rawValue ?? "").trim();
+          }
+
+          if (field.required && !String(payload[field.name] ?? "").trim()) {
+            rowErrors.push({
+              row: rowIndex + 2,
+              field: field.label,
+              value: rawValue,
+              message: `${field.label} is required.`
+            });
+          }
+
+          const validationError = validateField(field, payload[field.name]);
+          if (validationError) {
+            rowErrors.push({
+              row: rowIndex + 2,
+              field: field.label,
+              value: rawValue,
+              message: validationError
+            });
+          }
+        }
+
+        if (rowErrors.length > 0) {
+          uploadErrors.push(...rowErrors);
+          continue;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE}/masters/${config.resource}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          });
+          const json = await readApiJson(response);
+
+          if (!response.ok) {
+            uploadErrors.push({
+              row: rowIndex + 2,
+              field: "Row",
+              value: "",
+              message: json.message || "Failed to import this row."
+            });
+            continue;
+          }
+
+          successCount += 1;
+        } catch (uploadError) {
+          uploadErrors.push({
+            row: rowIndex + 2,
+            field: "Row",
+            value: "",
+            message: uploadError.message
+          });
+        }
+      }
+
+      setBulkUploadResult({
+        processed: dataRows.length,
+        successCount,
+        failureCount: uploadErrors.length > 0 ? new Set(uploadErrors.map((errorItem) => errorItem.row)).size : 0,
+        errors: uploadErrors
+      });
+
+      if (successCount > 0) {
+        const refresh = await fetch(`${API_BASE}/masters/${config.resource}?limit=100`);
+        const refreshJson = await readApiJson(refresh);
+        if (!refresh.ok) {
+          throw new Error(refreshJson.message || "Refresh failed after bulk upload.");
+        }
+        setRecords(refreshJson.data || []);
+        setMessage(
+          uploadErrors.length > 0
+            ? `${successCount} rows uploaded. Some rows have validation errors.`
+            : `${successCount} rows uploaded successfully.`
+        );
+      }
+    } catch (uploadError) {
+      setBulkUploadResult({
+        processed: 0,
+        successCount: 0,
+        failureCount: 1,
+        errors: [{ row: "-", field: "Upload", value: "", message: uploadError.message }]
+      });
+    } finally {
+      setBulkUploading(false);
+    }
+  };
+
   const resetRelatedPoliciesModal = () => {
     setRelatedPoliciesModal({
       isOpen: false,
@@ -411,6 +746,12 @@ export default function MasterPage({ resourceKey }) {
                   })
                 }
               />
+              <button type="button" className="secondary-button" onClick={handleDownloadTemplate}>
+                Download Template
+              </button>
+              <button type="button" className="secondary-button" onClick={openBulkUpload}>
+                Upload
+              </button>
               <button type="button" className="primary-button" onClick={handleAdd}>
                 + Add
               </button>
@@ -673,6 +1014,77 @@ export default function MasterPage({ resourceKey }) {
               </form>
 
               {error ? <p className="feedback feedback--error">{error}</p> : null}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {isBulkUploadOpen ? (
+        <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="bulk-upload-title">
+          <div className="master-modal__backdrop" onClick={closeBulkUpload} />
+          <section className="master-card master-modal__panel master-modal__panel--wide">
+            <div className="master-card__header">
+              <h3 id="bulk-upload-title">Bulk Upload {config.title}</h3>
+              <button type="button" className="text-button" onClick={closeBulkUpload}>
+                Cancel
+              </button>
+            </div>
+
+            <div className="master-modal__body">
+              <form className="master-form" onSubmit={handleBulkUpload}>
+                <label className="form-field">
+                  <FormLabel required>Upload CSV File</FormLabel>
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={(event) => setBulkUploadFile(event.target.files?.[0] || null)}
+                  />
+                </label>
+
+                <p className="table-state">
+                  Download the template first, fill the same columns, then upload the CSV file for bulk import.
+                </p>
+
+                <div className="form-actions">
+                  <button type="submit" className="primary-button" disabled={bulkUploading}>
+                    {bulkUploading ? "Uploading..." : "Upload Bulk"}
+                  </button>
+                </div>
+              </form>
+
+              {bulkUploadResult.processed > 0 || bulkUploadResult.errors.length > 0 ? (
+                <div className="bulk-upload-results">
+                  <p className="feedback feedback--success">
+                    Processed: {bulkUploadResult.processed} | Success: {bulkUploadResult.successCount} | Failed:{" "}
+                    {bulkUploadResult.failureCount}
+                  </p>
+
+                  {bulkUploadResult.errors.length > 0 ? (
+                    <div className="table-wrap">
+                      <table className="master-table">
+                        <thead>
+                          <tr>
+                            <th>Row</th>
+                            <th>Field</th>
+                            <th>Value</th>
+                            <th>Validation Error</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {bulkUploadResult.errors.map((errorItem, index) => (
+                            <tr key={`${errorItem.row}-${errorItem.field}-${index}`}>
+                              <td>{errorItem.row}</td>
+                              <td>{errorItem.field}</td>
+                              <td>{formatCellValue(errorItem.value)}</td>
+                              <td>{errorItem.message}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </section>
         </div>
