@@ -62,10 +62,6 @@ export const menuSections = [
     icon: "reports",
     items: [
       {
-        label: "All Expiry Reports",
-        path: "/reports/expiry-reports"
-      },
-      {
         label: "Monthly Expiry Reports",
         path: "/reports/expiry-reports/section/monthly",
         matchPrefixes: ["/reports/expiry-reports/month/"]
