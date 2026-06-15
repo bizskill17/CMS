@@ -1400,9 +1400,7 @@ button {
   font-size: 13px;
   border-right: 1px solid #000;
   border-bottom: 1px solid #000;
-  position: sticky;
-  top: 0;
-  z-index: 6;
+  position: static;
 }
 
 .master-table th:first-child {
