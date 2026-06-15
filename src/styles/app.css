@@ -1181,7 +1181,10 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: translateY(-1px);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  transform: translateY(-2px);
 }
 
 .secondary-button {
