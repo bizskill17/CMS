@@ -30,6 +30,7 @@ export const menuSections = [
     icon: "policies",
     items: [
       { label: "All Policies", path: "/policies/all", countKey: "all-policies" },
+      { label: "Familywise Policies", path: "/policies/familywise" },
       { label: "Issue Policy", path: "/policies/issue" },
       { label: "Renew Policy", path: "/policies/renew", countKey: "renew-policy" },
       { label: "Attach Documents", path: "/policies/attach-documents", countKey: "attach-documents" }
