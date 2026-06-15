@@ -45,6 +45,17 @@ const columns = [
   { key: "risk_end_date", label: "Risk Expiry Date" }
 ];
 
+function emptyPolicyDocumentEntry() {
+  return {
+    document_type_id: "",
+    document_number: "",
+    document_date: "",
+    expiry_date: "",
+    remarks: "",
+    file: null
+  };
+}
+
 export default function AttachDocumentsPage() {
   const [records, setRecords] = useState([]);
   const [documentTypes, setDocumentTypes] = useState([]);
@@ -58,14 +69,7 @@ export default function AttachDocumentsPage() {
   const [issueDateTo, setIssueDateTo] = useState("");
   const [expiryDateFrom, setExpiryDateFrom] = useState("");
   const [expiryDateTo, setExpiryDateTo] = useState("");
-  const [formState, setFormState] = useState({
-    document_type_id: "",
-    document_number: "",
-    document_date: "",
-    expiry_date: "",
-    remarks: "",
-    file: null
-  });
+  const [documents, setDocuments] = useState([emptyPolicyDocumentEntry()]);
 
   const policyDocumentTypes = documentTypes.filter(
     (documentType) => String(documentType.entity_level || "").toLowerCase() === "policy"
@@ -109,21 +113,38 @@ export default function AttachDocumentsPage() {
   const resetModal = () => {
     setIsModalOpen(false);
     setSelectedPolicy(null);
-    setFormState({
-      document_type_id: "",
-      document_number: "",
-      document_date: "",
-      expiry_date: "",
-      remarks: "",
-      file: null
-    });
+    setDocuments([emptyPolicyDocumentEntry()]);
   };
 
   const handleOpenUpload = (policy) => {
     setSelectedPolicy(policy);
     setMessage("");
     setError("");
+    setDocuments([emptyPolicyDocumentEntry()]);
     setIsModalOpen(true);
+  };
+
+  const handleDocumentChange = (index, key, value) => {
+    setDocuments((current) =>
+      current.map((document, documentIndex) =>
+        documentIndex === index
+          ? {
+              ...document,
+              [key]: value
+            }
+          : document
+      )
+    );
+  };
+
+  const addDocumentBlock = () => {
+    setDocuments((current) => [...current, emptyPolicyDocumentEntry()]);
+  };
+
+  const removeDocumentBlock = (index) => {
+    setDocuments((current) =>
+      current.length <= 1 ? [emptyPolicyDocumentEntry()] : current.filter((_, itemIndex) => itemIndex !== index)
+    );
   };
 
   const handleSubmit = async (event) => {
@@ -139,17 +160,26 @@ export default function AttachDocumentsPage() {
     try {
       const payload = new FormData();
       payload.append("policy_id", String(selectedPolicy.id));
-      payload.append("document_type_id", formState.document_type_id);
-      payload.append("document_number", formState.document_number);
-      payload.append("document_date", formState.document_date);
-      payload.append("expiry_date", formState.expiry_date);
-      payload.append("remarks", formState.remarks);
+      payload.append(
+        "documents",
+        JSON.stringify(
+          documents.map((document) => ({
+            document_type_id: document.document_type_id,
+            document_number: document.document_number,
+            document_date: document.document_date,
+            expiry_date: document.expiry_date,
+            remarks: document.remarks
+          }))
+        )
+      );
 
-      if (formState.file) {
-        payload.append("file", formState.file);
-      }
+      documents.forEach((document) => {
+        if (document.file) {
+          payload.append("files[]", document.file);
+        }
+      });
 
-      const response = await fetch(`${API_BASE}/policies/upload-document`, {
+      const response = await fetch(`${API_BASE}/policies/upload-documents`, {
         method: "POST",
         body: payload
       });
@@ -280,7 +310,7 @@ export default function AttachDocumentsPage() {
             </div>
 
             <div className="master-modal__body">
-              <form className="master-form" onSubmit={handleSubmit}>
+	              <form className="master-form" onSubmit={handleSubmit}>
                 <label className="form-field">
                   <FormLabel>Policy No.</FormLabel>
                   <input type="text" readOnly value={selectedPolicy?.policy_number || ""} />
@@ -291,85 +321,100 @@ export default function AttachDocumentsPage() {
                   <input type="text" readOnly value={selectedPolicy?.customer_name || ""} />
                 </label>
 
-                <label className="form-field">
-                  <FormLabel required>Document Type</FormLabel>
-                  <select
-                    value={formState.document_type_id}
-                    required
-                    onChange={(event) =>
-                      setFormState((current) => ({ ...current, document_type_id: event.target.value }))
-                    }
-                  >
-                    <option value="">Select Document Type</option>
-                    {policyDocumentTypes.map((documentType) => (
-                      <option key={documentType.id} value={documentType.id}>
-                        {documentType.name}
-                      </option>
+                  <div className="customer-document-list">
+                    {documents.map((document, index) => (
+                      <div className="customer-document-card" key={`policy-document-${index + 1}`}>
+                        <div className="customer-document-card__header">
+                          <h4>Document {index + 1}</h4>
+                          {documents.length > 1 ? (
+                            <button
+                              type="button"
+                              className="text-button text-blue"
+                              onClick={() => removeDocumentBlock(index)}
+                            >
+                              Remove
+                            </button>
+                          ) : null}
+                        </div>
+
+                        <div className="customer-document-card__grid">
+                          <label className="form-field">
+                            <FormLabel required>Document Type</FormLabel>
+                            <select
+                              value={document.document_type_id}
+                              required
+                              onChange={(event) => handleDocumentChange(index, "document_type_id", event.target.value)}
+                            >
+                              <option value="">Select Document Type</option>
+                              {policyDocumentTypes.map((documentType) => (
+                                <option key={documentType.id} value={documentType.id}>
+                                  {documentType.name}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+
+                          <label className="form-field">
+                            <FormLabel>Document Number</FormLabel>
+                            <input
+                              type="text"
+                              value={document.document_number}
+                              onChange={(event) => handleDocumentChange(index, "document_number", event.target.value)}
+                            />
+                          </label>
+
+                          <label className="form-field">
+                            <FormLabel>Document Date</FormLabel>
+                            <input
+                              type="date"
+                              value={document.document_date}
+                              onChange={(event) => handleDocumentChange(index, "document_date", event.target.value)}
+                            />
+                          </label>
+
+                          <label className="form-field">
+                            <FormLabel>Expiry Date</FormLabel>
+                            <input
+                              type="date"
+                              value={document.expiry_date}
+                              onChange={(event) => handleDocumentChange(index, "expiry_date", event.target.value)}
+                            />
+                          </label>
+
+                          <label className="form-field">
+                            <FormLabel required>Choose File</FormLabel>
+                            <input
+                              type="file"
+                              required
+                              onChange={(event) => handleDocumentChange(index, "file", event.target.files?.[0] || null)}
+                            />
+                          </label>
+
+                          <label className="form-field issue-policy-form__wide">
+                            <FormLabel>Remarks</FormLabel>
+                            <textarea
+                              rows="3"
+                              value={document.remarks}
+                              onChange={(event) => handleDocumentChange(index, "remarks", event.target.value)}
+                            />
+                          </label>
+                        </div>
+                      </div>
                     ))}
-                  </select>
-                </label>
+                  </div>
 
-                <label className="form-field">
-                  <FormLabel>Document Number</FormLabel>
-                  <input
-                    type="text"
-                    value={formState.document_number}
-                    onChange={(event) =>
-                      setFormState((current) => ({ ...current, document_number: event.target.value }))
-                    }
-                  />
-                </label>
+                  <div className="form-actions form-actions--stacked">
+                    <button type="button" className="secondary-button" onClick={addDocumentBlock}>
+                      + Add Another Document
+                    </button>
+                  </div>
 
-                <label className="form-field">
-                  <FormLabel>Document Date</FormLabel>
-                  <input
-                    type="date"
-                    value={formState.document_date}
-                    onChange={(event) =>
-                      setFormState((current) => ({ ...current, document_date: event.target.value }))
-                    }
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FormLabel>Expiry Date</FormLabel>
-                  <input
-                    type="date"
-                    value={formState.expiry_date}
-                    onChange={(event) =>
-                      setFormState((current) => ({ ...current, expiry_date: event.target.value }))
-                    }
-                  />
-                </label>
-
-                <label className="form-field">
-                  <FormLabel required>Choose File</FormLabel>
-                  <input
-                    type="file"
-                    required
-                    onChange={(event) =>
-                      setFormState((current) => ({ ...current, file: event.target.files?.[0] || null }))
-                    }
-                  />
-                </label>
-
-                <label className="form-field issue-policy-form__wide">
-                  <FormLabel>Remarks</FormLabel>
-                  <textarea
-                    rows="3"
-                    value={formState.remarks}
-                    onChange={(event) =>
-                      setFormState((current) => ({ ...current, remarks: event.target.value }))
-                    }
-                  />
-                </label>
-
-                <div className="form-actions">
-                  <button type="submit" className="primary-button" disabled={uploading}>
-                    {uploading ? <ButtonSpinner label="Uploading..." /> : "Upload Document"}
-                  </button>
-                </div>
-              </form>
+	                <div className="form-actions">
+	                  <button type="submit" className="primary-button" disabled={uploading}>
+	                    {uploading ? <ButtonSpinner label="Uploading..." /> : "Upload Documents"}
+	                  </button>
+	                </div>
+	              </form>
 
               {error ? <p className="feedback feedback--error">{error}</p> : null}
             </div>

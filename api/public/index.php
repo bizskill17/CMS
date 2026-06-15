@@ -578,32 +578,15 @@ try {
         exit;
     }
 
-    if ($path === '/api/policies/upload-document' && $method === 'POST') {
+    if (($path === '/api/policies/upload-document' || $path === '/api/policies/upload-documents') && $method === 'POST') {
         $pdo = Database::connection();
 
         $policyId = isset($_POST['policy_id']) ? (int) $_POST['policy_id'] : 0;
-        $documentTypeId = isset($_POST['document_type_id']) ? (int) $_POST['document_type_id'] : 0;
 
         if ($policyId <= 0) {
             Response::json([
                 'status' => 'error',
                 'message' => 'Policy is required.'
-            ], 422);
-            exit;
-        }
-
-        if ($documentTypeId <= 0) {
-            Response::json([
-                'status' => 'error',
-                'message' => 'Document type is required.'
-            ], 422);
-            exit;
-        }
-
-        if (!isset($_FILES['file']) || !is_array($_FILES['file']) || (int) $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-            Response::json([
-                'status' => 'error',
-                'message' => 'A file upload is required.'
             ], 422);
             exit;
         }
@@ -621,16 +604,68 @@ try {
             exit;
         }
 
-        $documentTypeStatement = $pdo->prepare('SELECT id FROM document_types WHERE id = :id');
-        $documentTypeStatement->bindValue(':id', $documentTypeId, PDO::PARAM_INT);
-        $documentTypeStatement->execute();
+        $documentsPayload = [];
 
-        if (!$documentTypeStatement->fetchColumn()) {
+        if (isset($_POST['documents'])) {
+            $decodedDocuments = json_decode((string) $_POST['documents'], true);
+            if (!is_array($decodedDocuments)) {
+                Response::json([
+                    'status' => 'error',
+                    'message' => 'Invalid documents JSON payload.'
+                ], 422);
+                exit;
+            }
+
+            $documentsPayload = $decodedDocuments;
+        } else {
+            $documentsPayload = [[
+                'document_type_id' => isset($_POST['document_type_id']) ? (int) $_POST['document_type_id'] : 0,
+                'document_number' => trim((string) ($_POST['document_number'] ?? '')),
+                'document_date' => trim((string) ($_POST['document_date'] ?? '')),
+                'expiry_date' => trim((string) ($_POST['expiry_date'] ?? '')),
+                'remarks' => trim((string) ($_POST['remarks'] ?? ''))
+            ]];
+        }
+
+        if ($documentsPayload === []) {
             Response::json([
                 'status' => 'error',
-                'message' => 'Document type not found.'
-            ], 404);
+                'message' => 'At least one document is required.'
+            ], 422);
             exit;
+        }
+
+        $uploadedFiles = [];
+
+        if (isset($_FILES['files']) && is_array($_FILES['files']['name'] ?? null)) {
+            $fileCount = count($_FILES['files']['name']);
+            for ($index = 0; $index < $fileCount; $index += 1) {
+                $uploadedFiles[] = [
+                    'name' => (string) ($_FILES['files']['name'][$index] ?? ''),
+                    'tmp_name' => (string) ($_FILES['files']['tmp_name'][$index] ?? ''),
+                    'error' => (int) ($_FILES['files']['error'][$index] ?? UPLOAD_ERR_NO_FILE)
+                ];
+            }
+        } elseif (isset($_FILES['file']) && is_array($_FILES['file'])) {
+            $uploadedFiles[] = [
+                'name' => (string) ($_FILES['file']['name'] ?? ''),
+                'tmp_name' => (string) ($_FILES['file']['tmp_name'] ?? ''),
+                'error' => (int) ($_FILES['file']['error'] ?? UPLOAD_ERR_NO_FILE)
+            ];
+        }
+
+        if (count($uploadedFiles) !== count($documentsPayload)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Each document entry must include one uploaded file.'
+            ], 422);
+            exit;
+        }
+
+        $documentTypesStatement = $pdo->query("SELECT id, entity_level FROM document_types WHERE is_active = 1");
+        $documentTypes = [];
+        foreach ($documentTypesStatement->fetchAll() as $documentType) {
+            $documentTypes[(int) $documentType['id']] = $documentType;
         }
 
         $uploadDir = __DIR__ . '/uploads';
@@ -641,27 +676,6 @@ try {
             ], 500);
             exit;
         }
-
-        $originalName = (string) $_FILES['file']['name'];
-        $tmpName = (string) $_FILES['file']['tmp_name'];
-        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-        $storedName = uniqid('doc_', true) . ($extension !== '' ? '.' . $extension : '');
-        $targetPath = $uploadDir . '/' . $storedName;
-
-        if (!move_uploaded_file($tmpName, $targetPath)) {
-            Response::json([
-                'status' => 'error',
-                'message' => 'Failed to save uploaded file.'
-            ], 500);
-            exit;
-        }
-
-        $mimeType = mime_content_type($targetPath) ?: null;
-        $fileSize = filesize($targetPath) ?: null;
-        $documentNumber = trim((string) ($_POST['document_number'] ?? ''));
-        $documentDate = trim((string) ($_POST['document_date'] ?? ''));
-        $expiryDate = trim((string) ($_POST['expiry_date'] ?? ''));
-        $remarks = trim((string) ($_POST['remarks'] ?? ''));
 
         $statement = $pdo->prepare(
             'INSERT INTO documents (
@@ -698,24 +712,89 @@ try {
                 1
              )'
         );
-        $statement->bindValue(':document_type_id', $documentTypeId, PDO::PARAM_INT);
-        $statement->bindValue(':customer_id', (int) $policy['customer_id'], PDO::PARAM_INT);
-        $statement->bindValue(':policy_id', $policyId, PDO::PARAM_INT);
-        $statement->bindValue(':file_name', $originalName);
-        $statement->bindValue(':stored_file_name', $storedName);
-        $statement->bindValue(':file_url', 'uploads/' . $storedName);
-        $statement->bindValue(':file_extension', $extension !== '' ? $extension : null);
-        $statement->bindValue(':mime_type', $mimeType);
-        $statement->bindValue(':file_size_bytes', $fileSize, $fileSize !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
-        $statement->bindValue(':document_number', $documentNumber !== '' ? $documentNumber : null);
-        $statement->bindValue(':document_date', $documentDate !== '' ? $documentDate : null);
-        $statement->bindValue(':expiry_date', $expiryDate !== '' ? $expiryDate : null);
-        $statement->bindValue(':remarks', $remarks !== '' ? $remarks : null);
-        $statement->execute();
+
+        $savedPaths = [];
+        $pdo->beginTransaction();
+
+        try {
+            foreach ($documentsPayload as $index => $documentPayload) {
+                $documentTypeId = (int) ($documentPayload['document_type_id'] ?? 0);
+                if ($documentTypeId <= 0) {
+                    throw new RuntimeException('Document type is required for each document.');
+                }
+
+                $documentType = $documentTypes[$documentTypeId] ?? null;
+                if (!$documentType) {
+                    throw new RuntimeException('Document type not found.');
+                }
+
+                if (strtolower((string) ($documentType['entity_level'] ?? '')) !== 'policy') {
+                    throw new RuntimeException('Selected document type is not valid for policy upload.');
+                }
+
+                $uploadedFile = $uploadedFiles[$index] ?? null;
+                if (!$uploadedFile || (int) $uploadedFile['error'] !== UPLOAD_ERR_OK) {
+                    throw new RuntimeException('A file upload is required for each document.');
+                }
+
+                $originalName = (string) $uploadedFile['name'];
+                $tmpName = (string) $uploadedFile['tmp_name'];
+                $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+                $storedName = uniqid('doc_', true) . ($extension !== '' ? '.' . $extension : '');
+                $targetPath = $uploadDir . '/' . $storedName;
+
+                if (!move_uploaded_file($tmpName, $targetPath)) {
+                    throw new RuntimeException('Failed to save uploaded file.');
+                }
+                $savedPaths[] = $targetPath;
+
+                $mimeType = mime_content_type($targetPath) ?: null;
+                $fileSize = filesize($targetPath) ?: null;
+                $documentNumber = trim((string) ($documentPayload['document_number'] ?? ''));
+                $documentDate = trim((string) ($documentPayload['document_date'] ?? ''));
+                $expiryDate = trim((string) ($documentPayload['expiry_date'] ?? ''));
+                $remarks = trim((string) ($documentPayload['remarks'] ?? ''));
+
+                $statement->bindValue(':document_type_id', $documentTypeId, PDO::PARAM_INT);
+                $statement->bindValue(':customer_id', (int) $policy['customer_id'], PDO::PARAM_INT);
+                $statement->bindValue(':policy_id', $policyId, PDO::PARAM_INT);
+                $statement->bindValue(':file_name', $originalName);
+                $statement->bindValue(':stored_file_name', $storedName);
+                $statement->bindValue(':file_url', 'uploads/' . $storedName);
+                $statement->bindValue(':file_extension', $extension !== '' ? $extension : null);
+                $statement->bindValue(':mime_type', $mimeType);
+                $statement->bindValue(':file_size_bytes', $fileSize, $fileSize !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+                $statement->bindValue(':document_number', $documentNumber !== '' ? $documentNumber : null);
+                $statement->bindValue(':document_date', $documentDate !== '' ? $documentDate : null);
+                $statement->bindValue(':expiry_date', $expiryDate !== '' ? $expiryDate : null);
+                $statement->bindValue(':remarks', $remarks !== '' ? $remarks : null);
+                $statement->execute();
+            }
+
+            $pdo->commit();
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+
+            foreach ($savedPaths as $savedPath) {
+                if (is_string($savedPath) && $savedPath !== '' && is_file($savedPath)) {
+                    @unlink($savedPath);
+                }
+            }
+
+            Response::json([
+                'status' => 'error',
+                'message' => $exception->getMessage() !== '' ? $exception->getMessage() : 'Failed to upload policy documents.'
+            ], 422);
+            exit;
+        }
 
         Response::json([
             'status' => 'ok',
-            'message' => 'Document uploaded successfully.'
+            'message' => count($documentsPayload) === 1
+                ? 'Document uploaded successfully.'
+                : 'Documents uploaded successfully.'
         ], 201);
         exit;
     }
