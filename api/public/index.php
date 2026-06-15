@@ -1643,6 +1643,10 @@ try {
                 $normalized[$column] = $value;
             }
 
+            if ($method === 'POST' && $resource === 'document-types' && empty($normalized['code'])) {
+                $normalized['code'] = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '_', $normalized['name'] ?? 'DOC_' . time()));
+            }
+
             if ($method === 'POST') {
                 $columns = array_keys($normalized);
                 $placeholders = array_map(static fn (string $column): string => ':' . $column, $columns);
