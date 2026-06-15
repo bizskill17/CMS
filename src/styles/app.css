@@ -9,6 +9,7 @@
   --submenu-bg: #dbe6fb;
   --submenu-active: #c2d7ff;
   --shadow-card: 0 3px 0 rgba(22, 33, 45, 0.85);
+  --sticky-topbar-offset: 96px;
 }
 
 * {
@@ -1392,7 +1393,7 @@ button {
   border-right: 1px solid #000;
   border-bottom: 1px solid #000;
   position: sticky;
-  top: 0;
+  top: var(--sticky-topbar-offset);
   z-index: 4;
 }
 
@@ -1512,6 +1513,10 @@ button {
 }
 
 @media (max-width: 900px) {
+  :root {
+    --sticky-topbar-offset: 84px;
+  }
+
   .table-pagination {
     justify-content: space-between;
     align-items: center;
@@ -1558,6 +1563,9 @@ button {
 }
 
 @media (max-width: 640px) {
+  :root {
+    --sticky-topbar-offset: 76px;
+  }
 }
 
 .spinner-wrap {
