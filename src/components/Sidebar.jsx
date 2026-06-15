@@ -93,18 +93,26 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
     <>
       {isMobile && isOpen ? <button type="button" className="sidebar-backdrop" onClick={onClose} aria-label="Close menu" /> : null}
       <aside className={`sidebar ${isOpen ? "" : "sidebar--collapsed"} ${isMobile ? "sidebar--mobile" : ""}`}>
-      <div className="brand-panel">
-        <div className="brand-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 2 4 6v6c0 5 3.4 9.4 8 10 4.6-.6 8-5 8-10V6l-8-4Zm0 2.2 5.8 2.9v4.7c0 3.9-2.5 7.5-5.8 8-3.3-.5-5.8-4.1-5.8-8V7.1L12 4.2Zm0 2.3 3.8 1.9v3.1c0 2.6-1.6 5-3.8 5.5-2.2-.5-3.8-2.9-3.8-5.5V8.4L12 6.5Z" />
-          </svg>
+        <div className="brand-panel">
+          <div className="brand-panel__main">
+            <div className="brand-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2 4 6v6c0 5 3.4 9.4 8 10 4.6-.6 8-5 8-10V6l-8-4Zm0 2.2 5.8 2.9v4.7c0 3.9-2.5 7.5-5.8 8-3.3-.5-5.8-4.1-5.8-8V7.1L12 4.2Zm0 2.3 3.8 1.9v3.1c0 2.6-1.6 5-3.8 5.5-2.2-.5-3.8-2.9-3.8-5.5V8.4L12 6.5Z" />
+              </svg>
+            </div>
+            <div className="brand-copy">
+              <h1>Policy Management System</h1>
+            </div>
+          </div>
+          {isMobile ? (
+            <button type="button" className="sidebar-close-button" onClick={onClose}>
+              Close Menu
+            </button>
+          ) : null}
         </div>
-        <div className="brand-copy">
-          <h1>Policy Management System</h1>
-        </div>
-      </div>
+      
 
-      <nav className="menu" aria-label="Primary">
+        <nav className="menu" aria-label="Primary">
         {menuSections.map((section) => {
           if (section.standalone) {
             return (
@@ -181,21 +189,21 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
             </section>
           );
         })}
-      </nav>
+        </nav>
 
-      <div className="sidebar-footer">
-        <p className="user-line">
-          Logged in as: <strong>Admin User</strong>
-        </p>
-        <button className="logout-button" type="button">
-          <span className="menu-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M10 4h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-8v-2h8V6h-8V4Zm1.7 4.3L13 9.6 11.6 11H5v2h6.6L13 14.4l-1.3 1.3L8 12l3.7-3.7Z" />
-            </svg>
-          </span>
-          <span>Logout</span>
-        </button>
-      </div>
+        <div className="sidebar-footer">
+          <p className="user-line">
+            Logged in as: <strong>Admin User</strong>
+          </p>
+          <button className="logout-button" type="button">
+            <span className="menu-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M10 4h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-8v-2h8V6h-8V4Zm1.7 4.3L13 9.6 11.6 11H5v2h6.6L13 14.4l-1.3 1.3L8 12l3.7-3.7Z" />
+              </svg>
+            </span>
+            <span>Logout</span>
+          </button>
+        </div>
       </aside>
     </>
   );

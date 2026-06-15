@@ -75,11 +75,19 @@ button {
 .brand-panel {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
   min-height: 112px;
   padding: 22px 26px;
   background: var(--panel-bg);
   border-bottom: 2px solid rgba(22, 33, 45, 0.45);
+}
+
+.brand-panel__main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
 }
 
 .brand-icon {
@@ -111,6 +119,19 @@ button {
   margin-top: 4px;
   color: var(--text-soft);
   font-size: 13px;
+}
+
+.sidebar-close-button {
+  display: none;
+  border: none;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #2d57d7;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 .menu {
@@ -1421,6 +1442,12 @@ button {
     border-bottom: 1px solid rgba(22, 33, 45, 0.14);
   }
 
+  .sidebar-close-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .menu {
     padding: 12px 12px 18px;
   }
@@ -1543,6 +1570,23 @@ button {
     top: 10px;
     height: calc(100vh - 20px);
     border-radius: 22px;
+  }
+
+  .brand-panel {
+    gap: 12px;
+  }
+
+  .brand-panel__main {
+    gap: 12px;
+  }
+
+  .brand-copy h1 {
+    font-size: 15px;
+  }
+
+  .sidebar-close-button {
+    padding: 9px 12px;
+    font-size: 12px;
   }
 
   .master-card__header {
