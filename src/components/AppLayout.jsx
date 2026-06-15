@@ -25,14 +25,14 @@ function getCurrentViewName(pathname) {
 export default function AppLayout() {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(() => getIsMobileViewport());
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => !getIsMobileViewport());
   const currentViewName = getCurrentViewName(location.pathname);
 
   useEffect(() => {
     const handleResize = () => {
       const nextIsMobile = getIsMobileViewport();
       setIsMobile(nextIsMobile);
-      setIsSidebarOpen(true);
+      setIsSidebarOpen(!nextIsMobile);
     };
 
     window.addEventListener("resize", handleResize);
