@@ -9,7 +9,6 @@
   --submenu-bg: #dbe6fb;
   --submenu-active: #c2d7ff;
   --shadow-card: 0 3px 0 rgba(22, 33, 45, 0.85);
-  --sticky-topbar-offset: 0px;
 }
 
 * {
@@ -277,9 +276,8 @@ button {
   align-items: center;
   gap: 18px;
   margin-bottom: 18px;
-  position: sticky;
-  top: 0;
-  z-index: 15;
+  position: relative;
+  z-index: 10;
   padding: 8px 0 12px;
   background: #dde6f0;
   backdrop-filter: blur(8px);
@@ -370,7 +368,17 @@ button {
   width: 100%;
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
   padding: clamp(16px, 2.8vw, 36px);
+}
+
+.content-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
 }
 
 .page-shell {
@@ -1393,7 +1401,7 @@ button {
   border-right: 1px solid #000;
   border-bottom: 1px solid #000;
   position: sticky;
-  top: var(--sticky-topbar-offset);
+  top: 0;
   z-index: 6;
 }
 

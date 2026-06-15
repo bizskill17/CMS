@@ -84,6 +84,7 @@ function getCurrentViewName(pathname) {
 export default function AppLayout() {
   const location = useLocation();
   const topbarRef = useRef(null);
+  const contentBodyRef = useRef(null);
   const [isMobile, setIsMobile] = useState(() => getIsMobileViewport());
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => !getIsMobileViewport());
   const [appBrand, setAppBrand] = useState({
@@ -102,20 +103,6 @@ export default function AppLayout() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  useEffect(() => {
-    const updateStickyOffset = () => {
-      const nextOffset = topbarRef.current?.offsetHeight ?? 0;
-      document.documentElement.style.setProperty("--sticky-topbar-offset", `${nextOffset}px`);
-    };
-
-    updateStickyOffset();
-    window.addEventListener("resize", updateStickyOffset);
-
-    return () => {
-      window.removeEventListener("resize", updateStickyOffset);
-    };
-  }, [currentViewName, appBrand.logo, isMobile]);
 
   useEffect(() => {
     let isActive = true;
@@ -151,7 +138,7 @@ export default function AppLayout() {
   }, []);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    contentBodyRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
     setIsSidebarOpen(false);
   }, [location.pathname]);
 
@@ -191,7 +178,9 @@ export default function AppLayout() {
             </div>
           ) : null}
         </div>
-        <Outlet />
+        <div ref={contentBodyRef} className="content-body">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
