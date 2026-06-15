@@ -105,8 +105,10 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
             </div>
           </div>
           {isMobile ? (
-            <button type="button" className="sidebar-close-button" onClick={onClose}>
-              Close Menu
+            <button type="button" className="sidebar-close-button" onClick={onClose} aria-label="Close menu">
+              <span className="sidebar-close-button__icon" aria-hidden="true">
+                x
+              </span>
             </button>
           ) : null}
         </div>
