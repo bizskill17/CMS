@@ -104,7 +104,7 @@ export default function DashboardPage() {
         <div className="master-card__header">
           <span></span>
           <div className="master-card__actions master-card__actions--header">
-            <span>{dashboardItems.length} dashboard items</span>
+            <span>{dashboardItems.length} Pending Tasks</span>
           </div>
         </div>
 
