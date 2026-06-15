@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { API_BASE } from "../config/api";
 import { menuSections } from "../data/menu";
@@ -83,6 +83,7 @@ function getCurrentViewName(pathname) {
 
 export default function AppLayout() {
   const location = useLocation();
+  const topbarRef = useRef(null);
   const [isMobile, setIsMobile] = useState(() => getIsMobileViewport());
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => !getIsMobileViewport());
   const [appBrand, setAppBrand] = useState({
@@ -101,6 +102,20 @@ export default function AppLayout() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    const updateStickyOffset = () => {
+      const nextOffset = topbarRef.current?.offsetHeight ?? 0;
+      document.documentElement.style.setProperty("--sticky-topbar-offset", `${nextOffset}px`);
+    };
+
+    updateStickyOffset();
+    window.addEventListener("resize", updateStickyOffset);
+
+    return () => {
+      window.removeEventListener("resize", updateStickyOffset);
+    };
+  }, [currentViewName, appBrand.logo, isMobile]);
 
   useEffect(() => {
     let isActive = true;
@@ -148,7 +163,7 @@ export default function AppLayout() {
     <div className="app-shell">
       <Sidebar isOpen={isSidebarOpen} isMobile={isMobile} onClose={() => setIsSidebarOpen(false)} />
       <main className="content-area">
-        <div className="content-topbar">
+        <div ref={topbarRef} className="content-topbar">
           <button
             className="sidebar-toggle"
             type="button"
