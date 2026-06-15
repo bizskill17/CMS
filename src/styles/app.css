@@ -9,7 +9,6 @@
   --submenu-bg: #dbe6fb;
   --submenu-active: #c2d7ff;
   --shadow-card: 0 3px 0 rgba(22, 33, 45, 0.85);
-  --sticky-header-offset: 92px;
 }
 
 * {
@@ -281,7 +280,7 @@ button {
   top: 0;
   z-index: 15;
   padding: 8px 0 12px;
-  background: linear-gradient(180deg, rgba(221, 230, 240, 0.98) 0%, rgba(221, 230, 240, 0.9) 75%, rgba(221, 230, 240, 0) 100%);
+  background: #dde6f0;
   backdrop-filter: blur(8px);
   flex-wrap: nowrap;
 }
@@ -1393,8 +1392,8 @@ button {
   border-right: 1px solid #000;
   border-bottom: 1px solid #000;
   position: sticky;
-  top: var(--sticky-header-offset);
-  z-index: 6;
+  top: 0;
+  z-index: 4;
 }
 
 .master-table th:first-child {
@@ -1513,10 +1512,6 @@ button {
 }
 
 @media (max-width: 900px) {
-  :root {
-    --sticky-header-offset: 84px;
-  }
-
   .table-pagination {
     justify-content: space-between;
     align-items: center;
@@ -1563,9 +1558,6 @@ button {
 }
 
 @media (max-width: 640px) {
-  :root {
-    --sticky-header-offset: 76px;
-  }
 }
 
 .spinner-wrap {
