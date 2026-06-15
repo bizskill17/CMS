@@ -1384,6 +1384,12 @@ button {
   }
 }
 
+.master-table thead {
+  position: sticky;
+  top: var(--sticky-topbar-offset);
+  z-index: 6;
+}
+
 .master-table th {
   padding: 12px 14px;
   background: #2d57d7;
@@ -1392,9 +1398,7 @@ button {
   font-size: 13px;
   border-right: 1px solid #000;
   border-bottom: 1px solid #000;
-  position: sticky;
-  top: var(--sticky-topbar-offset);
-  z-index: 4;
+  position: static;
 }
 
 .master-table th:first-child {
