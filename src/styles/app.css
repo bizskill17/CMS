@@ -1098,6 +1098,20 @@ button {
 
 .primary-button--add {
   background: #2d57d7;
+  color: #fff;
+}
+
+.primary-button--add,
+.primary-button--add:hover,
+.primary-button--add:focus,
+.primary-button--add:active,
+.primary-button--add:visited {
+  color: #fff;
+}
+
+.primary-button--add .primary-button__label,
+.primary-button--add .primary-button__icon {
+  color: #fff;
 }
 
 .primary-button__icon,
