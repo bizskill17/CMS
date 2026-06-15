@@ -1669,11 +1669,13 @@ button {
   }
 
   .master-card__actions--header .primary-button--add {
-    min-width: 34px;
-    width: 34px;
-    height: 34px;
+    min-width: 42px;
+    width: 42px;
+    height: 42px;
     padding: 0;
-    border-radius: 4px;
+    border: 1px solid #2d57d7;
+    border-radius: 10px;
+    box-shadow: 0 0 0 2px rgba(45, 87, 215, 0.12);
     font-size: 18px;
     line-height: 1;
   }
