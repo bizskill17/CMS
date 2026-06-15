@@ -633,7 +633,7 @@ try {
             exit;
         }
 
-        $uploadDir = dirname(__DIR__) . '/uploads';
+        $uploadDir = __DIR__ . '/uploads';
         if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
             Response::json([
                 'status' => 'error',
@@ -809,7 +809,7 @@ try {
             $documentTypes[(int) $documentType['id']] = $documentType;
         }
 
-        $uploadDir = dirname(__DIR__) . '/uploads';
+        $uploadDir = __DIR__ . '/uploads';
         if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
             Response::json([
                 'status' => 'error',
@@ -1904,7 +1904,7 @@ try {
                     exit;
                 }
 
-                $uploadDir = dirname(__DIR__) . '/uploads';
+                $uploadDir = __DIR__ . '/uploads';
                 if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
                     Response::json([
                         'status' => 'error',
