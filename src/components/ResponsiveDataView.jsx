@@ -56,7 +56,7 @@ export default function ResponsiveDataView({
   return (
     <>
       <div className="master-card__header">
-        <span className="hide-mobile">{title}</span>
+        <span>{title}</span>
         <div className="master-card__actions master-card__actions--header">
           <div className="master-list-toolbar__search">
             <input
@@ -81,7 +81,6 @@ export default function ResponsiveDataView({
             icon="excel"
             label="Download Excel"
             showLabel
-            className="hide-mobile"
             variant="toolbar"
             onClick={() =>
               downloadCsv({

@@ -837,7 +837,7 @@ export default function MasterPage({ resourceKey }) {
       <div className="master-grid master-grid--list-only">
         <section className="master-card master-card--table">
           <div className="master-card__header">
-            <span className="hide-mobile">{sortedRecords.length} records</span>
+            <span>{sortedRecords.length} records</span>
             <div className="master-card__actions master-card__actions--header">
               <div className="master-list-toolbar__search">
                 <input
@@ -861,8 +861,8 @@ export default function MasterPage({ resourceKey }) {
               <ActionIconDisplay
                 icon="excel"
                 label="Download Excel"
+                showLabel
                 variant="toolbar"
-                className="hide-mobile"
                 onClick={() =>
                   downloadCsv({
                     title: config.title,

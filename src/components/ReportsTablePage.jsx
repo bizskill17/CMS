@@ -3,6 +3,7 @@ import { API_BASE } from "../config/api";
 import { reportConfigs } from "../data/reportConfigs";
 import ResponsiveDataView from "./ResponsiveDataView";
 import { buildFilterOptions } from "../utils/dataView";
+import FormLabel from "./FormLabel";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -37,6 +38,10 @@ export default function ReportsTablePage({ reportKey }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [issueDateFrom, setIssueDateFrom] = useState("");
+  const [issueDateTo, setIssueDateTo] = useState("");
+  const [expiryDateFrom, setExpiryDateFrom] = useState("");
+  const [expiryDateTo, setExpiryDateTo] = useState("");
 
   useEffect(() => {
     if (!config) {
@@ -68,6 +73,20 @@ export default function ReportsTablePage({ reportKey }) {
     load();
   }, [config]);
 
+  const dateFilteredRecords = useMemo(() => {
+    return records.filter((record) => {
+      const issueDate = String(record.issue_date || "").slice(0, 10);
+      const expiryDate = String(record.risk_end_date || "").slice(0, 10);
+
+      if (issueDateFrom && issueDate < issueDateFrom) return false;
+      if (issueDateTo && issueDate > issueDateTo) return false;
+      if (expiryDateFrom && expiryDate < expiryDateFrom) return false;
+      if (expiryDateTo && expiryDate > expiryDateTo) return false;
+
+      return true;
+    });
+  }, [records, issueDateFrom, issueDateTo, expiryDateFrom, expiryDateTo]);
+
   const filterConfigs = useMemo(() => {
     if (!config) return [];
 
@@ -93,7 +112,7 @@ export default function ReportsTablePage({ reportKey }) {
       <section className="master-card issue-policy-card">
         <ResponsiveDataView
           title={config.title}
-          records={records}
+          records={dateFilteredRecords}
           columns={config.columns}
           loading={loading}
           error={error}
@@ -101,6 +120,48 @@ export default function ReportsTablePage({ reportKey }) {
           emptyMessage={config.emptyMessage}
           searchKeys={config.searchKeys}
           filterConfigs={filterConfigs}
+          customFilterContent={
+            <>
+              <label className="form-field data-toolbar__date-field">
+                <FormLabel>Issue Date From</FormLabel>
+                <input
+                  type="date"
+                  value={issueDateFrom}
+                  onChange={(event) => setIssueDateFrom(event.target.value)}
+                />
+              </label>
+              <label className="form-field data-toolbar__date-field">
+                <FormLabel>Issue Date To</FormLabel>
+                <input
+                  type="date"
+                  value={issueDateTo}
+                  onChange={(event) => setIssueDateTo(event.target.value)}
+                />
+              </label>
+              <label className="form-field data-toolbar__date-field">
+                <FormLabel>Expiry Date From</FormLabel>
+                <input
+                  type="date"
+                  value={expiryDateFrom}
+                  onChange={(event) => setExpiryDateFrom(event.target.value)}
+                />
+              </label>
+              <label className="form-field data-toolbar__date-field">
+                <FormLabel>Expiry Date To</FormLabel>
+                <input
+                  type="date"
+                  value={expiryDateTo}
+                  onChange={(event) => setExpiryDateTo(event.target.value)}
+                />
+              </label>
+            </>
+          }
+          onClearCustomFilters={() => {
+            setIssueDateFrom("");
+            setIssueDateTo("");
+            setExpiryDateFrom("");
+            setExpiryDateTo("");
+          }}
         />
       </section>
     </div>

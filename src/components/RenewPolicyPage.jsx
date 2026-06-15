@@ -118,6 +118,8 @@ export default function RenewPolicyPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [followUpError, setFollowUpError] = useState("");
+  const [issueDateFrom, setIssueDateFrom] = useState("");
+  const [issueDateTo, setIssueDateTo] = useState("");
   const [expiryDateFrom, setExpiryDateFrom] = useState("");
   const [expiryDateTo, setExpiryDateTo] = useState("");
 
@@ -294,23 +296,17 @@ export default function RenewPolicyPage() {
   const records = lookupData.policies || [];
   const dateFilteredRecords = useMemo(() => {
     return records.filter((record) => {
+      const issueDate = String(record.issue_date || "").slice(0, 10);
       const expiryDate = String(record.risk_end_date || "").slice(0, 10);
 
-      if (!expiryDate) {
-        return !expiryDateFrom && !expiryDateTo;
-      }
-
-      if (expiryDateFrom && expiryDate < expiryDateFrom) {
-        return false;
-      }
-
-      if (expiryDateTo && expiryDate > expiryDateTo) {
-        return false;
-      }
+      if (issueDateFrom && issueDate < issueDateFrom) return false;
+      if (issueDateTo && issueDate > issueDateTo) return false;
+      if (expiryDateFrom && expiryDate < expiryDateFrom) return false;
+      if (expiryDateTo && expiryDate > expiryDateTo) return false;
 
       return true;
     });
-  }, [records, expiryDateFrom, expiryDateTo]);
+  }, [records, issueDateFrom, issueDateTo, expiryDateFrom, expiryDateTo]);
 
   const filterConfigs = useMemo(
     () => [
@@ -347,6 +343,22 @@ export default function RenewPolicyPage() {
           customFilterContent={
             <>
               <label className="form-field data-toolbar__date-field">
+                <FormLabel>Issue Date From</FormLabel>
+                <input
+                  type="date"
+                  value={issueDateFrom}
+                  onChange={(event) => setIssueDateFrom(event.target.value)}
+                />
+              </label>
+              <label className="form-field data-toolbar__date-field">
+                <FormLabel>Issue Date To</FormLabel>
+                <input
+                  type="date"
+                  value={issueDateTo}
+                  onChange={(event) => setIssueDateTo(event.target.value)}
+                />
+              </label>
+              <label className="form-field data-toolbar__date-field">
                 <FormLabel>Expiry Date From</FormLabel>
                 <input
                   type="date"
@@ -365,6 +377,8 @@ export default function RenewPolicyPage() {
             </>
           }
           onClearCustomFilters={() => {
+            setIssueDateFrom("");
+            setIssueDateTo("");
             setExpiryDateFrom("");
             setExpiryDateTo("");
           }}

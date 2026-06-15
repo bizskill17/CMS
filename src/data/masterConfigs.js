@@ -250,12 +250,12 @@ export const masterConfigs = {
         required: true,
         staticOptions: [
           { value: "", label: "Select Type" },
-          { value: "bank_account", label: "Bank Account" },
-          { value: "credit_card", label: "Credit Card" },
-          { value: "debit_card", label: "Debit Card" },
-          { value: "upi", label: "UPI" },
-          { value: "wallet", label: "Wallet" },
-          { value: "cash", label: "Cash" }
+          { value: "Bank Account", label: "Bank Account" },
+          { value: "Credit Card", label: "Credit Card" },
+          { value: "Debit Card", label: "Debit Card" },
+          { value: "UPI", label: "UPI" },
+          { value: "Wallet", label: "Wallet" },
+          { value: "Cash", label: "Cash" }
         ]
       },
       { name: "bank_name", label: "Bank Name", type: "text" },
