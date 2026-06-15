@@ -1632,16 +1632,24 @@ button {
     width: 100%;
     flex: 1;
     justify-content: center;
+    gap: 12px;
+  }
+
+  .master-card__actions--header .master-list-toolbar__search {
+    width: 100%;
+    max-width: none;
+    flex: none;
+    order: -1;
   }
 
   .master-card__actions--header .primary-button {
-    order: 0;
+    order: 1;
     padding: 10px 14px;
     font-size: 14px;
   }
 
   .master-card__actions--header .icon-toggle-button--toolbar {
-    order: 2;
+    order: 1;
   }
 
   .master-card__actions--header .icon-toggle-button--toolbar span {

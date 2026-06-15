@@ -4,7 +4,7 @@ import { API_BASE } from "../config/api";
 import { masterConfigs } from "../data/masterConfigs";
 import { buildFilterOptions, filterRecords, sortRecords } from "../utils/dataView";
 import { downloadCsv } from "../utils/export";
-import { formatCellValue } from "../utils/formatting";
+import { formatAccountType, formatCellValue } from "../utils/formatting";
 import FormLabel from "./FormLabel";
 import MultiSelectFilter from "./MultiSelectFilter";
 import { ButtonSpinner, Spinner } from "./Spinner";
@@ -1001,7 +1001,9 @@ export default function MasterPage({ resourceKey }) {
 
                                 return (
                                   <td key={`${record.id}-${column.key}`} className={isName ? "text-blue" : ""}>
-                                    {column.type === "boolean"
+                                    {column.formatter === "account_type"
+                                      ? formatAccountType(record[column.key])
+                                      : column.type === "boolean"
                                       ? record[column.key]
                                         ? "Yes"
                                         : "No"
@@ -1027,7 +1029,9 @@ export default function MasterPage({ resourceKey }) {
 
                             return (
                               <td key={`${record.id}-${column.key}`} className={isName ? "text-blue" : ""}>
-                                {column.type === "boolean"
+                                {column.formatter === "account_type"
+                                  ? formatAccountType(record[column.key])
+                                  : column.type === "boolean"
                                   ? record[column.key]
                                     ? "Yes"
                                     : "No"
