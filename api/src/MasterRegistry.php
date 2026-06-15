@@ -178,6 +178,7 @@ final class MasterRegistry
                 'required' => ['organization_name'],
                 'nullable' => ['gst', 'address', 'logo'],
                 'boolean' => ['is_active'],
+                'file_columns' => ['logo'],
             ],
         ];
     }

@@ -39,7 +39,7 @@ async function readApiJson(response) {
 
 function emptyState(config) {
   return config.fields.reduce((acc, field) => {
-    acc[field.name] = field.type === "checkbox" ? true : "";
+    acc[field.name] = field.type === "checkbox" ? true : field.type === "file" ? null : "";
     return acc;
   }, {});
 }
@@ -241,6 +241,7 @@ function emptyCustomerDocumentEntry() {
 
 export default function MasterPage({ resourceKey }) {
   const config = masterConfigs[resourceKey];
+  const isSettingsView = resourceKey === "settings";
   const [records, setRecords] = useState([]);
   const [optionsMap, setOptionsMap] = useState({});
   const [formState, setFormState] = useState(() => emptyState(config));
@@ -479,6 +480,9 @@ export default function MasterPage({ resourceKey }) {
     setError("");
 
     for (const field of config.fields) {
+      if (field.type === "file") {
+        continue;
+      }
       const validationError = validateField(field, formState[field.name]);
       if (validationError) {
         setError(validationError);
@@ -493,14 +497,43 @@ export default function MasterPage({ resourceKey }) {
       const url = editingId
         ? `${API_BASE}/masters/${config.resource}/${editingId}`
         : `${API_BASE}/masters/${config.resource}`;
+      const hasFileField = config.fields.some((field) => field.type === "file");
+      let response;
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formState)
-      });
+      if (hasFileField) {
+        const payload = new FormData();
+
+        config.fields.forEach((field) => {
+          const value = formState[field.name];
+
+          if (field.type === "file") {
+            if (value instanceof File) {
+              payload.append(field.name, value);
+            }
+            return;
+          }
+
+          if (field.type === "checkbox") {
+            payload.append(field.name, value ? "1" : "0");
+            return;
+          }
+
+          payload.append(field.name, value ?? "");
+        });
+
+        response = await fetch(url, {
+          method,
+          body: payload
+        });
+      } else {
+        response = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(formState)
+        });
+      }
 
       const json = await readApiJson(response);
       if (!response.ok) {
@@ -977,6 +1010,8 @@ export default function MasterPage({ resourceKey }) {
 
   const renderRowActions = (record) => (
     <div className="table-actions">
+      {isSettingsView ? null : (
+        <>
       {resourceKey === "customers" ? (
         <button
           type="button"
@@ -1017,6 +1052,8 @@ export default function MasterPage({ resourceKey }) {
       >
         <DeleteIcon />
       </button>
+        </>
+      )}
     </div>
   );
 
@@ -1027,59 +1064,63 @@ export default function MasterPage({ resourceKey }) {
           <div className="master-card__header">
             <span>{sortedRecords.length} records</span>
             <div className="master-card__actions master-card__actions--header">
-              <div className="master-list-toolbar__search">
-                <input
-                  type="search"
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                />
-              </div>
+                {isSettingsView ? null : (
+                  <>
+	                  <div className="master-list-toolbar__search">
+	                    <input
+	                      type="search"
+	                      placeholder="Search..."
+	                      value={searchTerm}
+	                      onChange={(event) => setSearchTerm(event.target.value)}
+	                    />
+	                  </div>
 
-              {filterConfigs.length > 0 ? (
-                <ActionIconDisplay
-                  icon="filter"
-                  label="Filters"
-                  active={isFiltersOpen}
-                  onClick={() => setIsFiltersOpen((current) => !current)}
-                  variant="toolbar"
-                />
-              ) : null}
+	                  {filterConfigs.length > 0 ? (
+	                    <ActionIconDisplay
+	                      icon="filter"
+	                      label="Filters"
+	                      active={isFiltersOpen}
+	                      onClick={() => setIsFiltersOpen((current) => !current)}
+	                      variant="toolbar"
+	                    />
+	                  ) : null}
 
-              <ActionIconDisplay
-                icon="excel"
-                label="Download Excel"
-                showLabel
-                variant="toolbar"
-                onClick={() =>
-                  downloadCsv({
-                    title: config.title,
-                    columns: config.tableColumns,
-                    records: sortedRecords,
-                    mapRecord: (record) =>
-                      Object.fromEntries(
-                        config.tableColumns.map((column) => [
-                          column.key,
-                          column.type === "boolean" ? (record[column.key] ? "Yes" : "No") : record[column.key]
-                        ])
-                      )
-                  })
-                }
-              />
-              <button
-                type="button"
-                className="secondary-button secondary-button--template hide-mobile"
-                onClick={handleDownloadTemplate}
-              >
-                Download Template
-              </button>
-              <button
-                type="button"
-                className="secondary-button secondary-button--upload hide-mobile"
-                onClick={openBulkUpload}
-              >
-                Upload
-              </button>
+	                  <ActionIconDisplay
+	                    icon="excel"
+	                    label="Download Excel"
+	                    showLabel
+	                    variant="toolbar"
+	                    onClick={() =>
+	                      downloadCsv({
+	                        title: config.title,
+	                        columns: config.tableColumns,
+	                        records: sortedRecords,
+	                        mapRecord: (record) =>
+	                          Object.fromEntries(
+	                            config.tableColumns.map((column) => [
+	                              column.key,
+	                              column.type === "boolean" ? (record[column.key] ? "Yes" : "No") : record[column.key]
+	                            ])
+	                          )
+	                      })
+	                    }
+	                  />
+	                  <button
+	                    type="button"
+	                    className="secondary-button secondary-button--template hide-mobile"
+	                    onClick={handleDownloadTemplate}
+	                  >
+	                    Download Template
+	                  </button>
+	                  <button
+	                    type="button"
+	                    className="secondary-button secondary-button--upload hide-mobile"
+	                    onClick={openBulkUpload}
+	                  >
+	                    Upload
+	                  </button>
+                  </>
+                )}
               <button
                 type="button"
                 className="primary-button primary-button--add"
@@ -1101,7 +1142,7 @@ export default function MasterPage({ resourceKey }) {
             </div>
           ) : (
             <>
-              {isFiltersOpen ? (
+	              {isFiltersOpen && !isSettingsView ? (
                 <div className="data-toolbar">
                   <div className="data-toolbar__filters">
                     {filterConfigs.map((filter) => (
@@ -1156,13 +1197,13 @@ export default function MasterPage({ resourceKey }) {
                           )}
                         </th>
                       ))}
-                      <th>Action</th>
+                        {isSettingsView ? null : <th>Action</th>}
                     </tr>
                   </thead>
                   <tbody>
                     {sortedRecords.length === 0 ? (
                       <tr>
-                        <td colSpan={config.tableColumns.length + 2} className="table-state">
+	                        <td colSpan={config.tableColumns.length + (isSettingsView ? 1 : 2)} className="table-state">
                           No records yet.
                         </td>
                       </tr>
@@ -1171,7 +1212,7 @@ export default function MasterPage({ resourceKey }) {
                         <Fragment key={stateName}>
                           <tr className="table-group-header">
                             <td
-                              colSpan={config.tableColumns.length + 2}
+	                              colSpan={config.tableColumns.length + (isSettingsView ? 1 : 2)}
                               style={{ fontWeight: "bold", backgroundColor: "#f0f4ff", color: "#2d57d7" }}
                             >
                               {stateName}
@@ -1199,7 +1240,7 @@ export default function MasterPage({ resourceKey }) {
                                   </td>
                                 );
                               })}
-                              <td>{renderRowActions(record)}</td>
+	                              {isSettingsView ? null : <td>{renderRowActions(record)}</td>}
                             </tr>
                           ))}
                         </Fragment>
@@ -1227,7 +1268,7 @@ export default function MasterPage({ resourceKey }) {
                               </td>
                             );
                           })}
-                          <td>{renderRowActions(record)}</td>
+                            {isSettingsView ? null : <td>{renderRowActions(record)}</td>}
                         </tr>
                       ))
                     )}
@@ -1269,9 +1310,9 @@ export default function MasterPage({ resourceKey }) {
                     );
                   }
 
-                  if (field.type === "textarea") {
-                    return (
-                      <label key={field.name} className="form-field">
+	                  if (field.type === "textarea") {
+	                    return (
+	                      <label key={field.name} className="form-field">
                         <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
                         <textarea
                           value={formState[field.name]}
@@ -1279,10 +1320,23 @@ export default function MasterPage({ resourceKey }) {
                           rows="3"
                         />
                       </label>
-                    );
-                  }
+	                    );
+	                  }
 
-                  if (field.type === "select") {
+                    if (field.type === "file") {
+                      return (
+                        <label key={field.name} className="form-field">
+                          <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(event) => handleChange(field, event.target.files?.[0] || null)}
+                          />
+                        </label>
+                      );
+                    }
+
+	                  if (field.type === "select") {
                     const dynamicOptions = field.optionsFrom
                       ? (optionsMap[field.optionsFrom] || []).filter((option) => {
                           if (!field.dependsOn || !field.dependsOnKey) {

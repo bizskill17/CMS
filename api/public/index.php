@@ -1842,15 +1842,22 @@ try {
         }
 
         if (($method === 'POST' && $id === null) || ($method === 'PUT' && $id !== null)) {
-            $rawBody = file_get_contents('php://input');
-            $payload = json_decode($rawBody ?: '[]', true);
+            $payload = [];
+            $hasFiles = !empty($_FILES);
 
-            if (!is_array($payload)) {
-                Response::json([
-                    'status' => 'error',
-                    'message' => 'Invalid JSON payload'
-                ], 422);
-                exit;
+            if ($hasFiles) {
+                $payload = $_POST;
+            } else {
+                $rawBody = file_get_contents('php://input');
+                $payload = json_decode($rawBody ?: '[]', true);
+
+                if (!is_array($payload)) {
+                    Response::json([
+                        'status' => 'error',
+                        'message' => 'Invalid JSON payload'
+                    ], 422);
+                    exit;
+                }
             }
 
             foreach ($config['required'] as $requiredField) {
@@ -1882,6 +1889,45 @@ try {
                 }
 
                 $normalized[$column] = $value;
+            }
+
+            foreach (($config['file_columns'] ?? []) as $fileColumn) {
+                if (!isset($_FILES[$fileColumn]) || !is_array($_FILES[$fileColumn])) {
+                    continue;
+                }
+
+                if ((int) $_FILES[$fileColumn]['error'] !== UPLOAD_ERR_OK) {
+                    Response::json([
+                        'status' => 'error',
+                        'message' => sprintf('Failed to upload file for "%s".', $fileColumn)
+                    ], 422);
+                    exit;
+                }
+
+                $uploadDir = dirname(__DIR__) . '/uploads';
+                if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+                    Response::json([
+                        'status' => 'error',
+                        'message' => 'Unable to prepare upload directory.'
+                    ], 500);
+                    exit;
+                }
+
+                $originalName = (string) $_FILES[$fileColumn]['name'];
+                $tmpName = (string) $_FILES[$fileColumn]['tmp_name'];
+                $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+                $storedName = uniqid($resource . '_', true) . ($extension !== '' ? '.' . $extension : '');
+                $targetPath = $uploadDir . '/' . $storedName;
+
+                if (!move_uploaded_file($tmpName, $targetPath)) {
+                    Response::json([
+                        'status' => 'error',
+                        'message' => 'Failed to save uploaded file.'
+                    ], 500);
+                    exit;
+                }
+
+                $normalized[$fileColumn] = 'uploads/' . $storedName;
             }
 
             if ($method === 'POST' && $resource === 'document-types' && empty($normalized['code'])) {

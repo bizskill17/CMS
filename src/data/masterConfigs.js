@@ -278,7 +278,7 @@ export const masterConfigs = {
       { name: "organization_name", label: "Organization Name", type: "text", required: true },
       { name: "gst", label: "GST", type: "text" },
       { name: "address", label: "Address", type: "textarea" },
-      { name: "logo", label: "Logo", type: "text" },
+      { name: "logo", label: "Logo", type: "file" },
       { name: "is_active", label: "Active", type: "checkbox" }
     ]
   }
