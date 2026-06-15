@@ -1364,6 +1364,19 @@ button {
   border: 1px solid #d5dfec;
 }
 
+@media (min-width: 901px) {
+  .master-table {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .master-table th,
+  .master-table td {
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+
 .master-table th {
   padding: 12px 14px;
   background: #2d57d7;
