@@ -135,6 +135,10 @@ export default function AppLayout() {
     };
   }, []);
 
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
+
   const handleSidebarToggle = () => {
     setIsSidebarOpen((current) => !current);
   };
