@@ -1239,7 +1239,11 @@ export default function MasterPage({ resourceKey }) {
                                       : column.type === "image" && record[column.key]
                                       ? (
                                         <img 
-                                          src={`${API_BASE}/${String(record[column.key]).replace(/^\/+/, "")}`} 
+                                          src={
+                                            /^https?:\/\//i.test(record[column.key])
+                                              ? record[column.key]
+                                              : `${API_BASE}/${String(record[column.key]).replace(/^\/+/, "")}`
+                                          } 
                                           alt="Logo" 
                                           className="master-table__logo"
                                         />
@@ -1275,7 +1279,11 @@ export default function MasterPage({ resourceKey }) {
                                   : column.type === "image" && record[column.key]
                                   ? (
                                     <img 
-                                      src={`${API_BASE}/${String(record[column.key]).replace(/^\/+/, "")}`} 
+                                      src={
+                                        /^https?:\/\//i.test(record[column.key])
+                                          ? record[column.key]
+                                          : `${API_BASE}/${String(record[column.key]).replace(/^\/+/, "")}`
+                                      } 
                                       alt="Logo" 
                                       className="master-table__logo"
                                     />

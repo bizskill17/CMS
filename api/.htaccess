@@ -1,5 +1,12 @@
 RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^public/(.*)$ public/$1 [L]
+
+# 1. Map uploads/ to public/uploads/
+RewriteRule ^uploads/(.*)$ public/uploads/$1 [L]
+
+# 2. If the request is for a real file or directory, serve it directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# 3. Route everything else to public/index.php
 RewriteRule ^ public/index.php [QSA,L]
