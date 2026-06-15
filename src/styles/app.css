@@ -1900,8 +1900,14 @@ button {
   }
 
   .content-topbar__title {
-    font-size: 26px;
-    line-height: 1.15;
+    font-size: 22px;
+    line-height: 1.2;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .content-topbar__subtitle {
