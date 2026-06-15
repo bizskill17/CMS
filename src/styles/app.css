@@ -1356,6 +1356,7 @@ button {
   width: 100%;
   padding-bottom: 8px;
   scrollbar-gutter: stable;
+  position: relative;
 }
 
 .master-table {
@@ -1363,7 +1364,7 @@ button {
   min-width: 100%;
   border-collapse: collapse;
   min-width: 560px;
-  border: 1px solid #d5dfec;
+  border: 1px solid #000;
 }
 
 @media (min-width: 901px) {
@@ -1387,7 +1388,10 @@ button {
   color: #fff;
   text-align: left;
   font-size: 13px;
-  border: 1px solid #d5dfec;
+  border: 1px solid #000;
+  position: sticky;
+  top: 88px;
+  z-index: 5;
 }
 
 .master-table th:first-child {
@@ -1400,7 +1404,7 @@ button {
 
 .master-table td {
   padding: 12px 14px;
-  border: 1px solid #d5dfec;
+  border: 1px solid #000;
   background: #fff;
   font-size: 14px;
   vertical-align: top;
