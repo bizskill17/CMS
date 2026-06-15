@@ -124,20 +124,9 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
         <div className="brand-panel">
           <div className="brand-panel__main">
             <div className="brand-icon">
-              {appBrand.logo ? (
-                <img
-                  src={
-                    /^https?:\/\//i.test(appBrand.logo)
-                      ? appBrand.logo
-                      : `${API_BASE}/${String(appBrand.logo).replace(/^\/+/, "")}`
-                  }
-                  alt={appBrand.name}
-                />
-              ) : (
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 2 4 6v6c0 5 3.4 9.4 8 10 4.6-.6 8-5 8-10V6l-8-4Zm0 2.2 5.8 2.9v4.7c0 3.9-2.5 7.5-5.8 8-3.3-.5-5.8-4.1-5.8-8V7.1L12 4.2Zm0 2.3 3.8 1.9v3.1c0 2.6-1.6 5-3.8 5.5-2.2-.5-3.8-2.9-3.8-5.5V8.4L12 6.5Z" />
-                </svg>
-              )}
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2 4 6v6c0 5 3.4 9.4 8 10 4.6-.6 8-5 8-10V6l-8-4Zm0 2.2 5.8 2.9v4.7c0 3.9-2.5 7.5-5.8 8-3.3-.5-5.8-4.1-5.8-8V7.1L12 4.2Zm0 2.3 3.8 1.9v3.1c0 2.6-1.6 5-3.8 5.5-2.2-.5-3.8-2.9-3.8-5.5V8.4L12 6.5Z" />
+              </svg>
             </div>
             <div className="brand-copy">
               <h1>{appBrand.name}</h1>

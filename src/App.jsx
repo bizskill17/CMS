@@ -5,7 +5,6 @@ import AppLayout from "./components/AppLayout";
 import DashboardPage from "./components/DashboardPage";
 import ExpiryReportsPage from "./components/ExpiryReportsPage";
 import ExpiryReportDetailPage from "./components/ExpiryReportDetailPage";
-import FamilywisePoliciesPage from "./components/FamilywisePoliciesPage";
 import IssuePolicyPage from "./components/IssuePolicyPage";
 import MasterPage from "./components/MasterPage";
 import PendingPaymentsPage from "./components/PendingPaymentsPage";
@@ -23,8 +22,6 @@ function buildRoutes(items) {
       element={
         item.path === "/policies/all" ? (
           <AllPoliciesPage />
-        ) : item.path === "/policies/familywise" ? (
-          <FamilywisePoliciesPage />
         ) : item.path === "/dashboard" ? (
           <DashboardPage />
         ) : item.path === "/payments/pending" ? (

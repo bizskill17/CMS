@@ -336,6 +336,23 @@ button {
   min-width: 0;
 }
 
+.content-topbar__brand {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.content-topbar__brand-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 6px;
+  box-shadow: 0 10px 24px rgba(38, 60, 89, 0.12);
+}
+
 .content-topbar__subtitle {
   margin: 4px 0 0;
   color: var(--text-soft);
@@ -1588,6 +1605,15 @@ button {
     width: min(100%, 520px);
   }
 
+  .content-topbar__brand {
+    width: auto;
+  }
+
+  .content-topbar__brand-logo {
+    width: 58px;
+    height: 58px;
+  }
+
   .master-grid {
     grid-template-columns: 1fr;
   }
@@ -1872,6 +1898,15 @@ button {
     width: auto;
     flex: 1;
     text-align: left;
+  }
+
+  .content-topbar__brand {
+    margin-left: 0;
+  }
+
+  .content-topbar__brand-logo {
+    width: 52px;
+    height: 52px;
   }
 
   .content-topbar__title {

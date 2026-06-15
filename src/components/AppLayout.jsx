@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { API_BASE } from "../config/api";
 import { menuSections } from "../data/menu";
 import Sidebar from "./Sidebar";
 
@@ -26,6 +27,10 @@ export default function AppLayout() {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(() => getIsMobileViewport());
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => !getIsMobileViewport());
+  const [appBrand, setAppBrand] = useState({
+    name: "Policy Management System",
+    logo: ""
+  });
   const currentViewName = getCurrentViewName(location.pathname);
 
   useEffect(() => {
@@ -37,6 +42,39 @@ export default function AppLayout() {
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadBrand = () => {
+      fetch(`${API_BASE}/masters/settings?limit=1`)
+        .then((res) => res.json())
+        .then((json) => {
+          if (!isActive || json.status !== "ok") {
+            return;
+          }
+
+          const record = Array.isArray(json.data) ? json.data[0] : null;
+          if (!record) {
+            return;
+          }
+
+          setAppBrand({
+            name: record.organization_name || "Policy Management System",
+            logo: record.logo || ""
+          });
+        })
+        .catch((err) => console.error("Failed to fetch settings brand", err));
+    };
+
+    loadBrand();
+    window.addEventListener("focus", loadBrand);
+
+    return () => {
+      isActive = false;
+      window.removeEventListener("focus", loadBrand);
+    };
   }, []);
 
   const handleSidebarToggle = () => {
@@ -61,6 +99,19 @@ export default function AppLayout() {
           <div className="content-topbar__copy">
             {currentViewName ? <h1 className="content-topbar__title">{currentViewName}</h1> : null}
           </div>
+          {appBrand.logo ? (
+            <div className="content-topbar__brand">
+              <img
+                src={
+                  /^https?:\/\//i.test(appBrand.logo)
+                    ? appBrand.logo
+                    : `${API_BASE}/${String(appBrand.logo).replace(/^\/+/, "")}`
+                }
+                alt={appBrand.name}
+                className="content-topbar__brand-logo"
+              />
+            </div>
+          ) : null}
         </div>
         <Outlet />
       </main>
