@@ -1173,6 +1173,23 @@ button {
   justify-content: flex-start;
 }
 
+.customer-view-sections {
+  display: grid;
+  gap: 22px;
+}
+
+.customer-view-section {
+  display: grid;
+  gap: 10px;
+}
+
+.customer-view-section__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
 .text-blue {
   color: #2d57d7;
   font-weight: 600;

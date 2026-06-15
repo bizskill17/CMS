@@ -157,11 +157,33 @@ try {
         $policyStatement->bindValue(':customer_id', $customerId, PDO::PARAM_INT);
         $policyStatement->execute();
 
+        $documentStatement = $pdo->prepare(
+            'SELECT
+                d.id,
+                dt.name AS document_type_name,
+                d.file_name,
+                d.file_url,
+                d.document_number,
+                d.document_date,
+                d.expiry_date,
+                d.remarks,
+                d.uploaded_at
+             FROM documents d
+             LEFT JOIN document_types dt ON dt.id = d.document_type_id
+             WHERE d.customer_id = :customer_id
+               AND d.deleted_at IS NULL
+               AND d.is_active = 1
+             ORDER BY d.uploaded_at DESC, d.id DESC'
+        );
+        $documentStatement->bindValue(':customer_id', $customerId, PDO::PARAM_INT);
+        $documentStatement->execute();
+
         Response::json([
             'status' => 'ok',
             'data' => [
                 'customer' => $customer,
-                'policies' => $policyStatement->fetchAll()
+                'policies' => $policyStatement->fetchAll(),
+                'documents' => $documentStatement->fetchAll()
             ]
         ]);
         exit;

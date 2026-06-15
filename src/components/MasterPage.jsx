@@ -258,6 +258,7 @@ export default function MasterPage({ resourceKey }) {
     isOpen: false,
     customer: null,
     policies: [],
+    documents: [],
     loading: false,
     error: ""
   });
@@ -790,6 +791,7 @@ export default function MasterPage({ resourceKey }) {
       isOpen: false,
       customer: null,
       policies: [],
+      documents: [],
       loading: false,
       error: ""
     });
@@ -940,6 +942,7 @@ export default function MasterPage({ resourceKey }) {
       isOpen: true,
       customer: record,
       policies: [],
+      documents: [],
       loading: true,
       error: ""
     });
@@ -956,6 +959,7 @@ export default function MasterPage({ resourceKey }) {
         isOpen: true,
         customer: json.data.customer || record,
         policies: json.data.policies || [],
+        documents: json.data.documents || [],
         loading: false,
         error: ""
       });
@@ -964,6 +968,7 @@ export default function MasterPage({ resourceKey }) {
         isOpen: true,
         customer: record,
         policies: [],
+        documents: [],
         loading: false,
         error: loadError.message
       });
@@ -1446,50 +1451,95 @@ export default function MasterPage({ resourceKey }) {
                 <div className="table-state">
                   <Spinner label="Loading related policies..." />
                 </div>
-              ) : relatedPoliciesModal.error ? (
-                <p className="feedback feedback--error">{relatedPoliciesModal.error}</p>
-              ) : (
-                <div className="table-wrap">
-                  <table className="master-table">
-                    <thead>
-	                      <tr>
-	                        <th>Policy No.</th>
-	                        <th>Issue Date</th>
-	                        <th>Business Type</th>
-	                        <th>Policy Type</th>
-	                        <th>Company</th>
-	                        <th>Product</th>
-	                        <th>Risk Expiry Date</th>
-	                        <th>Renewal Status</th>
-	                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {relatedPoliciesModal.policies.length === 0 ? (
-                        <tr>
-                          <td colSpan="9" className="table-state">
-                            No related policies found for this customer.
-                          </td>
-                        </tr>
-                      ) : (
-                        relatedPoliciesModal.policies.map((policy) => (
-	                          <tr key={policy.id}>
-	                            <td>{formatCellValue(policy.policy_number)}</td>
-	                            <td>{formatCellValue(policy.issue_date)}</td>
-	                            <td>{formatCellValue(policy.business_type)}</td>
-	                            <td>{formatCellValue(policy.policy_type)}</td>
-	                            <td className="text-blue">{formatCellValue(policy.company_name)}</td>
-	                            <td className="text-blue">{formatCellValue(policy.product_name)}</td>
-	                            <td>{formatCellValue(policy.risk_end_date)}</td>
-	                            <td>{formatCellValue(policy.renewal_status)}</td>
-	                            <td>{formatCellValue(policy.policy_status)}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+	              ) : relatedPoliciesModal.error ? (
+	                <p className="feedback feedback--error">{relatedPoliciesModal.error}</p>
+	              ) : (
+                  <div className="customer-view-sections">
+                    <div className="customer-view-section">
+                      <h4 className="customer-view-section__title">Policies</h4>
+                      <div className="table-wrap">
+                        <table className="master-table">
+                          <thead>
+		                        <tr>
+		                          <th>Policy No.</th>
+		                          <th>Issue Date</th>
+		                          <th>Business Type</th>
+		                          <th>Policy Type</th>
+		                          <th>Company</th>
+		                          <th>Product</th>
+		                          <th>Risk Expiry Date</th>
+		                          <th>Renewal Status</th>
+		                          <th>Status</th>
+	                        </tr>
+                          </thead>
+                          <tbody>
+                            {relatedPoliciesModal.policies.length === 0 ? (
+                              <tr>
+                                <td colSpan="9" className="table-state">
+                                  No related policies found for this customer.
+                                </td>
+                              </tr>
+                            ) : (
+                              relatedPoliciesModal.policies.map((policy) => (
+		                            <tr key={policy.id}>
+		                              <td>{formatCellValue(policy.policy_number)}</td>
+		                              <td>{formatCellValue(policy.issue_date)}</td>
+		                              <td>{formatCellValue(policy.business_type)}</td>
+		                              <td>{formatCellValue(policy.policy_type)}</td>
+		                              <td className="text-blue">{formatCellValue(policy.company_name)}</td>
+		                              <td className="text-blue">{formatCellValue(policy.product_name)}</td>
+		                              <td>{formatCellValue(policy.risk_end_date)}</td>
+		                              <td>{formatCellValue(policy.renewal_status)}</td>
+		                              <td>{formatCellValue(policy.policy_status)}</td>
+	                            </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div className="customer-view-section">
+                      <h4 className="customer-view-section__title">Documents</h4>
+                      <div className="table-wrap">
+                        <table className="master-table">
+                          <thead>
+                            <tr>
+                              <th>Document Type</th>
+                              <th>File Name</th>
+                              <th>Document No.</th>
+                              <th>Document Date</th>
+                              <th>Expiry Date</th>
+                              <th>Remarks</th>
+                              <th>Uploaded At</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {relatedPoliciesModal.documents.length === 0 ? (
+                              <tr>
+                                <td colSpan="7" className="table-state">
+                                  No documents found for this customer.
+                                </td>
+                              </tr>
+                            ) : (
+                              relatedPoliciesModal.documents.map((document) => (
+                                <tr key={document.id}>
+                                  <td>{formatCellValue(document.document_type_name)}</td>
+                                  <td>{formatCellValue(document.file_name)}</td>
+                                  <td>{formatCellValue(document.document_number)}</td>
+                                  <td>{formatCellValue(document.document_date)}</td>
+                                  <td>{formatCellValue(document.expiry_date)}</td>
+                                  <td>{formatCellValue(document.remarks)}</td>
+                                  <td>{formatCellValue(document.uploaded_at)}</td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+	              )}
             </div>
           </section>
         </div>
