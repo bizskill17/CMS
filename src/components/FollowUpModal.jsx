@@ -8,13 +8,13 @@ const initialFormState = {
   follow_up_remarks: "",
   follow_up_mode: "",
   next_follow_up_date: "",
-  status: "Pending"
+  status: ""
 };
 
 const modeOptions = ["Call", "WhatsApp", "Email", "Visit", "SMS", "Other"];
 const defaultStatusOptions = ["Pending", "Done", "Interested", "Not Interested", "No Response", "Converted"];
-const renewalStatusOptions = [...defaultStatusOptions, "Follow Up Again", "Inactive"];
-const paymentStatusOptions = [...defaultStatusOptions, "Follow Up Again"];
+const renewalStatusOptions = ["Follow Up Again", "Inactive"];
+const paymentStatusOptions = ["Follow Up Again"];
 
 export default function FollowUpModal({
   isOpen,
@@ -46,9 +46,10 @@ export default function FollowUpModal({
     const today = new Date().toISOString().slice(0, 10);
     setFormState({
       ...initialFormState,
-      follow_up_date: today
+      follow_up_date: today,
+      status: resolvedStatusOptions[0] || ""
     });
-  }, [isOpen, policy?.id]);
+  }, [isOpen, policy?.id, resolvedStatusOptions]);
 
   if (!isOpen) {
     return null;
@@ -92,6 +93,34 @@ export default function FollowUpModal({
               <FormLabel>Customer</FormLabel>
               <input type="text" readOnly value={policy?.customer_name || ""} />
             </label>
+
+            {policyType === "Renewal" ? (
+              <>
+                <label className="form-field">
+                  <FormLabel>Product Name</FormLabel>
+                  <input type="text" readOnly value={policy?.product_name || ""} />
+                </label>
+
+                <label className="form-field">
+                  <FormLabel>Policy Type</FormLabel>
+                  <input type="text" readOnly value={policy?.policy_type || ""} />
+                </label>
+              </>
+            ) : null}
+
+            {policyType === "Payment" ? (
+              <>
+                <label className="form-field">
+                  <FormLabel>Company</FormLabel>
+                  <input type="text" readOnly value={policy?.company_name || ""} />
+                </label>
+
+                <label className="form-field">
+                  <FormLabel>Policy Type</FormLabel>
+                  <input type="text" readOnly value={policy?.policy_type || ""} />
+                </label>
+              </>
+            ) : null}
 
             <label className="form-field">
               <FormLabel required>Follow Up Date</FormLabel>
