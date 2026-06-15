@@ -1716,6 +1716,7 @@ button {
   .master-modal__body {
     max-height: calc(100vh - 132px);
     padding-right: 0;
+    padding-bottom: 24px;
   }
 
   .master-form {
@@ -1737,6 +1738,10 @@ button {
   .form-actions .primary-button {
     width: 100%;
     min-height: 46px;
+  }
+
+  .form-actions {
+    padding-bottom: 20px;
   }
 
   .issue-policy-form__actions .primary-button,
