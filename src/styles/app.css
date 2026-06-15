@@ -1669,12 +1669,12 @@ button {
   }
 
   .master-card__actions--header .primary-button--add {
-    min-width: 44px;
-    width: 44px;
-    height: 44px;
+    min-width: 34px;
+    width: 34px;
+    height: 34px;
     padding: 0;
-    border-radius: 12px;
-    font-size: 20px;
+    border-radius: 4px;
+    font-size: 18px;
     line-height: 1;
   }
 
@@ -1683,7 +1683,7 @@ button {
   }
 
   .master-card__actions--header .primary-button--add .primary-button__icon {
-    font-size: 22px;
+    font-size: 18px;
   }
 
   .master-modal {
