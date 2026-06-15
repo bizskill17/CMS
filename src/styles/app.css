@@ -365,19 +365,19 @@ button {
 
 .page-shell {
   width: 100%;
-  max-width: 980px;
+  max-width: none;
   min-width: 0;
 }
 
 .dashboard-page {
   width: 100%;
-  max-width: 1260px;
+  max-width: none;
   min-width: 0;
 }
 
 .issue-policy-page {
   width: 100%;
-  max-width: 1260px;
+  max-width: none;
   min-width: 0;
 }
 
@@ -405,7 +405,7 @@ button {
 
 .master-page {
   width: 100%;
-  max-width: 1260px;
+  max-width: none;
   min-width: 0;
 }
 
