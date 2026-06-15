@@ -1537,8 +1537,7 @@ button {
   }
 
   .table-pagination__size span {
-    white-space: nowrap;
-    font-size: 12px;
+    display: none;
   }
 }
 
