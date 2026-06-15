@@ -9,7 +9,6 @@
   --submenu-bg: #dbe6fb;
   --submenu-active: #c2d7ff;
   --shadow-card: 0 3px 0 rgba(22, 33, 45, 0.85);
-  --sticky-topbar-height: 92px;
 }
 
 * {
@@ -1393,7 +1392,7 @@ button {
   border-right: 1px solid #000;
   border-bottom: 1px solid #000;
   position: sticky;
-  top: var(--sticky-topbar-height);
+  top: 0;
   z-index: 4;
 }
 
@@ -1513,10 +1512,6 @@ button {
 }
 
 @media (max-width: 900px) {
-  :root {
-    --sticky-topbar-height: 84px;
-  }
-
   .table-pagination {
     justify-content: space-between;
     align-items: center;
@@ -1563,9 +1558,6 @@ button {
 }
 
 @media (max-width: 640px) {
-  :root {
-    --sticky-topbar-height: 76px;
-  }
 }
 
 .spinner-wrap {
