@@ -108,6 +108,14 @@ button {
   fill: currentColor;
 }
 
+.brand-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
 .brand-copy h1 {
   margin: 0;
   font-size: 17px;

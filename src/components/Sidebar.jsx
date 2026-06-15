@@ -40,6 +40,10 @@ function Icon({ name }) {
 export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }) {
   const location = useLocation();
   const [counts, setCounts] = useState({});
+  const [appBrand, setAppBrand] = useState({
+    name: "Policy Management System",
+    logo: ""
+  });
 
   useEffect(() => {
     let isActive = true;
@@ -55,17 +59,41 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
         .catch((err) => console.error("Failed to fetch menu counts", err));
     };
 
+    const loadBrand = () => {
+      fetch(`${API_BASE}/masters/settings?limit=1`)
+        .then((res) => res.json())
+        .then((json) => {
+          if (!isActive || json.status !== "ok") {
+            return;
+          }
+
+          const record = Array.isArray(json.data) ? json.data[0] : null;
+          if (!record) {
+            return;
+          }
+
+          setAppBrand({
+            name: record.organization_name || "Policy Management System",
+            logo: record.logo || ""
+          });
+        })
+        .catch((err) => console.error("Failed to fetch settings brand", err));
+    };
+
     const handleFocus = () => {
       loadCounts();
+      loadBrand();
     };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         loadCounts();
+        loadBrand();
       }
     };
 
     loadCounts();
+    loadBrand();
     window.addEventListener("focus", handleFocus);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
@@ -96,12 +124,23 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
         <div className="brand-panel">
           <div className="brand-panel__main">
             <div className="brand-icon">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 2 4 6v6c0 5 3.4 9.4 8 10 4.6-.6 8-5 8-10V6l-8-4Zm0 2.2 5.8 2.9v4.7c0 3.9-2.5 7.5-5.8 8-3.3-.5-5.8-4.1-5.8-8V7.1L12 4.2Zm0 2.3 3.8 1.9v3.1c0 2.6-1.6 5-3.8 5.5-2.2-.5-3.8-2.9-3.8-5.5V8.4L12 6.5Z" />
-              </svg>
+              {appBrand.logo ? (
+                <img
+                  src={
+                    /^https?:\/\//i.test(appBrand.logo)
+                      ? appBrand.logo
+                      : `${API_BASE}/${String(appBrand.logo).replace(/^\/+/, "")}`
+                  }
+                  alt={appBrand.name}
+                />
+              ) : (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 2 4 6v6c0 5 3.4 9.4 8 10 4.6-.6 8-5 8-10V6l-8-4Zm0 2.2 5.8 2.9v4.7c0 3.9-2.5 7.5-5.8 8-3.3-.5-5.8-4.1-5.8-8V7.1L12 4.2Zm0 2.3 3.8 1.9v3.1c0 2.6-1.6 5-3.8 5.5-2.2-.5-3.8-2.9-3.8-5.5V8.4L12 6.5Z" />
+                </svg>
+              )}
             </div>
             <div className="brand-copy">
-              <h1>Policy Management System</h1>
+              <h1>{appBrand.name}</h1>
             </div>
           </div>
           {isMobile ? (
