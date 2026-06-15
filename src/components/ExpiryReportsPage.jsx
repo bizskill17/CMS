@@ -36,9 +36,17 @@ const expirySections = {
   yearly: { title: "Yearly Expiry Reports", items: yearlyReports }
 };
 
-function ExpirySection({ title, items, compact = false, onOpen, hideTitle = false, counts = {} }) {
+function ExpirySection({
+  title,
+  items,
+  compact = false,
+  stacked = false,
+  onOpen,
+  hideTitle = false,
+  counts = {}
+}) {
   return (
-    <section className="expiry-reports__section">
+    <section className={`expiry-reports__section ${stacked ? "expiry-reports__section--stacked" : ""}`}>
       {!hideTitle ? <h3>{title}</h3> : null}
       <div className={`expiry-reports__grid ${compact ? "expiry-reports__grid--compact" : ""}`}>
         {items.map((item) => (
@@ -106,6 +114,7 @@ export default function ExpiryReportsPage() {
             title={activeSection.title}
             items={activeSection.items}
             compact={activeSection.compact}
+            stacked
             onOpen={navigate}
             hideTitle
             counts={activeCounts}

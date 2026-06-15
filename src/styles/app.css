@@ -960,6 +960,16 @@ button {
   margin-top: 28px;
 }
 
+.expiry-reports__section--stacked .expiry-reports__grid,
+.expiry-reports__section--stacked .expiry-reports__grid--compact {
+  grid-template-columns: 1fr;
+  justify-items: center;
+}
+
+.expiry-reports__section--stacked .expiry-reports__button {
+  width: min(100%, 860px);
+}
+
 .expiry-reports__section h3 {
   margin: 0 0 18px;
   text-align: center;
