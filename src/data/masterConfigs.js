@@ -271,7 +271,7 @@ export const masterConfigs = {
       { key: "organization_name", label: "Organization Name" },
       { key: "gst", label: "GST" },
       { key: "address", label: "Address" },
-      { key: "logo", label: "Logo" },
+      { key: "logo", label: "Logo", type: "image" },
       { key: "is_active", label: "Active", type: "boolean" }
     ],
     fields: [

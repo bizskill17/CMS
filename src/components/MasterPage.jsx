@@ -1236,6 +1236,14 @@ export default function MasterPage({ resourceKey }) {
                                       ? record[column.key]
                                         ? "Yes"
                                         : "No"
+                                      : column.type === "image" && record[column.key]
+                                      ? (
+                                        <img 
+                                          src={`${API_BASE}/${String(record[column.key]).replace(/^\/+/, "")}`} 
+                                          alt="Logo" 
+                                          className="master-table__logo"
+                                        />
+                                      )
                                       : formatCellValue(record[column.key])}
                                   </td>
                                 );
@@ -1264,6 +1272,14 @@ export default function MasterPage({ resourceKey }) {
                                   ? record[column.key]
                                     ? "Yes"
                                     : "No"
+                                  : column.type === "image" && record[column.key]
+                                  ? (
+                                    <img 
+                                      src={`${API_BASE}/${String(record[column.key]).replace(/^\/+/, "")}`} 
+                                      alt="Logo" 
+                                      className="master-table__logo"
+                                    />
+                                  )
                                   : formatCellValue(record[column.key])}
                               </td>
                             );
