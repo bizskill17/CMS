@@ -1106,7 +1106,7 @@ export default function MasterPage({ resourceKey }) {
 
 	                  <ActionIconDisplay
 	                    icon="excel"
-	                    label="Download Excel"
+	                    label="Excel"
 	                    showLabel
 	                    variant="toolbar"
 	                    onClick={() =>
@@ -1129,7 +1129,7 @@ export default function MasterPage({ resourceKey }) {
 	                    className="secondary-button secondary-button--template hide-mobile"
 	                    onClick={handleDownloadTemplate}
 	                  >
-	                    Download Template
+	                    Template
 	                  </button>
 	                  <button
 	                    type="button"

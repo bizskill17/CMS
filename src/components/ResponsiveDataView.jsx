@@ -160,7 +160,7 @@ export default function ResponsiveDataView({
           ) : null}
           <ActionIconDisplay
             icon="excel"
-            label="Download Excel"
+            label="Excel"
             showLabel
             variant="toolbar"
             onClick={() =>
