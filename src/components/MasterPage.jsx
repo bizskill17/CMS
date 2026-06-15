@@ -327,12 +327,6 @@ export default function MasterPage({ resourceKey }) {
     setCurrentPage(1);
   }, [searchTerm, activeFilters, pageSize, resourceKey, records, filterConfigs]);
 
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
-
   const filteredRecords = useMemo(
     () => filterRecords(records, { searchTerm, searchKeys, activeFilters }),
     [records, searchTerm, searchKeys, activeFilters]
@@ -362,6 +356,12 @@ export default function MasterPage({ resourceKey }) {
     });
     return groups;
   }, [paginatedRecords, resourceKey]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   useEffect(() => {
     setMessage("");
