@@ -276,6 +276,17 @@ create table document_types (
   created_at datetime not null default current_timestamp
 );
 
+create table settings (
+  id bigint unsigned auto_increment primary key,
+  organization_name varchar(150) not null,
+  gst varchar(50),
+  address text,
+  logo varchar(255),
+  is_active tinyint(1) not null default 1,
+  created_at datetime not null default current_timestamp,
+  updated_at datetime null default null on update current_timestamp
+);
+
 create table documents (
   id bigint unsigned auto_increment primary key,
   document_type_id bigint unsigned not null,

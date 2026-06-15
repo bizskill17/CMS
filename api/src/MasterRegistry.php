@@ -169,6 +169,16 @@ final class MasterRegistry
                 'nullable' => ['bank_name', 'account_holder_name', 'masked_account_number', 'card_last4', 'upi_id', 'branch_name', 'notes'],
                 'boolean' => ['is_default', 'is_active'],
             ],
+            'settings' => [
+                'table' => 'settings',
+                'select' => 's.id, s.organization_name, s.gst, s.address, s.logo, s.is_active, s.created_at',
+                'from' => 'settings s',
+                'order_by' => 's.id desc',
+                'write_columns' => ['organization_name', 'gst', 'address', 'logo', 'is_active'],
+                'required' => ['organization_name'],
+                'nullable' => ['gst', 'address', 'logo'],
+                'boolean' => ['is_active'],
+            ],
         ];
     }
 }

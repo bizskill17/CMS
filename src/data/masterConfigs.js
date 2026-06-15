@@ -263,5 +263,23 @@ export const masterConfigs = {
       { name: "is_default", label: "Default Account", type: "checkbox" },
       { name: "is_active", label: "Active", type: "checkbox" }
     ]
+  },
+  settings: {
+    title: "Settings",
+    resource: "settings",
+    tableColumns: [
+      { key: "organization_name", label: "Organization Name" },
+      { key: "gst", label: "GST" },
+      { key: "address", label: "Address" },
+      { key: "logo", label: "Logo" },
+      { key: "is_active", label: "Active", type: "boolean" }
+    ],
+    fields: [
+      { name: "organization_name", label: "Organization Name", type: "text", required: true },
+      { name: "gst", label: "GST", type: "text" },
+      { name: "address", label: "Address", type: "textarea" },
+      { name: "logo", label: "Logo", type: "text" },
+      { name: "is_active", label: "Active", type: "checkbox" }
+    ]
   }
 };
