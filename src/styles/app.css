@@ -201,6 +201,10 @@ button {
   gap: 6px;
 }
 
+.menu-group:not(.is-open) .submenu {
+  display: none;
+}
+
 .submenu-item {
   min-height: 44px;
   border-radius: 10px;
