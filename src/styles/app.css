@@ -1722,7 +1722,7 @@ button {
   .master-card__actions--header {
     width: 100%;
     flex: 1;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 12px;
   }
 
