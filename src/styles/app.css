@@ -78,18 +78,16 @@ button {
   justify-content: space-between;
   gap: 16px;
   min-height: 112px;
-  padding: 16px 22px;
+  padding: 22px 26px;
   background: var(--panel-bg);
   border-bottom: 2px solid rgba(22, 33, 45, 0.45);
 }
 
 .brand-panel__main {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 16px;
   min-width: 0;
-  flex: 1;
 }
 
 .brand-icon {
@@ -103,26 +101,6 @@ button {
   flex: 0 0 auto;
 }
 
-.brand-logo-container {
-  max-width: 100%;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.brand-logo-container img {
-  height: 100%;
-  width: auto;
-  max-width: 240px;
-  object-fit: contain;
-  border-radius: 6px;
-  background: white;
-  padding: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(22, 33, 45, 0.08);
-}
-
 .brand-icon svg,
 .menu-icon svg {
   width: 22px;
@@ -132,10 +110,8 @@ button {
 
 .brand-copy h1 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--text-dark);
-  line-height: 1.2;
+  font-size: 17px;
+  font-weight: 700;
 }
 
 .content-topbar__brand-logo {
