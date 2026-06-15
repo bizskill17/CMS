@@ -228,7 +228,7 @@ function UploadIcon() {
   );
 }
 
-function emptyCustomerDocumentState() {
+function emptyCustomerDocumentEntry() {
   return {
     document_type_id: "",
     document_number: "",
@@ -274,7 +274,7 @@ export default function MasterPage({ resourceKey }) {
     isOpen: false,
     customer: null,
     documentTypes: [],
-    form: emptyCustomerDocumentState(),
+    documents: [emptyCustomerDocumentEntry()],
     loading: false,
     uploading: false,
     error: ""
@@ -800,7 +800,7 @@ export default function MasterPage({ resourceKey }) {
       isOpen: false,
       customer: null,
       documentTypes: [],
-      form: emptyCustomerDocumentState(),
+      documents: [emptyCustomerDocumentEntry()],
       loading: false,
       uploading: false,
       error: ""
@@ -814,7 +814,7 @@ export default function MasterPage({ resourceKey }) {
       isOpen: true,
       customer: record,
       documentTypes: [],
-      form: emptyCustomerDocumentState(),
+      documents: [emptyCustomerDocumentEntry()],
       loading: true,
       uploading: false,
       error: ""
@@ -844,13 +844,34 @@ export default function MasterPage({ resourceKey }) {
     }
   };
 
-  const handleCustomerUploadChange = (key, value) => {
+  const handleCustomerUploadChange = (index, key, value) => {
     setCustomerUploadModal((current) => ({
       ...current,
-      form: {
-        ...current.form,
-        [key]: value
-      }
+      documents: current.documents.map((document, documentIndex) =>
+        documentIndex === index
+          ? {
+              ...document,
+              [key]: value
+            }
+          : document
+      )
+    }));
+  };
+
+  const addCustomerUploadDocument = () => {
+    setCustomerUploadModal((current) => ({
+      ...current,
+      documents: [...current.documents, emptyCustomerDocumentEntry()]
+    }));
+  };
+
+  const removeCustomerUploadDocument = (index) => {
+    setCustomerUploadModal((current) => ({
+      ...current,
+      documents:
+        current.documents.length <= 1
+          ? [emptyCustomerDocumentEntry()]
+          : current.documents.filter((_, documentIndex) => documentIndex !== index)
     }));
   };
 
@@ -870,17 +891,24 @@ export default function MasterPage({ resourceKey }) {
     try {
       const payload = new FormData();
       payload.append("customer_id", String(customerUploadModal.customer.id));
-      payload.append("document_type_id", customerUploadModal.form.document_type_id);
-      payload.append("document_number", customerUploadModal.form.document_number);
-      payload.append("document_date", customerUploadModal.form.document_date);
-      payload.append("expiry_date", customerUploadModal.form.expiry_date);
-      payload.append("remarks", customerUploadModal.form.remarks);
 
-      if (customerUploadModal.form.file) {
-        payload.append("file", customerUploadModal.form.file);
-      }
+      const documents = customerUploadModal.documents.map((document) => ({
+        document_type_id: document.document_type_id,
+        document_number: document.document_number,
+        document_date: document.document_date,
+        expiry_date: document.expiry_date,
+        remarks: document.remarks
+      }));
 
-      const response = await fetch(`${API_BASE}/customers/upload-document`, {
+      payload.append("documents", JSON.stringify(documents));
+
+      customerUploadModal.documents.forEach((document) => {
+        if (document.file) {
+          payload.append("files[]", document.file);
+        }
+      });
+
+      const response = await fetch(`${API_BASE}/customers/upload-documents`, {
         method: "POST",
         body: payload
       });
@@ -1495,75 +1523,112 @@ export default function MasterPage({ resourceKey }) {
                     <input type="text" readOnly value={customerUploadModal.customer?.customer_code || ""} />
                   </label>
 
-                  <label className="form-field">
-                    <FormLabel required>Document Type</FormLabel>
-                    <select
-                      value={customerUploadModal.form.document_type_id}
-                      required
-                      onChange={(event) => handleCustomerUploadChange("document_type_id", event.target.value)}
-                    >
-                      <option value="">Select Document Type</option>
-                      {customerUploadModal.documentTypes.map((documentType) => (
-                        <option key={documentType.id} value={documentType.id}>
-                          {documentType.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <div className="customer-document-list">
+                    {customerUploadModal.documents.map((document, index) => (
+                      <div className="customer-document-card" key={`customer-document-${index + 1}`}>
+                        <div className="customer-document-card__header">
+                          <h4>Document {index + 1}</h4>
+                          {customerUploadModal.documents.length > 1 ? (
+                            <button
+                              type="button"
+                              className="text-button text-blue"
+                              onClick={() => removeCustomerUploadDocument(index)}
+                            >
+                              Remove
+                            </button>
+                          ) : null}
+                        </div>
 
-                  <label className="form-field">
-                    <FormLabel>Document Number</FormLabel>
-                    <input
-                      type="text"
-                      value={customerUploadModal.form.document_number}
-                      onChange={(event) => handleCustomerUploadChange("document_number", event.target.value)}
-                    />
-                  </label>
+                        <div className="customer-document-card__grid">
+                          <label className="form-field">
+                            <FormLabel required>Document Type</FormLabel>
+                            <select
+                              value={document.document_type_id}
+                              required
+                              onChange={(event) =>
+                                handleCustomerUploadChange(index, "document_type_id", event.target.value)
+                              }
+                            >
+                              <option value="">Select Document Type</option>
+                              {customerUploadModal.documentTypes.map((documentType) => (
+                                <option key={documentType.id} value={documentType.id}>
+                                  {documentType.name}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
 
-                  <label className="form-field">
-                    <FormLabel>Document Date</FormLabel>
-                    <input
-                      type="date"
-                      value={customerUploadModal.form.document_date}
-                      onChange={(event) => handleCustomerUploadChange("document_date", event.target.value)}
-                    />
-                  </label>
+                          <label className="form-field">
+                            <FormLabel>Document Number</FormLabel>
+                            <input
+                              type="text"
+                              value={document.document_number}
+                              onChange={(event) =>
+                                handleCustomerUploadChange(index, "document_number", event.target.value)
+                              }
+                            />
+                          </label>
 
-                  <label className="form-field">
-                    <FormLabel>Expiry Date</FormLabel>
-                    <input
-                      type="date"
-                      value={customerUploadModal.form.expiry_date}
-                      onChange={(event) => handleCustomerUploadChange("expiry_date", event.target.value)}
-                    />
-                  </label>
+                          <label className="form-field">
+                            <FormLabel>Document Date</FormLabel>
+                            <input
+                              type="date"
+                              value={document.document_date}
+                              onChange={(event) =>
+                                handleCustomerUploadChange(index, "document_date", event.target.value)
+                              }
+                            />
+                          </label>
 
-                  <label className="form-field">
-                    <FormLabel required>Choose File</FormLabel>
-                    <input
-                      type="file"
-                      required
-                      onChange={(event) =>
-                        handleCustomerUploadChange("file", event.target.files?.[0] || null)
-                      }
-                    />
-                  </label>
+                          <label className="form-field">
+                            <FormLabel>Expiry Date</FormLabel>
+                            <input
+                              type="date"
+                              value={document.expiry_date}
+                              onChange={(event) =>
+                                handleCustomerUploadChange(index, "expiry_date", event.target.value)
+                              }
+                            />
+                          </label>
 
-                  <label className="form-field">
-                    <FormLabel>Remarks</FormLabel>
-                    <textarea
-                      rows="3"
-                      value={customerUploadModal.form.remarks}
-                      onChange={(event) => handleCustomerUploadChange("remarks", event.target.value)}
-                    />
-                  </label>
+                          <label className="form-field">
+                            <FormLabel required>Choose File</FormLabel>
+                            <input
+                              type="file"
+                              required
+                              onChange={(event) =>
+                                handleCustomerUploadChange(index, "file", event.target.files?.[0] || null)
+                              }
+                            />
+                          </label>
+
+                          <label className="form-field">
+                            <FormLabel>Remarks</FormLabel>
+                            <textarea
+                              rows="3"
+                              value={document.remarks}
+                              onChange={(event) =>
+                                handleCustomerUploadChange(index, "remarks", event.target.value)
+                              }
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="form-actions form-actions--stacked">
+                    <button type="button" className="secondary-button" onClick={addCustomerUploadDocument}>
+                      + Add Another Document
+                    </button>
+                  </div>
 
                   <div className="form-actions">
                     <button type="submit" className="primary-button" disabled={customerUploadModal.uploading}>
                       {customerUploadModal.uploading ? (
                         <ButtonSpinner label="Uploading..." />
                       ) : (
-                        "Upload Document"
+                        "Upload Documents"
                       )}
                     </button>
                   </div>

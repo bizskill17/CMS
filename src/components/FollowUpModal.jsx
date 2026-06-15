@@ -12,7 +12,9 @@ const initialFormState = {
 };
 
 const modeOptions = ["Call", "WhatsApp", "Email", "Visit", "SMS", "Other"];
-const statusOptions = ["Pending", "Done", "Interested", "Not Interested", "No Response", "Converted"];
+const defaultStatusOptions = ["Pending", "Done", "Interested", "Not Interested", "No Response", "Converted"];
+const renewalStatusOptions = [...defaultStatusOptions, "Follow Up Again", "Inactive"];
+const paymentStatusOptions = [...defaultStatusOptions, "Follow Up Again"];
 
 export default function FollowUpModal({
   isOpen,
@@ -20,12 +22,20 @@ export default function FollowUpModal({
   policy,
   policyType,
   users = [],
+  statusOptions,
   saving = false,
   error = "",
   onClose,
   onSubmit
 }) {
   const [formState, setFormState] = useState(initialFormState);
+  const resolvedStatusOptions =
+    statusOptions ||
+    (policyType === "Renewal"
+      ? renewalStatusOptions
+      : policyType === "Payment"
+        ? paymentStatusOptions
+        : defaultStatusOptions);
 
   useEffect(() => {
     if (!isOpen) {
@@ -141,7 +151,7 @@ export default function FollowUpModal({
                 value={formState.status}
                 onChange={(event) => handleChange("status", event.target.value)}
               >
-                {statusOptions.map((status) => (
+                {resolvedStatusOptions.map((status) => (
                   <option key={status} value={status}>
                     {status}
                   </option>

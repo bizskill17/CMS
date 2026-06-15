@@ -1129,6 +1129,50 @@ button {
   grid-column: 1 / -1;
 }
 
+.customer-document-list {
+  display: grid;
+  gap: 14px;
+  grid-column: 1 / -1;
+}
+
+.customer-document-card {
+  border: 1px solid #d7e1f1;
+  border-radius: 18px;
+  padding: 16px;
+  background: #f8fbff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.customer-document-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.customer-document-card__header h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.customer-document-card__grid {
+  display: grid;
+  gap: 14px;
+}
+
+.customer-document-card__grid > .form-field:has(textarea),
+.customer-document-card__grid > .form-field:has(input[type="file"]) {
+  grid-column: 1 / -1;
+}
+
+.form-actions--stacked {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .text-blue {
   color: #2d57d7;
   font-weight: 600;
@@ -1723,6 +1767,23 @@ button {
 
   .master-form {
     gap: 12px;
+  }
+
+  .customer-document-card {
+    padding: 14px;
+  }
+
+  .customer-document-card__header {
+    align-items: flex-start;
+  }
+
+  .customer-document-card__header .text-button {
+    padding-left: 0;
+  }
+
+  .form-actions--stacked .secondary-button {
+    width: 100%;
+    min-height: 46px;
   }
 
   .form-field {
