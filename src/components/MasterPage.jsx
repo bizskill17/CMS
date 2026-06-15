@@ -7,6 +7,7 @@ import { downloadCsv } from "../utils/export";
 import { formatAccountType, formatCellValue } from "../utils/formatting";
 import FormLabel from "./FormLabel";
 import MultiSelectFilter from "./MultiSelectFilter";
+import TablePagination from "./TablePagination";
 import { ButtonSpinner, Spinner } from "./Spinner";
 
 async function readApiJson(response) {
@@ -253,6 +254,8 @@ export default function MasterPage({ resourceKey }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [relatedPoliciesModal, setRelatedPoliciesModal] = useState({
@@ -320,6 +323,16 @@ export default function MasterPage({ resourceKey }) {
     setActiveFilters(Object.fromEntries(filterConfigs.map((filter) => [filter.key, []])));
   }, [filterConfigs]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilters, pageSize, resourceKey, records, filterConfigs]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   const filteredRecords = useMemo(
     () => filterRecords(records, { searchTerm, searchKeys, activeFilters }),
     [records, searchTerm, searchKeys, activeFilters]
@@ -329,12 +342,18 @@ export default function MasterPage({ resourceKey }) {
     () => sortRecords(filteredRecords, sortConfig),
     [filteredRecords, sortConfig]
   );
+  const totalPages = Math.max(1, Math.ceil(sortedRecords.length / pageSize));
+  const pageStart = (currentPage - 1) * pageSize;
+  const paginatedRecords = useMemo(
+    () => sortedRecords.slice(pageStart, pageStart + pageSize),
+    [pageSize, pageStart, sortedRecords]
+  );
 
   const groupedRecords = useMemo(() => {
     if (resourceKey !== "cities") return null;
 
     const groups = {};
-    sortedRecords.forEach((record) => {
+    paginatedRecords.forEach((record) => {
       const stateName = record.state_name || "Unknown State";
       if (!groups[stateName]) {
         groups[stateName] = [];
@@ -342,7 +361,7 @@ export default function MasterPage({ resourceKey }) {
       groups[stateName].push(record);
     });
     return groups;
-  }, [resourceKey, sortedRecords]);
+  }, [paginatedRecords, resourceKey]);
 
   useEffect(() => {
     setMessage("");
@@ -1208,59 +1227,65 @@ export default function MasterPage({ resourceKey }) {
                         </td>
                       </tr>
                     ) : resourceKey === "cities" && groupedRecords ? (
-                      Object.entries(groupedRecords).map(([stateName, recordsInState]) => (
-                        <Fragment key={stateName}>
-                          <tr className="table-group-header">
-                            <td
-	                              colSpan={config.tableColumns.length + (isSettingsView ? 1 : 2)}
-                              style={{ fontWeight: "bold", backgroundColor: "#f0f4ff", color: "#2d57d7" }}
-                            >
-                              {stateName}
-                            </td>
-                          </tr>
-                          {recordsInState.map((record, index) => (
-                            <tr key={record.id}>
-                              <td>{index + 1}</td>
-                              {config.tableColumns.map((column) => {
-                                const isName =
-                                  column.key.toLowerCase().includes("name") ||
-                                  column.key.toLowerCase().includes("customer") ||
-                                  column.key.toLowerCase().includes("company") ||
-                                  column.key.toLowerCase().includes("agent");
-
-                                return (
-                                  <td key={`${record.id}-${column.key}`} className={isName ? "text-blue" : ""}>
-                                    {column.formatter === "account_type"
-                                      ? formatAccountType(record[column.key])
-                                      : column.type === "boolean"
-                                      ? record[column.key]
-                                        ? "Yes"
-                                        : "No"
-                                      : column.type === "image" && record[column.key]
-                                      ? (
-                                        <img 
-                                          src={
-                                            /^https?:\/\//i.test(record[column.key])
-                                              ? record[column.key]
-                                              : `${API_BASE}/${String(record[column.key]).replace(/^\/+/, "")}`
-                                          } 
-                                          alt="Logo" 
-                                          className="master-table__logo"
-                                        />
-                                      )
-                                      : formatCellValue(record[column.key])}
-                                  </td>
-                                );
-                              })}
-	                              {isSettingsView ? null : <td>{renderRowActions(record)}</td>}
+                      (() => {
+                        let runningIndex = pageStart;
+                        return Object.entries(groupedRecords).map(([stateName, recordsInState]) => (
+                          <Fragment key={stateName}>
+                            <tr className="table-group-header">
+                              <td
+		                                colSpan={config.tableColumns.length + (isSettingsView ? 1 : 2)}
+                                style={{ fontWeight: "bold", backgroundColor: "#f0f4ff", color: "#2d57d7" }}
+                              >
+                                {stateName}
+                              </td>
                             </tr>
-                          ))}
-                        </Fragment>
-                      ))
+                            {recordsInState.map((record) => {
+                              runningIndex += 1;
+                              return (
+                                <tr key={record.id}>
+                                  <td>{runningIndex}</td>
+                                  {config.tableColumns.map((column) => {
+                                    const isName =
+                                      column.key.toLowerCase().includes("name") ||
+                                      column.key.toLowerCase().includes("customer") ||
+                                      column.key.toLowerCase().includes("company") ||
+                                      column.key.toLowerCase().includes("agent");
+
+                                    return (
+                                      <td key={`${record.id}-${column.key}`} className={isName ? "text-blue" : ""}>
+                                        {column.formatter === "account_type"
+                                          ? formatAccountType(record[column.key])
+                                          : column.type === "boolean"
+                                          ? record[column.key]
+                                            ? "Yes"
+                                            : "No"
+                                          : column.type === "image" && record[column.key]
+                                          ? (
+                                            <img 
+                                              src={
+                                                /^https?:\/\//i.test(record[column.key])
+                                                  ? record[column.key]
+                                                  : `${API_BASE}/${String(record[column.key]).replace(/^\/+/, "")}`
+                                              } 
+                                              alt="Logo" 
+                                              className="master-table__logo"
+                                            />
+                                          )
+                                          : formatCellValue(record[column.key])}
+                                      </td>
+                                    );
+                                  })}
+		                                {isSettingsView ? null : <td>{renderRowActions(record)}</td>}
+                                </tr>
+                              );
+                            })}
+                          </Fragment>
+                        ));
+                      })()
                     ) : (
-                      sortedRecords.map((record, index) => (
+                      paginatedRecords.map((record, index) => (
                         <tr key={record.id}>
-                          <td>{index + 1}</td>
+                          <td>{pageStart + index + 1}</td>
                           {config.tableColumns.map((column) => {
                             const isName =
                               column.key.toLowerCase().includes("name") ||
@@ -1297,10 +1322,19 @@ export default function MasterPage({ resourceKey }) {
                       ))
                     )}
                   </tbody>
-                </table>
-              </div>
-            </>
-          )}
+	                </table>
+	              </div>
+                {sortedRecords.length > 0 ? (
+                  <TablePagination
+                    currentPage={currentPage}
+                    pageSize={pageSize}
+                    totalItems={sortedRecords.length}
+                    onPageChange={setCurrentPage}
+                    onPageSizeChange={setPageSize}
+                  />
+                ) : null}
+	            </>
+	          )}
 
           {message ? <p className="feedback feedback--success">{message}</p> : null}
           {error && !isFormOpen ? <p className="feedback feedback--error">{error}</p> : null}

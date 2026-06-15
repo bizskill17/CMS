@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ActionIconDisplay } from "./ActionIcon";
 import MultiSelectFilter from "./MultiSelectFilter";
 import { Spinner } from "./Spinner";
+import TablePagination from "./TablePagination";
 import { downloadCsv } from "../utils/export";
 import { filterRecords, getRecordValue, sortRecords } from "../utils/dataView";
 import { formatCellValue } from "../utils/formatting";
@@ -87,6 +88,8 @@ export default function ResponsiveDataView({
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState(initialSort);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [activeFilters, setActiveFilters] = useState(() =>
     Object.fromEntries(filterConfigs.map((filter) => [filter.key, []]))
   );
@@ -104,6 +107,22 @@ export default function ResponsiveDataView({
     () => sortRecords(filteredRecords, sortConfig),
     [filteredRecords, sortConfig]
   );
+  const totalPages = Math.max(1, Math.ceil(sortedRecords.length / pageSize));
+  const pageStart = (currentPage - 1) * pageSize;
+  const paginatedRecords = useMemo(
+    () => sortedRecords.slice(pageStart, pageStart + pageSize),
+    [pageSize, pageStart, sortedRecords]
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilters, pageSize, records, filterConfigs, title]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const handleSort = (key) => {
     setSortConfig((current) => {
@@ -199,81 +218,94 @@ export default function ResponsiveDataView({
       ) : error ? (
         <p className="feedback feedback--error">{error}</p>
       ) : (
-        <div className="table-wrap">
-          <table className="master-table">
-            <colgroup>
-              <col style={{ width: "72px", minWidth: "72px", maxWidth: "72px" }} />
-              {columns.map((col) => (
-                <col key={col.key} style={getColumnWidthStyle(col)} />
-              ))}
-              {renderActions ? (
-                <col style={{ width: "150px", minWidth: "150px", maxWidth: "150px" }} />
-              ) : null}
-            </colgroup>
-            <thead>
-              <tr>
-                <th style={{ width: "72px", minWidth: "72px", maxWidth: "72px" }}>Sl.No.</th>
+        <>
+          <div className="table-wrap">
+            <table className="master-table">
+              <colgroup>
+                <col style={{ width: "72px", minWidth: "72px", maxWidth: "72px" }} />
                 {columns.map((col) => (
-                  <th
-                    key={col.key}
-                    onClick={() => handleSort(col.key)}
-                    style={{ cursor: "pointer", ...getColumnWidthStyle(col) }}
-                  >
-                    {col.label}
-                    {sortConfig?.key === col.key ? (
-                      <span>{sortConfig.direction === "asc" ? " ^" : " v"}</span>
-                    ) : null}
-                  </th>
+                  <col key={col.key} style={getColumnWidthStyle(col)} />
                 ))}
                 {renderActions ? (
-                  <th style={{ width: "150px", minWidth: "150px", maxWidth: "150px" }}>Action</th>
+                  <col style={{ width: "150px", minWidth: "150px", maxWidth: "150px" }} />
                 ) : null}
-              </tr>
-            </thead>
-            <tbody>
-              {sortedRecords.length === 0 ? (
+              </colgroup>
+              <thead>
                 <tr>
-                  <td colSpan={columns.length + (renderActions ? 2 : 1)} className="table-state">
-                    {emptyMessage}
-                  </td>
+                  <th style={{ width: "72px", minWidth: "72px", maxWidth: "72px" }}>Sl.No.</th>
+                  {columns.map((col) => (
+                    <th
+                      key={col.key}
+                      onClick={() => handleSort(col.key)}
+                      style={{ cursor: "pointer", ...getColumnWidthStyle(col) }}
+                    >
+                      {col.label}
+                      {sortConfig?.key === col.key ? (
+                        <span>{sortConfig.direction === "asc" ? " ^" : " v"}</span>
+                      ) : null}
+                    </th>
+                  ))}
+                  {renderActions ? (
+                    <th style={{ width: "150px", minWidth: "150px", maxWidth: "150px" }}>Action</th>
+                  ) : null}
                 </tr>
-              ) : (
-                sortedRecords.map((record, index) => (
-                  <tr key={record[rowKey] ?? index}>
-                    <td style={{ width: "72px", minWidth: "72px", maxWidth: "72px" }}>{index + 1}</td>
-                    {columns.map((col) => {
-                      const isName =
-                        col.key.toLowerCase().includes("name") ||
-                        col.key.toLowerCase().includes("customer") ||
-                        col.key.toLowerCase().includes("company") ||
-                        col.key.toLowerCase().includes("agent");
-
-                      return (
-                        <td
-                          key={col.key}
-                          style={getColumnWidthStyle(col)}
-                          className={[
-                            col.highlight || isName ? "text-blue" : "",
-                            col.className || ""
-                          ]
-                            .filter(Boolean)
-                            .join(" ")}
-                        >
-                          {formatCellValue(getRecordValue(record, col.key))}
-                        </td>
-                      );
-                    })}
-                    {renderActions ? (
-                      <td style={{ width: "150px", minWidth: "150px", maxWidth: "150px" }}>
-                        <div className="table-actions">{renderActions(record)}</div>
-                      </td>
-                    ) : null}
+              </thead>
+              <tbody>
+                {sortedRecords.length === 0 ? (
+                  <tr>
+                    <td colSpan={columns.length + (renderActions ? 2 : 1)} className="table-state">
+                      {emptyMessage}
+                    </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  paginatedRecords.map((record, index) => (
+                    <tr key={record[rowKey] ?? index}>
+                      <td style={{ width: "72px", minWidth: "72px", maxWidth: "72px" }}>
+                        {pageStart + index + 1}
+                      </td>
+                      {columns.map((col) => {
+                        const isName =
+                          col.key.toLowerCase().includes("name") ||
+                          col.key.toLowerCase().includes("customer") ||
+                          col.key.toLowerCase().includes("company") ||
+                          col.key.toLowerCase().includes("agent");
+
+                        return (
+                          <td
+                            key={col.key}
+                            style={getColumnWidthStyle(col)}
+                            className={[
+                              col.highlight || isName ? "text-blue" : "",
+                              col.className || ""
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
+                          >
+                            {formatCellValue(getRecordValue(record, col.key))}
+                          </td>
+                        );
+                      })}
+                      {renderActions ? (
+                        <td style={{ width: "150px", minWidth: "150px", maxWidth: "150px" }}>
+                          <div className="table-actions">{renderActions(record)}</div>
+                        </td>
+                      ) : null}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          {sortedRecords.length > 0 ? (
+            <TablePagination
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalItems={sortedRecords.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+            />
+          ) : null}
+        </>
       )}
     </>
   );
