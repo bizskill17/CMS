@@ -1080,6 +1080,18 @@ button {
   background: #2d57d7;
 }
 
+.primary-button__icon,
+.primary-button__label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.primary-button__icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
 .secondary-button {
   border-radius: 9px;
   background: #2d57d7;
@@ -1421,6 +1433,7 @@ button {
   }
 
   .master-card__actions .master-list-toolbar__search {
+    flex-basis: 100%;
     max-width: none;
   }
 
@@ -1442,20 +1455,43 @@ button {
   .master-card__actions {
     align-items: center;
     flex-direction: row;
-    width: auto;
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
     gap: 8px;
   }
 
   .master-card__actions--header {
-    width: auto;
+    width: 100%;
     flex: 1;
-    justify-content: flex-end;
+    justify-content: flex-start;
   }
 
   .master-card__actions--header .primary-button {
     order: 0;
     padding: 10px 14px;
     font-size: 14px;
+  }
+
+  .master-card__actions--header .icon-toggle-button--toolbar {
+    order: 2;
+  }
+
+  .master-card__actions--header .primary-button--add {
+    min-width: 44px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 12px;
+    font-size: 20px;
+  }
+
+  .master-card__actions--header .primary-button--add .primary-button__label {
+    display: none;
+  }
+
+  .master-card__actions--header .primary-button--add .primary-button__icon {
+    font-size: 22px;
   }
 
   .dashboard-table__item {

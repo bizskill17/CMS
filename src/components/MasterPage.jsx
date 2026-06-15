@@ -892,8 +892,17 @@ export default function MasterPage({ resourceKey }) {
               >
                 Upload
               </button>
-              <button type="button" className="primary-button primary-button--add" onClick={handleAdd}>
-                + Add
+              <button
+                type="button"
+                className="primary-button primary-button--add"
+                onClick={handleAdd}
+                aria-label="Add record"
+                title="Add"
+              >
+                <span className="primary-button__icon" aria-hidden="true">
+                  +
+                </span>
+                <span className="primary-button__label">Add</span>
               </button>
             </div>
           </div>
