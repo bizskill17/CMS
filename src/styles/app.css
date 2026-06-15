@@ -1495,6 +1495,53 @@ button {
   font-weight: 600;
 }
 
+@media (max-width: 900px) {
+  .table-pagination {
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 10px;
+  }
+
+  .table-pagination__controls,
+  .table-pagination__size {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .table-pagination__controls {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .table-pagination__icon,
+  .table-pagination__page {
+    min-width: 28px;
+    width: 28px;
+    height: 32px;
+    font-size: 12px;
+    border-radius: 8px;
+    padding: 0;
+  }
+
+  .table-pagination__size {
+    flex: 0 0 auto;
+    font-size: 12px;
+  }
+
+  .table-pagination__select-wrap select {
+    min-width: 64px;
+    height: 34px;
+    padding: 0 28px 0 10px;
+    font-size: 12px;
+  }
+
+  .table-pagination__size span {
+    white-space: nowrap;
+    font-size: 12px;
+  }
+}
+
 .spinner-wrap {
   display: inline-flex;
   align-items: center;
