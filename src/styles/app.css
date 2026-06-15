@@ -1370,13 +1370,13 @@ button {
   .master-table {
     width: max-content;
     min-width: 100%;
-    table-layout: auto;
+    table-layout: fixed;
   }
 
   .master-table th,
   .master-table td {
     white-space: normal;
-    word-break: normal;
+    word-break: break-word;
     overflow-wrap: anywhere;
   }
 }

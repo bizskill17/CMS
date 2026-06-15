@@ -6,6 +6,68 @@ import { downloadCsv } from "../utils/export";
 import { filterRecords, getRecordValue, sortRecords } from "../utils/dataView";
 import { formatCellValue } from "../utils/formatting";
 
+function getColumnWidthStyle(column, fallback = "140px") {
+  if (column.width) {
+    return {
+      width: column.width,
+      minWidth: column.width,
+      maxWidth: column.width
+    };
+  }
+
+  const key = String(column.key || "").toLowerCase();
+  const label = String(column.label || "").toLowerCase();
+  const token = `${key} ${label}`;
+
+  let width = fallback;
+
+  if (token.includes("issue date") || token.includes("expiry date") || token.includes("follow up date")) {
+    width = "120px";
+  } else if (
+    token.includes("policy no") ||
+    token.includes("document no") ||
+    token.includes("code") ||
+    token.includes("mobile")
+  ) {
+    width = "110px";
+  } else if (token.includes("customer group") || token.includes("group")) {
+    width = "170px";
+  } else if (
+    token.includes("insurance company") ||
+    token.includes("company")
+  ) {
+    width = "240px";
+  } else if (token.includes("customer") || token.includes("agent")) {
+    width = "145px";
+  } else if (token.includes("product")) {
+    width = "170px";
+  } else if (
+    token.includes("premium") ||
+    token.includes("amount") ||
+    token.includes("received") ||
+    token.includes("pending")
+  ) {
+    width = "120px";
+  } else if (
+    token.includes("status") ||
+    token.includes("active") ||
+    token.includes("payment by") ||
+    token.includes("payment mode") ||
+    token.includes("policy type") ||
+    token.includes("business type")
+  ) {
+    width = "110px";
+  } else if (token.includes("remarks")) {
+    width = "220px";
+  }
+
+  return {
+    width,
+    minWidth: width,
+    maxWidth: width
+  };
+}
+
 export default function ResponsiveDataView({
   title,
   records,
@@ -139,18 +201,33 @@ export default function ResponsiveDataView({
       ) : (
         <div className="table-wrap">
           <table className="master-table">
+            <colgroup>
+              <col style={{ width: "72px", minWidth: "72px", maxWidth: "72px" }} />
+              {columns.map((col) => (
+                <col key={col.key} style={getColumnWidthStyle(col)} />
+              ))}
+              {renderActions ? (
+                <col style={{ width: "150px", minWidth: "150px", maxWidth: "150px" }} />
+              ) : null}
+            </colgroup>
             <thead>
               <tr>
-                <th>Sl.No.</th>
+                <th style={{ width: "72px", minWidth: "72px", maxWidth: "72px" }}>Sl.No.</th>
                 {columns.map((col) => (
-                  <th key={col.key} onClick={() => handleSort(col.key)} style={{ cursor: "pointer" }}>
+                  <th
+                    key={col.key}
+                    onClick={() => handleSort(col.key)}
+                    style={{ cursor: "pointer", ...getColumnWidthStyle(col) }}
+                  >
                     {col.label}
                     {sortConfig?.key === col.key ? (
                       <span>{sortConfig.direction === "asc" ? " ^" : " v"}</span>
                     ) : null}
                   </th>
                 ))}
-                {renderActions ? <th>Action</th> : null}
+                {renderActions ? (
+                  <th style={{ width: "150px", minWidth: "150px", maxWidth: "150px" }}>Action</th>
+                ) : null}
               </tr>
             </thead>
             <tbody>
@@ -163,7 +240,7 @@ export default function ResponsiveDataView({
               ) : (
                 sortedRecords.map((record, index) => (
                   <tr key={record[rowKey] ?? index}>
-                    <td>{index + 1}</td>
+                    <td style={{ width: "72px", minWidth: "72px", maxWidth: "72px" }}>{index + 1}</td>
                     {columns.map((col) => {
                       const isName =
                         col.key.toLowerCase().includes("name") ||
@@ -174,6 +251,7 @@ export default function ResponsiveDataView({
                       return (
                         <td
                           key={col.key}
+                          style={getColumnWidthStyle(col)}
                           className={[
                             col.highlight || isName ? "text-blue" : "",
                             col.className || ""
@@ -186,7 +264,7 @@ export default function ResponsiveDataView({
                       );
                     })}
                     {renderActions ? (
-                      <td>
+                      <td style={{ width: "150px", minWidth: "150px", maxWidth: "150px" }}>
                         <div className="table-actions">{renderActions(record)}</div>
                       </td>
                     ) : null}
