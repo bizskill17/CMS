@@ -1439,7 +1439,7 @@ button {
   border: none;
   border-radius: 10px;
   background: transparent;
-  color: #4d6ba7;
+  color: #2f4f93;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
@@ -1519,7 +1519,7 @@ button {
     min-width: 28px;
     width: 28px;
     height: 32px;
-    font-size: 12px;
+    font-size: 15px;
     border-radius: 8px;
     padding: 0;
   }
