@@ -99,6 +99,8 @@ export default function AllPoliciesPage() {
 
   const filterConfigs = useMemo(
     () => [
+      { key: "customer_name", label: "Customer", options: buildFilterOptions(records, "customer_name") },
+      { key: "customer_group_name", label: "Group", options: buildFilterOptions(records, "customer_group_name") },
       { key: "company_name", label: "Company", options: buildFilterOptions(records, "company_name") },
       { key: "policy_type", label: "Policy Type", options: buildFilterOptions(records, "policy_type") },
       { key: "business_type", label: "Business Type", options: buildFilterOptions(records, "business_type") },

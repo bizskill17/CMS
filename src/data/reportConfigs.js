@@ -13,6 +13,8 @@ export const reportConfigs = {
       "policy_type"
     ],
     filters: [
+      { key: "customer_name", label: "Customer" },
+      { key: "customer_group_name", label: "Group" },
       { key: "company_name", label: "Company" },
       { key: "policy_type", label: "Policy Type" },
       { key: "business_type", label: "Business Type" }
@@ -44,6 +46,8 @@ export const reportConfigs = {
       "policy_type"
     ],
     filters: [
+      { key: "customer_name", label: "Customer" },
+      { key: "customer_group_name", label: "Group" },
       { key: "company_name", label: "Company" },
       { key: "policy_type", label: "Policy Type" },
       { key: "business_type", label: "Business Type" }
@@ -75,6 +79,8 @@ export const reportConfigs = {
       "policy_type"
     ],
     filters: [
+      { key: "customer_name", label: "Customer" },
+      { key: "customer_group_name", label: "Group" },
       { key: "company_name", label: "Company" },
       { key: "policy_type", label: "Policy Type" },
       { key: "business_type", label: "Business Type" }
@@ -106,6 +112,7 @@ export const reportConfigs = {
       "reference_number"
     ],
     filters: [
+      { key: "customer_name", label: "Customer" },
       { key: "company_name", label: "Company" },
       { key: "payment_mode", label: "Payment Mode" },
       { key: "payment_status", label: "Payment Status" }

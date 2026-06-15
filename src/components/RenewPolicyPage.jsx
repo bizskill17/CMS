@@ -310,6 +310,7 @@ export default function RenewPolicyPage() {
 
   const filterConfigs = useMemo(
     () => [
+      { key: "customer_name", label: "Customer", options: buildFilterOptions(records, "customer_name") },
       { key: "company_name", label: "Company", options: buildFilterOptions(records, "company_name") },
       { key: "product_name", label: "Product", options: buildFilterOptions(records, "product_name") },
       { key: "policy_type", label: "Policy Type", options: buildFilterOptions(records, "policy_type") },
