@@ -45,11 +45,11 @@ const columns = [
   { key: "customer_group_name", label: "Family", highlight: true },
   { key: "policy_count", label: "Total Policies" },
   { key: "policy_number", label: "First Policy No." },
+  { key: "issue_date", label: "Issue Date" },
   { key: "customer_name", label: "Customer", highlight: true },
   { key: "company_name", label: "Insurance Company", highlight: true },
   { key: "product_name", label: "Product Name", highlight: true },
   { key: "policy_type", label: "Policy Type" },
-  { key: "issue_date", label: "Issue Date" },
   { key: "risk_end_date", label: "Risk End" },
   { key: "policy_status", label: "Status" }
 ];
@@ -209,12 +209,12 @@ export default function FamilywisePoliciesPage() {
                     <thead>
                       <tr>
                         <th>Policy No.</th>
+                        <th>Issue Date</th>
                         <th>Customer</th>
                         <th>Company</th>
                         <th>Product</th>
                         <th>Policy Type</th>
                         <th>Business Type</th>
-                        <th>Issue Date</th>
                         <th>Risk End</th>
                         <th>Status</th>
                       </tr>
@@ -230,12 +230,12 @@ export default function FamilywisePoliciesPage() {
                         familyModal.policies.map((policy) => (
                           <tr key={policy.id}>
                             <td>{formatCellValue(policy.policy_number)}</td>
+                            <td>{formatCellValue(policy.issue_date)}</td>
                             <td className="text-blue">{formatCellValue(policy.customer_name)}</td>
                             <td className="text-blue">{formatCellValue(policy.company_name)}</td>
                             <td className="text-blue">{formatCellValue(policy.product_name)}</td>
                             <td>{formatCellValue(policy.policy_type)}</td>
                             <td>{formatCellValue(policy.business_type)}</td>
-                            <td>{formatCellValue(policy.issue_date)}</td>
                             <td>{formatCellValue(policy.risk_end_date)}</td>
                             <td>{formatCellValue(policy.policy_status)}</td>
                           </tr>

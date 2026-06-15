@@ -698,6 +698,155 @@ try {
         exit;
     }
 
+    if ($path === '/api/customers/upload-document' && $method === 'POST') {
+        $pdo = Database::connection();
+
+        $customerId = isset($_POST['customer_id']) ? (int) $_POST['customer_id'] : 0;
+        $documentTypeId = isset($_POST['document_type_id']) ? (int) $_POST['document_type_id'] : 0;
+
+        if ($customerId <= 0) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Customer is required.'
+            ], 422);
+            exit;
+        }
+
+        if ($documentTypeId <= 0) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Document type is required.'
+            ], 422);
+            exit;
+        }
+
+        if (!isset($_FILES['file']) || !is_array($_FILES['file']) || (int) $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'A file upload is required.'
+            ], 422);
+            exit;
+        }
+
+        $customerStatement = $pdo->prepare('SELECT id FROM customers WHERE id = :id');
+        $customerStatement->bindValue(':id', $customerId, PDO::PARAM_INT);
+        $customerStatement->execute();
+
+        if (!$customerStatement->fetchColumn()) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Customer not found.'
+            ], 404);
+            exit;
+        }
+
+        $documentTypeStatement = $pdo->prepare('SELECT id, entity_level FROM document_types WHERE id = :id');
+        $documentTypeStatement->bindValue(':id', $documentTypeId, PDO::PARAM_INT);
+        $documentTypeStatement->execute();
+        $documentType = $documentTypeStatement->fetch();
+
+        if (!$documentType) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Document type not found.'
+            ], 404);
+            exit;
+        }
+
+        if (strtolower((string) ($documentType['entity_level'] ?? '')) !== 'customer') {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Selected document type is not valid for customer upload.'
+            ], 422);
+            exit;
+        }
+
+        $uploadDir = dirname(__DIR__) . '/uploads';
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Unable to prepare upload directory.'
+            ], 500);
+            exit;
+        }
+
+        $originalName = (string) $_FILES['file']['name'];
+        $tmpName = (string) $_FILES['file']['tmp_name'];
+        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+        $storedName = uniqid('doc_', true) . ($extension !== '' ? '.' . $extension : '');
+        $targetPath = $uploadDir . '/' . $storedName;
+
+        if (!move_uploaded_file($tmpName, $targetPath)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Failed to save uploaded file.'
+            ], 500);
+            exit;
+        }
+
+        $mimeType = mime_content_type($targetPath) ?: null;
+        $fileSize = filesize($targetPath) ?: null;
+        $documentNumber = trim((string) ($_POST['document_number'] ?? ''));
+        $documentDate = trim((string) ($_POST['document_date'] ?? ''));
+        $expiryDate = trim((string) ($_POST['expiry_date'] ?? ''));
+        $remarks = trim((string) ($_POST['remarks'] ?? ''));
+
+        $statement = $pdo->prepare(
+            'INSERT INTO documents (
+                document_type_id,
+                customer_id,
+                policy_id,
+                file_name,
+                stored_file_name,
+                file_url,
+                file_extension,
+                mime_type,
+                file_size_bytes,
+                document_number,
+                document_date,
+                expiry_date,
+                remarks,
+                uploaded_at,
+                is_active
+             ) VALUES (
+                :document_type_id,
+                :customer_id,
+                NULL,
+                :file_name,
+                :stored_file_name,
+                :file_url,
+                :file_extension,
+                :mime_type,
+                :file_size_bytes,
+                :document_number,
+                :document_date,
+                :expiry_date,
+                :remarks,
+                now(),
+                1
+             )'
+        );
+        $statement->bindValue(':document_type_id', $documentTypeId, PDO::PARAM_INT);
+        $statement->bindValue(':customer_id', $customerId, PDO::PARAM_INT);
+        $statement->bindValue(':file_name', $originalName);
+        $statement->bindValue(':stored_file_name', $storedName);
+        $statement->bindValue(':file_url', 'uploads/' . $storedName);
+        $statement->bindValue(':file_extension', $extension !== '' ? $extension : null);
+        $statement->bindValue(':mime_type', $mimeType);
+        $statement->bindValue(':file_size_bytes', $fileSize, $fileSize !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+        $statement->bindValue(':document_number', $documentNumber !== '' ? $documentNumber : null);
+        $statement->bindValue(':document_date', $documentDate !== '' ? $documentDate : null);
+        $statement->bindValue(':expiry_date', $expiryDate !== '' ? $expiryDate : null);
+        $statement->bindValue(':remarks', $remarks !== '' ? $remarks : null);
+        $statement->execute();
+
+        Response::json([
+            'status' => 'ok',
+            'message' => 'Customer document uploaded successfully.'
+        ], 201);
+        exit;
+    }
+
     if ($path === '/api/payments/pending-client' && $method === 'GET') {
         $pdo = Database::connection();
         $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;

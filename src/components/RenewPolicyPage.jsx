@@ -88,6 +88,7 @@ function buildOldPolicyDetail(policy) {
 const columns = [
   { key: "risk_end_date", label: "Expiry Date" },
   { key: "policy_number", label: "Policy No." },
+  { key: "issue_date", label: "Issue Date" },
   { key: "customer_name", label: "Customer", highlight: true },
   { key: "customer_mobile", label: "Mobile" },
   { key: "customer_group_name", label: "Group", highlight: true },

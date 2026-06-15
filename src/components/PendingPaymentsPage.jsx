@@ -50,10 +50,10 @@ async function readApiJson(response) {
 
 const columns = [
   { key: "policy_number", label: "Policy No." },
+  { key: "issue_date", label: "Issue Date" },
   { key: "customer_name", label: "Customer", highlight: true },
   { key: "company_name", label: "Company", highlight: true },
   { key: "policy_type", label: "Policy Type" },
-  { key: "issue_date", label: "Issue Date" },
   { key: "paid_by_type", label: "Payment By" },
   { key: "net_premium", label: "Net Premium" },
   { key: "payment_received_amount", label: "Received" },

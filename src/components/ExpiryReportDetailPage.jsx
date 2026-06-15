@@ -8,6 +8,7 @@ import FormLabel from "./FormLabel";
 const columns = [
   { key: "risk_end_date", label: "Expiry Date" },
   { key: "policy_number", label: "Policy No." },
+  { key: "issue_date", label: "Issue Date" },
   { key: "customer_name", label: "Customer", highlight: true },
   { key: "customer_group_name", label: "Customer Group", highlight: true },
   { key: "company_name", label: "Insurance Company", highlight: true },

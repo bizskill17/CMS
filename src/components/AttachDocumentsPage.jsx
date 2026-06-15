@@ -36,12 +36,12 @@ async function readApiJson(response) {
 
 const columns = [
   { key: "policy_number", label: "Policy No." },
+  { key: "issue_date", label: "Issue Date" },
   { key: "customer_name", label: "Customer", highlight: true },
   { key: "customer_group_name", label: "Group Name", highlight: true },
   { key: "company_name", label: "Insurance Company", highlight: true },
   { key: "product_name", label: "Product Name", highlight: true },
   { key: "policy_type", label: "Policy Type" },
-  { key: "issue_date", label: "Issue Date" },
   { key: "risk_end_date", label: "Risk Expiry Date" }
 ];
 

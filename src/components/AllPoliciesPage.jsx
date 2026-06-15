@@ -34,6 +34,7 @@ async function readApiJson(response) {
 
 const columns = [
   { key: "policy_number", label: "Policy No." },
+  { key: "issue_date", label: "Issue Date" },
   { key: "customer_name", label: "Customer", highlight: true },
   { key: "customer_group_name", label: "Customer Group", highlight: true },
   { key: "company_name", label: "Insurance Company", highlight: true },
@@ -42,7 +43,6 @@ const columns = [
   { key: "business_type", label: "Business Type" },
   { key: "gross_premium", label: "Gross Premium" },
   { key: "net_premium", label: "Net Premium" },
-  { key: "issue_date", label: "Issue Date" },
   { key: "risk_start_date", label: "Risk Start" },
   { key: "risk_end_date", label: "Risk End" },
   { key: "paid_by_type", label: "Payment By" },

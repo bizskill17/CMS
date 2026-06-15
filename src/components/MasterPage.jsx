@@ -217,6 +217,28 @@ function ViewIcon() {
   );
 }
 
+function UploadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7.5 3.5h6l3 3V18a2 2 0 0 1-2 2h-7A2.5 2.5 0 0 1 5 17.5V6a2.5 2.5 0 0 1 2.5-2.5Z" />
+      <path d="M13.5 3.5V7h3" />
+      <path d="M11 10v5" />
+      <path d="m8.5 12.5 2.5-2.5 2.5 2.5" />
+    </svg>
+  );
+}
+
+function emptyCustomerDocumentState() {
+  return {
+    document_type_id: "",
+    document_number: "",
+    document_date: "",
+    expiry_date: "",
+    remarks: "",
+    file: null
+  };
+}
+
 export default function MasterPage({ resourceKey }) {
   const config = masterConfigs[resourceKey];
   const [records, setRecords] = useState([]);
@@ -247,6 +269,15 @@ export default function MasterPage({ resourceKey }) {
     successCount: 0,
     failureCount: 0,
     errors: []
+  });
+  const [customerUploadModal, setCustomerUploadModal] = useState({
+    isOpen: false,
+    customer: null,
+    documentTypes: [],
+    form: emptyCustomerDocumentState(),
+    loading: false,
+    uploading: false,
+    error: ""
   });
 
   const handleSort = (key) => {
@@ -329,6 +360,7 @@ export default function MasterPage({ resourceKey }) {
       errors: []
     });
     resetRelatedPoliciesModal();
+    resetCustomerUploadModal();
   }, [resourceKey, config]);
 
   useEffect(() => {
@@ -763,6 +795,118 @@ export default function MasterPage({ resourceKey }) {
     });
   };
 
+  const resetCustomerUploadModal = () => {
+    setCustomerUploadModal({
+      isOpen: false,
+      customer: null,
+      documentTypes: [],
+      form: emptyCustomerDocumentState(),
+      loading: false,
+      uploading: false,
+      error: ""
+    });
+  };
+
+  const openCustomerUploadModal = async (record) => {
+    setMessage("");
+    setError("");
+    setCustomerUploadModal({
+      isOpen: true,
+      customer: record,
+      documentTypes: [],
+      form: emptyCustomerDocumentState(),
+      loading: true,
+      uploading: false,
+      error: ""
+    });
+
+    try {
+      const response = await fetch(`${API_BASE}/masters/document-types?limit=250`);
+      const json = await readApiJson(response);
+
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to load document types.");
+      }
+
+      setCustomerUploadModal((current) => ({
+        ...current,
+        documentTypes: (json.data || []).filter(
+          (documentType) => String(documentType.entity_level || "").toLowerCase() === "customer"
+        ),
+        loading: false
+      }));
+    } catch (loadError) {
+      setCustomerUploadModal((current) => ({
+        ...current,
+        loading: false,
+        error: loadError.message
+      }));
+    }
+  };
+
+  const handleCustomerUploadChange = (key, value) => {
+    setCustomerUploadModal((current) => ({
+      ...current,
+      form: {
+        ...current.form,
+        [key]: value
+      }
+    }));
+  };
+
+  const handleCustomerDocumentUpload = async (event) => {
+    event.preventDefault();
+
+    if (!customerUploadModal.customer) {
+      return;
+    }
+
+    setCustomerUploadModal((current) => ({
+      ...current,
+      uploading: true,
+      error: ""
+    }));
+
+    try {
+      const payload = new FormData();
+      payload.append("customer_id", String(customerUploadModal.customer.id));
+      payload.append("document_type_id", customerUploadModal.form.document_type_id);
+      payload.append("document_number", customerUploadModal.form.document_number);
+      payload.append("document_date", customerUploadModal.form.document_date);
+      payload.append("expiry_date", customerUploadModal.form.expiry_date);
+      payload.append("remarks", customerUploadModal.form.remarks);
+
+      if (customerUploadModal.form.file) {
+        payload.append("file", customerUploadModal.form.file);
+      }
+
+      const response = await fetch(`${API_BASE}/customers/upload-document`, {
+        method: "POST",
+        body: payload
+      });
+      const json = await readApiJson(response);
+
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to upload document.");
+      }
+
+      setMessage(json.message || "Customer document uploaded successfully.");
+      resetCustomerUploadModal();
+    } catch (uploadError) {
+      setCustomerUploadModal((current) => ({
+        ...current,
+        uploading: false,
+        error: uploadError.message
+      }));
+      return;
+    }
+
+    setCustomerUploadModal((current) => ({
+      ...current,
+      uploading: false
+    }));
+  };
+
   const handleViewRelatedPolicies = async (record) => {
     setRelatedPoliciesModal({
       isOpen: true,
@@ -800,6 +944,17 @@ export default function MasterPage({ resourceKey }) {
 
   const renderRowActions = (record) => (
     <div className="table-actions">
+      {resourceKey === "customers" ? (
+        <button
+          type="button"
+          className="icon-button icon-button--upload"
+          onClick={() => openCustomerUploadModal(record)}
+          aria-label="Upload customer document"
+          title="Upload customer document"
+        >
+          <UploadIcon />
+        </button>
+      ) : null}
       {resourceKey === "customers" ? (
         <button
           type="button"
@@ -1269,16 +1424,16 @@ export default function MasterPage({ resourceKey }) {
                 <div className="table-wrap">
                   <table className="master-table">
                     <thead>
-                      <tr>
-                        <th>Policy No.</th>
-                        <th>Business Type</th>
-                        <th>Policy Type</th>
-                        <th>Company</th>
-                        <th>Product</th>
-                        <th>Issue Date</th>
-                        <th>Risk Expiry Date</th>
-                        <th>Renewal Status</th>
-                        <th>Status</th>
+	                      <tr>
+	                        <th>Policy No.</th>
+	                        <th>Issue Date</th>
+	                        <th>Business Type</th>
+	                        <th>Policy Type</th>
+	                        <th>Company</th>
+	                        <th>Product</th>
+	                        <th>Risk Expiry Date</th>
+	                        <th>Renewal Status</th>
+	                        <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1290,16 +1445,16 @@ export default function MasterPage({ resourceKey }) {
                         </tr>
                       ) : (
                         relatedPoliciesModal.policies.map((policy) => (
-                          <tr key={policy.id}>
-                            <td>{formatCellValue(policy.policy_number)}</td>
-                            <td>{formatCellValue(policy.business_type)}</td>
-                            <td>{formatCellValue(policy.policy_type)}</td>
-                            <td className="text-blue">{formatCellValue(policy.company_name)}</td>
-                            <td className="text-blue">{formatCellValue(policy.product_name)}</td>
-                            <td>{formatCellValue(policy.issue_date)}</td>
-                            <td>{formatCellValue(policy.risk_end_date)}</td>
-                            <td>{formatCellValue(policy.renewal_status)}</td>
-                            <td>{formatCellValue(policy.policy_status)}</td>
+	                          <tr key={policy.id}>
+	                            <td>{formatCellValue(policy.policy_number)}</td>
+	                            <td>{formatCellValue(policy.issue_date)}</td>
+	                            <td>{formatCellValue(policy.business_type)}</td>
+	                            <td>{formatCellValue(policy.policy_type)}</td>
+	                            <td className="text-blue">{formatCellValue(policy.company_name)}</td>
+	                            <td className="text-blue">{formatCellValue(policy.product_name)}</td>
+	                            <td>{formatCellValue(policy.risk_end_date)}</td>
+	                            <td>{formatCellValue(policy.renewal_status)}</td>
+	                            <td>{formatCellValue(policy.policy_status)}</td>
                           </tr>
                         ))
                       )}
@@ -1307,6 +1462,117 @@ export default function MasterPage({ resourceKey }) {
                   </table>
                 </div>
               )}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {resourceKey === "customers" && customerUploadModal.isOpen ? (
+        <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="customer-upload-title">
+          <div className="master-modal__backdrop" onClick={resetCustomerUploadModal} />
+          <section className="master-card master-modal__panel">
+            <div className="master-card__header">
+              <h3 id="customer-upload-title">Upload Customer Document</h3>
+              <button type="button" className="text-button" onClick={resetCustomerUploadModal}>
+                Cancel
+              </button>
+            </div>
+
+            <div className="master-modal__body">
+              {customerUploadModal.loading ? (
+                <div className="table-state">
+                  <Spinner label="Loading document types..." />
+                </div>
+              ) : (
+                <form className="master-form" onSubmit={handleCustomerDocumentUpload}>
+                  <label className="form-field">
+                    <FormLabel>Customer</FormLabel>
+                    <input type="text" readOnly value={customerUploadModal.customer?.full_name || ""} />
+                  </label>
+
+                  <label className="form-field">
+                    <FormLabel>Customer Code</FormLabel>
+                    <input type="text" readOnly value={customerUploadModal.customer?.customer_code || ""} />
+                  </label>
+
+                  <label className="form-field">
+                    <FormLabel required>Document Type</FormLabel>
+                    <select
+                      value={customerUploadModal.form.document_type_id}
+                      required
+                      onChange={(event) => handleCustomerUploadChange("document_type_id", event.target.value)}
+                    >
+                      <option value="">Select Document Type</option>
+                      {customerUploadModal.documentTypes.map((documentType) => (
+                        <option key={documentType.id} value={documentType.id}>
+                          {documentType.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="form-field">
+                    <FormLabel>Document Number</FormLabel>
+                    <input
+                      type="text"
+                      value={customerUploadModal.form.document_number}
+                      onChange={(event) => handleCustomerUploadChange("document_number", event.target.value)}
+                    />
+                  </label>
+
+                  <label className="form-field">
+                    <FormLabel>Document Date</FormLabel>
+                    <input
+                      type="date"
+                      value={customerUploadModal.form.document_date}
+                      onChange={(event) => handleCustomerUploadChange("document_date", event.target.value)}
+                    />
+                  </label>
+
+                  <label className="form-field">
+                    <FormLabel>Expiry Date</FormLabel>
+                    <input
+                      type="date"
+                      value={customerUploadModal.form.expiry_date}
+                      onChange={(event) => handleCustomerUploadChange("expiry_date", event.target.value)}
+                    />
+                  </label>
+
+                  <label className="form-field">
+                    <FormLabel required>Choose File</FormLabel>
+                    <input
+                      type="file"
+                      required
+                      onChange={(event) =>
+                        handleCustomerUploadChange("file", event.target.files?.[0] || null)
+                      }
+                    />
+                  </label>
+
+                  <label className="form-field">
+                    <FormLabel>Remarks</FormLabel>
+                    <textarea
+                      rows="3"
+                      value={customerUploadModal.form.remarks}
+                      onChange={(event) => handleCustomerUploadChange("remarks", event.target.value)}
+                    />
+                  </label>
+
+                  <div className="form-actions">
+                    <button type="submit" className="primary-button" disabled={customerUploadModal.uploading}>
+                      {customerUploadModal.uploading ? (
+                        <ButtonSpinner label="Uploading..." />
+                      ) : (
+                        "Upload Document"
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {customerUploadModal.error ? (
+                <p className="feedback feedback--error">{customerUploadModal.error}</p>
+              ) : null}
             </div>
           </section>
         </div>

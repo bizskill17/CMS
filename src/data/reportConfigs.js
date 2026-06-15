@@ -21,6 +21,7 @@ export const reportConfigs = {
     ],
     columns: [
       { key: "policy_number", label: "Policy No." },
+      { key: "issue_date", label: "Issue Date" },
       { key: "customer_name", label: "Customer", highlight: true },
       { key: "customer_group_name", label: "Customer Group", highlight: true },
       { key: "company_name", label: "Insurance Company", highlight: true },
@@ -28,8 +29,7 @@ export const reportConfigs = {
       { key: "policy_type", label: "Policy Type" },
       { key: "business_type", label: "Business Type" },
       { key: "gross_premium", label: "Gross Premium" },
-      { key: "net_premium", label: "Net Premium" },
-      { key: "issue_date", label: "Issue Date" }
+      { key: "net_premium", label: "Net Premium" }
     ]
   },
   "policies-this-week": {
@@ -54,6 +54,7 @@ export const reportConfigs = {
     ],
     columns: [
       { key: "policy_number", label: "Policy No." },
+      { key: "issue_date", label: "Issue Date" },
       { key: "customer_name", label: "Customer", highlight: true },
       { key: "customer_group_name", label: "Customer Group", highlight: true },
       { key: "company_name", label: "Insurance Company", highlight: true },
@@ -61,8 +62,7 @@ export const reportConfigs = {
       { key: "policy_type", label: "Policy Type" },
       { key: "business_type", label: "Business Type" },
       { key: "gross_premium", label: "Gross Premium" },
-      { key: "net_premium", label: "Net Premium" },
-      { key: "issue_date", label: "Issue Date" }
+      { key: "net_premium", label: "Net Premium" }
     ]
   },
   "policies-this-month": {
@@ -87,6 +87,7 @@ export const reportConfigs = {
     ],
     columns: [
       { key: "policy_number", label: "Policy No." },
+      { key: "issue_date", label: "Issue Date" },
       { key: "customer_name", label: "Customer", highlight: true },
       { key: "customer_group_name", label: "Customer Group", highlight: true },
       { key: "company_name", label: "Insurance Company", highlight: true },
@@ -94,8 +95,7 @@ export const reportConfigs = {
       { key: "policy_type", label: "Policy Type" },
       { key: "business_type", label: "Business Type" },
       { key: "gross_premium", label: "Gross Premium" },
-      { key: "net_premium", label: "Net Premium" },
-      { key: "issue_date", label: "Issue Date" }
+      { key: "net_premium", label: "Net Premium" }
     ]
   },
   "payments-received": {
