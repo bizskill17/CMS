@@ -1437,10 +1437,10 @@ export default function MasterPage({ resourceKey }) {
         >
           <div className="master-modal__backdrop" onClick={resetRelatedPoliciesModal} />
           <section className="master-card master-modal__panel master-modal__panel--wide">
-            <div className="master-card__header">
-              <h3 id="customer-related-policies-title">
-                Related Policies - {relatedPoliciesModal.customer?.full_name || "Customer"}
-              </h3>
+	            <div className="master-card__header">
+	              <h3 id="customer-related-policies-title">
+	                Related Policies - Customer Name: {relatedPoliciesModal.customer?.full_name || "Customer"}
+	              </h3>
               <button type="button" className="text-button" onClick={resetRelatedPoliciesModal}>
                 Cancel
               </button>
@@ -1522,13 +1522,26 @@ export default function MasterPage({ resourceKey }) {
                                 </td>
                               </tr>
                             ) : (
-                              relatedPoliciesModal.documents.map((document) => (
-                                <tr key={document.id}>
-                                  <td>{formatCellValue(document.document_type_name)}</td>
-                                  <td>{formatCellValue(document.file_name)}</td>
-                                  <td>{formatCellValue(document.document_number)}</td>
-                                  <td>{formatCellValue(document.document_date)}</td>
-                                  <td>{formatCellValue(document.expiry_date)}</td>
+	                              relatedPoliciesModal.documents.map((document) => (
+	                                <tr key={document.id}>
+	                                  <td>{formatCellValue(document.document_type_name)}</td>
+	                                  <td>
+                                      {document.file_url ? (
+                                        <a
+                                          href={`${API_BASE}/${String(document.file_url).replace(/^\/+/, "")}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="text-blue"
+                                        >
+                                          {formatCellValue(document.file_name)}
+                                        </a>
+                                      ) : (
+                                        formatCellValue(document.file_name)
+                                      )}
+                                    </td>
+	                                  <td>{formatCellValue(document.document_number)}</td>
+	                                  <td>{formatCellValue(document.document_date)}</td>
+	                                  <td>{formatCellValue(document.expiry_date)}</td>
                                   <td>{formatCellValue(document.remarks)}</td>
                                   <td>{formatCellValue(document.uploaded_at)}</td>
                                 </tr>
