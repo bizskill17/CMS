@@ -163,7 +163,7 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
             );
           }
 
-          const isOpen = isMobile ? true : openGroup === section.label;
+          const isOpen = openGroup === section.label;
 
           return (
             <section
@@ -175,9 +175,7 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
                 type="button"
                 aria-expanded={isOpen}
                 onClick={() => {
-                  if (!isMobile) {
-                    setOpenGroup(isOpen ? null : section.label);
-                  }
+                  setOpenGroup(isOpen ? null : section.label);
                 }}
               >
                 <span className="menu-card__left">
