@@ -1354,6 +1354,8 @@ button {
   overflow-x: auto;
   overflow-y: hidden;
   width: 100%;
+  padding-bottom: 8px;
+  scrollbar-gutter: stable;
 }
 
 .master-table {
@@ -1366,14 +1368,16 @@ button {
 
 @media (min-width: 901px) {
   .master-table {
-    width: 100%;
-    table-layout: fixed;
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
   }
 
   .master-table th,
   .master-table td {
     white-space: normal;
-    word-break: break-word;
+    word-break: normal;
+    overflow-wrap: anywhere;
   }
 }
 
