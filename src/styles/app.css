@@ -1721,6 +1721,10 @@ button {
     font-weight: 700;
   }
 
+  .responsive-data-view__title {
+    display: none;
+  }
+
   .master-card__actions {
     align-items: center;
     flex-direction: row;

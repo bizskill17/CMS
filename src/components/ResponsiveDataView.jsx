@@ -56,7 +56,7 @@ export default function ResponsiveDataView({
   return (
     <>
       <div className="master-card__header">
-        <span>{title}</span>
+        <span className="responsive-data-view__title">{title}</span>
         <div className="master-card__actions master-card__actions--header">
           <div className="master-list-toolbar__search">
             <input
