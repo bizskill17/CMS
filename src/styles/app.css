@@ -1594,7 +1594,7 @@ button {
   }
 
   .master-modal {
-    align-items: end;
+    align-items: start;
     padding: 8px;
   }
 
