@@ -1144,6 +1144,9 @@ button {
 .primary-button--add {
   background: #2d57d7;
   color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .primary-button--add,
@@ -1663,6 +1666,7 @@ button {
     padding: 0;
     border-radius: 12px;
     font-size: 20px;
+    line-height: 1;
   }
 
   .master-card__actions--header .primary-button--add .primary-button__label {
