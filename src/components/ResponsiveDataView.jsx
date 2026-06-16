@@ -120,6 +120,7 @@ export default function ResponsiveDataView({
     setCurrentPage(1);
     setSearchTerm("");
     setActiveFilters(Object.fromEntries(filterConfigs.map((filter) => [filter.key, []])));
+    setIsFiltersOpen(false);
   }, [title, filterConfigs]);
 
   useEffect(() => {

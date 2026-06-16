@@ -138,8 +138,11 @@ export default function AppLayout() {
   }, []);
 
   useEffect(() => {
-    contentBodyRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    const timer = setTimeout(() => {
+      contentBodyRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }, 0);
     setIsSidebarOpen(false);
+    return () => clearTimeout(timer);
   }, [location.pathname]);
 
   const handleSidebarToggle = () => {

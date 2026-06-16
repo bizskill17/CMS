@@ -120,6 +120,11 @@ export default function ExpiryReportDetailPage() {
   const [expiryDateTo, setExpiryDateTo] = useState("");
 
   useEffect(() => {
+    setIssueDateFrom("");
+    setIssueDateTo("");
+    setExpiryDateFrom("");
+    setExpiryDateTo("");
+
     if (!config) {
       setLoading(false);
       setError("Expiry report configuration not found.");

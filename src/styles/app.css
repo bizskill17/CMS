@@ -379,6 +379,7 @@ button {
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 4px;
+  scroll-behavior: auto;
 }
 
 .page-shell {
