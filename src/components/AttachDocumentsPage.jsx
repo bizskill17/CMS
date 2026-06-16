@@ -410,6 +410,9 @@ export default function AttachDocumentsPage() {
                   </div>
 
 	                <div className="form-actions">
+                    <button type="button" className="secondary-button form-actions__cancel" onClick={resetModal}>
+                      Cancel
+                    </button>
 	                  <button type="submit" className="primary-button" disabled={uploading}>
 	                    {uploading ? <ButtonSpinner label="Uploading..." /> : "Upload Documents"}
 	                  </button>

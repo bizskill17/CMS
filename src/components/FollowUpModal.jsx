@@ -199,6 +199,9 @@ export default function FollowUpModal({
             </label>
 
             <div className="form-actions">
+              <button type="button" className="secondary-button form-actions__cancel" onClick={onClose}>
+                Cancel
+              </button>
               <button type="submit" className="primary-button" disabled={saving}>
                 {saving ? <ButtonSpinner label="Saving..." /> : "Save Follow Up"}
               </button>

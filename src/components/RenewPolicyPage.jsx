@@ -564,6 +564,9 @@ export default function RenewPolicyPage() {
                 </label>
 
                 <div className="form-actions issue-policy-form__actions">
+                  <button type="button" className="secondary-button form-actions__cancel" onClick={resetForm}>
+                    Cancel
+                  </button>
                   <button type="submit" className="primary-button" disabled={saving}>
                     {saving ? <ButtonSpinner label="Saving..." /> : "Save Renewal"}
                   </button>

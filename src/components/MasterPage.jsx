@@ -7,6 +7,7 @@ import { downloadCsv } from "../utils/export";
 import { formatAccountType, formatCellValue } from "../utils/formatting";
 import FormLabel from "./FormLabel";
 import MultiSelectFilter from "./MultiSelectFilter";
+import RecordDetailModal from "./RecordDetailModal";
 import TablePagination from "./TablePagination";
 import { ButtonSpinner, Spinner } from "./Spinner";
 
@@ -240,6 +241,16 @@ function emptyCustomerDocumentEntry() {
   };
 }
 
+function isNameColumn(columnKey) {
+  const normalized = String(columnKey || "").toLowerCase();
+  return (
+    normalized.includes("name") ||
+    normalized.includes("customer") ||
+    normalized.includes("company") ||
+    normalized.includes("agent")
+  );
+}
+
 export default function MasterPage({ resourceKey }) {
   const config = masterConfigs[resourceKey];
   const isSettingsView = resourceKey === "settings";
@@ -284,6 +295,7 @@ export default function MasterPage({ resourceKey }) {
     uploading: false,
     error: ""
   });
+  const [selectedRecord, setSelectedRecord] = useState(null);
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -370,6 +382,7 @@ export default function MasterPage({ resourceKey }) {
     setIsFiltersOpen(false);
     setIsFormOpen(false);
     setEditingId(null);
+    setSelectedRecord(null);
     setFormState(emptyState(config));
     setIsBulkUploadOpen(false);
     setBulkUploadFile(null);
@@ -1076,6 +1089,38 @@ export default function MasterPage({ resourceKey }) {
     </div>
   );
 
+  const buildDetailValue = (record, column) => {
+    if (column.formatter === "account_type") {
+      return formatAccountType(record[column.key]);
+    }
+
+    if (column.type === "boolean") {
+      return record[column.key] ? "Yes" : "No";
+    }
+
+    if (column.type === "image" && record[column.key]) {
+      const imageUrl = /^https?:\/\//i.test(record[column.key])
+        ? record[column.key]
+        : `${API_BASE}/${String(record[column.key]).replace(/^\/+/, "")}`;
+
+      return <img src={imageUrl} alt={column.label} className="master-table__logo" />;
+    }
+
+    return formatCellValue(record[column.key]);
+  };
+
+  const detailRows = useMemo(() => {
+    if (!selectedRecord) {
+      return [];
+    }
+
+    return config.tableColumns.map((column) => ({
+      key: column.key,
+      label: column.label,
+      value: buildDetailValue(selectedRecord, column)
+    }));
+  }, [config.tableColumns, selectedRecord]);
+
   return (
     <div className="master-page">
       <div className="master-grid master-grid--list-only">
@@ -1242,17 +1287,18 @@ export default function MasterPage({ resourceKey }) {
                             {recordsInState.map((record) => {
                               runningIndex += 1;
                               return (
-                                <tr key={record.id}>
+                                <tr
+                                  key={record.id}
+                                  className="master-table__row"
+                                  onClick={() => setSelectedRecord(record)}
+                                >
                                   <td>{runningIndex}</td>
                                   {config.tableColumns.map((column) => {
-                                    const isName =
-                                      column.key.toLowerCase().includes("name") ||
-                                      column.key.toLowerCase().includes("customer") ||
-                                      column.key.toLowerCase().includes("company") ||
-                                      column.key.toLowerCase().includes("agent");
-
                                     return (
-                                      <td key={`${record.id}-${column.key}`} className={isName ? "text-blue" : ""}>
+                                      <td
+                                        key={`${record.id}-${column.key}`}
+                                        className={isNameColumn(column.key) ? "text-blue" : ""}
+                                      >
                                         {column.formatter === "account_type"
                                           ? formatAccountType(record[column.key])
                                           : column.type === "boolean"
@@ -1275,7 +1321,7 @@ export default function MasterPage({ resourceKey }) {
                                       </td>
                                     );
                                   })}
-		                                {isSettingsView ? null : <td>{renderRowActions(record)}</td>}
+		                                {isSettingsView ? null : <td onClick={(event) => event.stopPropagation()}>{renderRowActions(record)}</td>}
                                 </tr>
                               );
                             })}
@@ -1284,17 +1330,18 @@ export default function MasterPage({ resourceKey }) {
                       })()
                     ) : (
                       paginatedRecords.map((record, index) => (
-                        <tr key={record.id}>
+                        <tr
+                          key={record.id}
+                          className="master-table__row"
+                          onClick={() => setSelectedRecord(record)}
+                        >
                           <td>{pageStart + index + 1}</td>
                           {config.tableColumns.map((column) => {
-                            const isName =
-                              column.key.toLowerCase().includes("name") ||
-                              column.key.toLowerCase().includes("customer") ||
-                              column.key.toLowerCase().includes("company") ||
-                              column.key.toLowerCase().includes("agent");
-
                             return (
-                              <td key={`${record.id}-${column.key}`} className={isName ? "text-blue" : ""}>
+                              <td
+                                key={`${record.id}-${column.key}`}
+                                className={isNameColumn(column.key) ? "text-blue" : ""}
+                              >
                                 {column.formatter === "account_type"
                                   ? formatAccountType(record[column.key])
                                   : column.type === "boolean"
@@ -1317,7 +1364,7 @@ export default function MasterPage({ resourceKey }) {
                               </td>
                             );
                           })}
-                            {isSettingsView ? null : <td>{renderRowActions(record)}</td>}
+                            {isSettingsView ? null : <td onClick={(event) => event.stopPropagation()}>{renderRowActions(record)}</td>}
                         </tr>
                       ))
                     )}
@@ -1333,6 +1380,13 @@ export default function MasterPage({ resourceKey }) {
                     onPageSizeChange={setPageSize}
                   />
                 ) : null}
+                <RecordDetailModal
+                  isOpen={Boolean(selectedRecord)}
+                  title={config.title}
+                  rows={detailRows}
+                  actions={!isSettingsView && selectedRecord ? renderRowActions(selectedRecord) : null}
+                  onClose={() => setSelectedRecord(null)}
+                />
 	            </>
 	          )}
 
@@ -1457,6 +1511,9 @@ export default function MasterPage({ resourceKey }) {
                 })}
 
                 <div className="form-actions">
+                  <button type="button" className="secondary-button form-actions__cancel" onClick={resetForm}>
+                    Cancel
+                  </button>
                   <button type="submit" className="primary-button" disabled={saving}>
                     {saving ? <ButtonSpinner label="Saving..." /> : editingId ? "Update Record" : "Save Record"}
                   </button>
@@ -1496,6 +1553,13 @@ export default function MasterPage({ resourceKey }) {
                 </p>
 
                 <div className="form-actions">
+                  <button
+                    type="button"
+                    className="secondary-button form-actions__cancel"
+                    onClick={closeBulkUpload}
+                  >
+                    Cancel
+                  </button>
                   <button type="submit" className="primary-button" disabled={bulkUploading}>
                     {bulkUploading ? <ButtonSpinner label="Uploading..." /> : "Upload Bulk"}
                   </button>
@@ -1799,6 +1863,13 @@ export default function MasterPage({ resourceKey }) {
                   </div>
 
                   <div className="form-actions">
+                    <button
+                      type="button"
+                      className="secondary-button form-actions__cancel"
+                      onClick={resetCustomerUploadModal}
+                    >
+                      Cancel
+                    </button>
                     <button type="submit" className="primary-button" disabled={customerUploadModal.uploading}>
                       {customerUploadModal.uploading ? (
                         <ButtonSpinner label="Uploading..." />

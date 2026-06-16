@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ActionIconDisplay } from "./ActionIcon";
 import MultiSelectFilter from "./MultiSelectFilter";
+import RecordDetailModal from "./RecordDetailModal";
 import { Spinner } from "./Spinner";
 import TablePagination from "./TablePagination";
 import { downloadCsv } from "../utils/export";
@@ -90,6 +91,7 @@ export default function ResponsiveDataView({
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [selectedRecord, setSelectedRecord] = useState(null);
   const [activeFilters, setActiveFilters] = useState(() =>
     Object.fromEntries(filterConfigs.map((filter) => [filter.key, []]))
   );
@@ -133,6 +135,18 @@ export default function ResponsiveDataView({
       return { key, direction: "asc" };
     });
   };
+
+  const detailRows = useMemo(() => {
+    if (!selectedRecord) {
+      return [];
+    }
+
+    return columns.map((column) => ({
+      key: column.key,
+      label: column.label,
+      value: formatCellValue(getRecordValue(selectedRecord, column.key))
+    }));
+  }, [columns, selectedRecord]);
 
   return (
     <>
@@ -259,7 +273,11 @@ export default function ResponsiveDataView({
                   </tr>
                 ) : (
                   paginatedRecords.map((record, index) => (
-                    <tr key={record[rowKey] ?? index}>
+                    <tr
+                      key={record[rowKey] ?? index}
+                      className="master-table__row"
+                      onClick={() => setSelectedRecord(record)}
+                    >
                       <td style={{ width: "72px", minWidth: "72px", maxWidth: "72px" }}>
                         {pageStart + index + 1}
                       </td>
@@ -286,7 +304,10 @@ export default function ResponsiveDataView({
                         );
                       })}
                       {renderActions ? (
-                        <td style={{ width: "150px", minWidth: "150px", maxWidth: "150px" }}>
+                        <td
+                          style={{ width: "150px", minWidth: "150px", maxWidth: "150px" }}
+                          onClick={(event) => event.stopPropagation()}
+                        >
                           <div className="table-actions">{renderActions(record)}</div>
                         </td>
                       ) : null}
@@ -305,6 +326,13 @@ export default function ResponsiveDataView({
               onPageSizeChange={setPageSize}
             />
           ) : null}
+          <RecordDetailModal
+            isOpen={Boolean(selectedRecord)}
+            title={title}
+            rows={detailRows}
+            actions={selectedRecord && renderActions ? renderActions(selectedRecord) : null}
+            onClose={() => setSelectedRecord(null)}
+          />
         </>
       )}
     </>

@@ -504,6 +504,9 @@ export default function PendingPaymentsPage() {
                 </label>
 
                 <div className="form-actions">
+                  <button type="button" className="secondary-button form-actions__cancel" onClick={resetModal}>
+                    Cancel
+                  </button>
                   <button type="submit" className="primary-button" disabled={saving}>
                     {saving ? <ButtonSpinner label="Saving..." /> : "Save Client Payment"}
                   </button>

@@ -1136,6 +1136,10 @@ button {
 .form-actions {
   padding-top: 6px;
   width: 100%;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .master-form > .form-actions,
@@ -1433,6 +1437,15 @@ button {
   background: #eef8ff;
 }
 
+.master-table__row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.master-table__row:hover td {
+  background: #f5f8ff;
+}
+
 .table-state {
   color: var(--text-soft);
   font-size: 14px;
@@ -1468,6 +1481,8 @@ button {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .table-pagination__page.is-active {
@@ -1539,8 +1554,8 @@ button {
 
   .table-pagination__icon,
   .table-pagination__page {
-    min-width: 28px;
-    width: 28px;
+    min-width: 32px;
+    width: 32px;
     height: 32px;
     font-size: 15px;
     border-radius: 8px;
@@ -1613,6 +1628,29 @@ button {
   flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-start;
+}
+
+.record-detail__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.record-detail__actions-label,
+.record-detail__field {
+  color: #2d57d7;
+  font-weight: 700;
+}
+
+.record-detail__table td:last-child {
+  color: var(--text-dark);
+}
+
+.form-actions__cancel {
+  min-width: 120px;
 }
 
 .icon-action-button {
@@ -2011,7 +2049,12 @@ button {
     font-size: 14px;
   }
 
-  .form-actions .primary-button {
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .primary-button,
+  .form-actions .form-actions__cancel {
     width: 100%;
     min-height: 46px;
   }
