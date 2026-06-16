@@ -8,6 +8,7 @@ use App\Database;
 use App\MasterRegistry;
 use App\Response;
 use PDO;
+use PDOException;
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -20,6 +21,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+function singularizeMasterLabel(string $resource): string
+{
+    $label = str_replace('-', ' ', $resource);
+
+    return match ($resource) {
+        'customer-groups' => 'customer group',
+        'customers' => 'customer',
+        'insurance-companies' => 'insurance company',
+        'states' => 'state',
+        'cities' => 'city',
+        'product-categories' => 'product category',
+        'insurance-products' => 'insurance product',
+        'document-types' => 'document type',
+        'users' => 'user',
+        'agents' => 'agent',
+        'agent-accounts' => 'agent account',
+        'settings' => 'settings record',
+        default => rtrim($label, 's'),
+    };
+}
+
+function linkedDeleteMessage(string $resource): string
+{
+    $label = singularizeMasterLabel($resource);
+
+    return sprintf(
+        'Cannot delete this %s because linked records exist. Remove the related records first and try again.',
+        $label
+    );
+}
 
 try {
     if ($path === '/api/health' && $method === 'GET') {
@@ -2074,7 +2106,19 @@ try {
         if ($method === 'DELETE' && $id !== null) {
             $statement = $pdo->prepare(sprintf('DELETE FROM %s WHERE id = :id', $config['table']));
             $statement->bindValue(':id', $id, PDO::PARAM_INT);
-            $statement->execute();
+            try {
+                $statement->execute();
+            } catch (PDOException $exception) {
+                if ($exception->getCode() === '23000') {
+                    Response::json([
+                        'status' => 'error',
+                        'message' => linkedDeleteMessage($resource)
+                    ], 409);
+                    exit;
+                }
+
+                throw $exception;
+            }
 
             if ($statement->rowCount() === 0) {
                 Response::json([
