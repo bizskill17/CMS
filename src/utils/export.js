@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import { formatCellValue } from "./formatting";
 
 function escapeCsvValue(value) {
@@ -53,7 +53,7 @@ export function downloadPdf({ title, columns, records, mapRecord, fileSuffix = "
     return columns.map((col) => formatCellValue(mappedRecord[col.key]));
   });
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: 28,
     head: [tableHeaders],
     body: tableData,
