@@ -138,9 +138,17 @@ export default function AppLayout() {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      contentBodyRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    }, 0);
+    const scrollToTop = () => {
+      if (contentBodyRef.current) {
+        contentBodyRef.current.scrollTop = 0;
+      }
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTo(0, 0);
+    };
+
+    scrollToTop();
+    const timer = setTimeout(scrollToTop, 100);
+    
     setIsSidebarOpen(false);
     return () => clearTimeout(timer);
   }, [location.pathname]);
