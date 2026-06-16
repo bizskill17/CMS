@@ -22,23 +22,13 @@ export default function RecordDetailModal({ isOpen, title, rows, actions = null,
             </div>
           ) : null}
 
-          <div className="table-wrap">
-            <table className="master-table record-detail__table">
-              <thead>
-                <tr>
-                  <th>Field Name</th>
-                  <th>Field Data</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.key}>
-                    <td className="record-detail__field">{row.label}</td>
-                    <td>{row.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="record-detail__list" role="list" aria-label={`${title} details`}>
+            {rows.map((row) => (
+              <div key={row.key} className="record-detail__item" role="listitem">
+                <div className="record-detail__field">{row.label}</div>
+                <div className="record-detail__value">{row.value}</div>
+              </div>
+            ))}
           </div>
 
           <div className="form-actions">
