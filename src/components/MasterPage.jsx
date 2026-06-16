@@ -376,6 +376,7 @@ export default function MasterPage({ resourceKey }) {
     setMessage("");
     setError("");
     setSearchTerm("");
+    setActiveFilters({});
     setIsFiltersOpen(false);
     setIsFormOpen(false);
     setEditingId(null);

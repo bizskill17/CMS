@@ -118,7 +118,13 @@ export default function ResponsiveDataView({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, activeFilters, pageSize, records, filterConfigs, title]);
+    setSearchTerm("");
+    setActiveFilters(Object.fromEntries(filterConfigs.map((filter) => [filter.key, []])));
+  }, [title, filterConfigs]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilters, pageSize, records]);
 
   useEffect(() => {
     if (currentPage > totalPages) {

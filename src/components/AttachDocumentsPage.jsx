@@ -76,6 +76,11 @@ export default function AttachDocumentsPage() {
   );
 
   useEffect(() => {
+    setIssueDateFrom("");
+    setIssueDateTo("");
+    setExpiryDateFrom("");
+    setExpiryDateTo("");
+
     const load = async () => {
       setLoading(true);
       setError("");

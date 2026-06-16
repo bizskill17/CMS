@@ -44,6 +44,11 @@ export default function ReportsTablePage({ reportKey }) {
   const [expiryDateTo, setExpiryDateTo] = useState("");
 
   useEffect(() => {
+    setIssueDateFrom("");
+    setIssueDateTo("");
+    setExpiryDateFrom("");
+    setExpiryDateTo("");
+
     if (!config) {
       setLoading(false);
       setError("Report configuration not found.");
