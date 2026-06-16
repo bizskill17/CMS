@@ -673,18 +673,21 @@ button {
   line-height: 1;
 }
 
-.icon-toggle-button--excel {
+.icon-toggle-button--excel,
+.icon-toggle-button--pdf {
   border-color: #2d57d7;
   background: #2d57d7;
   color: #fff;
   box-shadow: 0 0 0 2px rgba(45, 87, 215, 0.16);
 }
 
-.icon-toggle-button--excel svg {
+.icon-toggle-button--excel svg,
+.icon-toggle-button--pdf svg {
   color: #fff;
 }
 
-.icon-toggle-button--excel span {
+.icon-toggle-button--excel span,
+.icon-toggle-button--pdf span {
   color: #fff;
 }
 
@@ -1207,6 +1210,10 @@ button {
 .customer-view-section {
   display: grid;
   gap: 10px;
+}
+
+.customer-view-section .master-card__header {
+  margin-bottom: 4px;
 }
 
 .customer-view-section__title {

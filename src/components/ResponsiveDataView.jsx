@@ -4,7 +4,7 @@ import MultiSelectFilter from "./MultiSelectFilter";
 import RecordDetailModal from "./RecordDetailModal";
 import { Spinner } from "./Spinner";
 import TablePagination from "./TablePagination";
-import { downloadCsv } from "../utils/export";
+import { downloadCsv, downloadPdf } from "../utils/export";
 import { filterRecords, getRecordValue, sortRecords } from "../utils/dataView";
 import { formatCellValue } from "../utils/formatting";
 
@@ -179,6 +179,19 @@ export default function ResponsiveDataView({
             variant="toolbar"
             onClick={() =>
               downloadCsv({
+                title,
+                columns,
+                records: sortedRecords
+              })
+            }
+          />
+          <ActionIconDisplay
+            icon="pdf"
+            label="PDF"
+            showLabel
+            variant="toolbar"
+            onClick={() =>
+              downloadPdf({
                 title,
                 columns,
                 records: sortedRecords

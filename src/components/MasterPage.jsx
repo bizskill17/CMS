@@ -3,7 +3,7 @@ import { ActionIconDisplay } from "./ActionIcon";
 import { API_BASE } from "../config/api";
 import { masterConfigs } from "../data/masterConfigs";
 import { buildFilterOptions, filterRecords, sortRecords } from "../utils/dataView";
-import { downloadCsv } from "../utils/export";
+import { downloadCsv, downloadPdf } from "../utils/export";
 import { formatAccountType, formatCellValue } from "../utils/formatting";
 import FormLabel from "./FormLabel";
 import MultiSelectFilter from "./MultiSelectFilter";
@@ -1166,6 +1166,26 @@ export default function MasterPage({ resourceKey }) {
 	                      })
 	                    }
 	                  />
+	                  <ActionIconDisplay
+	                    icon="pdf"
+	                    label="PDF"
+	                    showLabel
+	                    variant="toolbar"
+	                    onClick={() =>
+	                      downloadPdf({
+	                        title: config.title,
+	                        columns: config.tableColumns,
+	                        records: sortedRecords,
+	                        mapRecord: (record) =>
+	                          Object.fromEntries(
+	                            config.tableColumns.map((column) => [
+	                              column.key,
+	                              column.type === "boolean" ? (record[column.key] ? "Yes" : "No") : record[column.key]
+	                            ])
+	                          )
+	                      })
+	                    }
+	                  />
 	                  <button
 	                    type="button"
 	                    className="secondary-button secondary-button--template hide-mobile"
@@ -1629,7 +1649,55 @@ export default function MasterPage({ resourceKey }) {
 	              ) : (
                   <div className="customer-view-sections">
                     <div className="customer-view-section">
-                      <h4 className="customer-view-section__title">Policies</h4>
+                      <div className="master-card__header">
+                        <h4 className="customer-view-section__title">Policies</h4>
+                        <div className="master-card__actions">
+                          <ActionIconDisplay
+                            icon="excel"
+                            label="Excel"
+                            variant="toolbar"
+                            onClick={() =>
+                              downloadCsv({
+                                title: `Policies - ${relatedPoliciesModal.customer?.full_name}`,
+                                columns: [
+                                  { key: "policy_number", label: "Policy No." },
+                                  { key: "issue_date", label: "Issue Date" },
+                                  { key: "business_type", label: "Business Type" },
+                                  { key: "policy_type", label: "Policy Type" },
+                                  { key: "company_name", label: "Company" },
+                                  { key: "product_name", label: "Product" },
+                                  { key: "risk_end_date", label: "Risk Expiry Date" },
+                                  { key: "renewal_status", label: "Renewal Status" },
+                                  { key: "policy_status", label: "Status" }
+                                ],
+                                records: relatedPoliciesModal.policies
+                              })
+                            }
+                          />
+                          <ActionIconDisplay
+                            icon="pdf"
+                            label="PDF"
+                            variant="toolbar"
+                            onClick={() =>
+                              downloadPdf({
+                                title: `Policies - ${relatedPoliciesModal.customer?.full_name}`,
+                                columns: [
+                                  { key: "policy_number", label: "Policy No." },
+                                  { key: "issue_date", label: "Issue Date" },
+                                  { key: "business_type", label: "Business Type" },
+                                  { key: "policy_type", label: "Policy Type" },
+                                  { key: "company_name", label: "Company" },
+                                  { key: "product_name", label: "Product" },
+                                  { key: "risk_end_date", label: "Risk Expiry Date" },
+                                  { key: "renewal_status", label: "Renewal Status" },
+                                  { key: "policy_status", label: "Status" }
+                                ],
+                                records: relatedPoliciesModal.policies
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
                       <div className="table-wrap">
                         <table className="master-table">
                           <thead>
@@ -1673,7 +1741,51 @@ export default function MasterPage({ resourceKey }) {
                     </div>
 
                     <div className="customer-view-section">
-                      <h4 className="customer-view-section__title">Documents</h4>
+                      <div className="master-card__header">
+                        <h4 className="customer-view-section__title">Documents</h4>
+                        <div className="master-card__actions">
+                          <ActionIconDisplay
+                            icon="excel"
+                            label="Excel"
+                            variant="toolbar"
+                            onClick={() =>
+                              downloadCsv({
+                                title: `Documents - ${relatedPoliciesModal.customer?.full_name}`,
+                                columns: [
+                                  { key: "document_type_name", label: "Document Type" },
+                                  { key: "file_name", label: "File Name" },
+                                  { key: "document_number", label: "Document No." },
+                                  { key: "document_date", label: "Document Date" },
+                                  { key: "expiry_date", label: "Expiry Date" },
+                                  { key: "remarks", label: "Remarks" },
+                                  { key: "uploaded_at", label: "Uploaded At" }
+                                ],
+                                records: relatedPoliciesModal.documents
+                              })
+                            }
+                          />
+                          <ActionIconDisplay
+                            icon="pdf"
+                            label="PDF"
+                            variant="toolbar"
+                            onClick={() =>
+                              downloadPdf({
+                                title: `Documents - ${relatedPoliciesModal.customer?.full_name}`,
+                                columns: [
+                                  { key: "document_type_name", label: "Document Type" },
+                                  { key: "file_name", label: "File Name" },
+                                  { key: "document_number", label: "Document No." },
+                                  { key: "document_date", label: "Document Date" },
+                                  { key: "expiry_date", label: "Expiry Date" },
+                                  { key: "remarks", label: "Remarks" },
+                                  { key: "uploaded_at", label: "Uploaded At" }
+                                ],
+                                records: relatedPoliciesModal.documents
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
                       <div className="table-wrap">
                         <table className="master-table">
                           <thead>

@@ -1,3 +1,5 @@
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 import { formatCellValue } from "./formatting";
 
 function escapeCsvValue(value) {
@@ -30,4 +32,38 @@ export function downloadCsv({ title, columns, records, mapRecord, fileSuffix = "
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+export function downloadPdf({ title, columns, records, mapRecord, fileSuffix = "export" }) {
+  const doc = new jsPDF({
+    orientation: "landscape",
+    unit: "mm",
+    format: "a4"
+  });
+
+  doc.setFontSize(16);
+  doc.text(title, 14, 15);
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+
+  const tableHeaders = columns.map((col) => col.label);
+  const tableData = records.map((record, index) => {
+    const mappedRecord = mapRecord ? mapRecord(record, index) : record;
+    return columns.map((col) => formatCellValue(mappedRecord[col.key]));
+  });
+
+  doc.autoTable({
+    startY: 28,
+    head: [tableHeaders],
+    body: tableData,
+    theme: "grid",
+    headStyles: { fillColor: [45, 87, 215], textColor: 255, fontStyle: "bold" },
+    styles: { fontSize: 8, cellPadding: 2 },
+    alternateRowStyles: { fillColor: [245, 248, 255] },
+    margin: { top: 25 }
+  });
+
+  const fileName = `${sanitizeFileName(title)}-${sanitizeFileName(fileSuffix)}.pdf`;
+  doc.save(fileName);
 }
