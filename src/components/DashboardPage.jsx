@@ -102,9 +102,8 @@ export default function DashboardPage() {
     <div className="dashboard-page">
       <section className="master-card dashboard-card">
         <div className="master-card__header">
-          <span></span>
+          <h3 className="responsive-data-view__title">Pending Insurance Tasks</h3>
           <div className="master-card__actions master-card__actions--header">
-            <span>Pending Insurance Tasks</span>
           </div>
         </div>
 
