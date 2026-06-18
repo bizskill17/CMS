@@ -82,6 +82,10 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
       loadBrand();
     };
 
+    const handleRefreshCounts = () => {
+      loadCounts();
+    };
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         loadCounts();
@@ -92,11 +96,13 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
     loadCounts();
     loadBrand();
     window.addEventListener("focus", handleFocus);
+    window.addEventListener("refresh-counts", handleRefreshCounts);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       isActive = false;
       window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("refresh-counts", handleRefreshCounts);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [location.pathname]);

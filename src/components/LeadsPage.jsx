@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ActionIconButton } from "./ActionIcon";
 import FormLabel from "./FormLabel";
 import ResponsiveDataView from "./ResponsiveDataView";
@@ -8,8 +9,8 @@ import { buildFilterOptions } from "../utils/dataView";
 import { formatCellValue } from "../utils/formatting";
 
 const leadViewConfigs = {
-  "/leads/create-view": {
-    title: "Lead List",
+  "/leads/all": {
+    title: "All Leads",
     endpoint: `${API_BASE}/leads?view=all`,
     emptyMessage: "No leads found."
   },
@@ -171,7 +172,8 @@ function normalizeLeadToForm(lead) {
 }
 
 export default function LeadsPage({ viewPath }) {
-  const viewConfig = leadViewConfigs[viewPath] || leadViewConfigs["/leads/create-view"];
+  const navigate = useNavigate();
+  const viewConfig = leadViewConfigs[viewPath] || leadViewConfigs["/leads/all"];
   const isActivityLog = Boolean(viewConfig.activityLog);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -190,6 +192,7 @@ export default function LeadsPage({ viewPath }) {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [savingLead, setSavingLead] = useState(false);
   const [savingUpdate, setSavingUpdate] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const loadRecords = async () => {
     setLoading(true);
@@ -204,6 +207,7 @@ export default function LeadsPage({ viewPath }) {
       }
 
       setRecords(json.data || []);
+      setRefreshKey((k) => k + 1);
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -307,6 +311,10 @@ export default function LeadsPage({ viewPath }) {
     setIsAssigneeOnly(false);
     setEditingLeadId(null);
     setLeadForm(emptyLeadForm());
+
+    if (viewPath === "/leads/add") {
+      navigate("/leads/all");
+    }
   };
 
   const resetUpdateModal = () => {
@@ -413,6 +421,7 @@ export default function LeadsPage({ viewPath }) {
       setMessage(json.message || "Lead saved successfully.");
       resetLeadModal();
       await loadRecords();
+      window.dispatchEvent(new Event("refresh-counts"));
     } catch (saveError) {
       setError(saveError.message);
     } finally {
@@ -448,6 +457,7 @@ export default function LeadsPage({ viewPath }) {
       setMessage(json.message || "Lead update saved successfully.");
       resetUpdateModal();
       await loadRecords();
+      window.dispatchEvent(new Event("refresh-counts"));
     } catch (saveError) {
       setError(saveError.message);
     } finally {
@@ -472,6 +482,7 @@ export default function LeadsPage({ viewPath }) {
       }
 
       await loadRecords();
+      window.dispatchEvent(new Event("refresh-counts"));
     } catch (deleteError) {
       alert(deleteError.message);
     }
@@ -533,6 +544,7 @@ export default function LeadsPage({ viewPath }) {
         {error ? <p className="feedback feedback--error">{error}</p> : null}
 
         <ResponsiveDataView
+          key={`${viewPath}-${refreshKey}`}
           title={viewConfig.title}
           records={records}
           columns={currentColumns}
@@ -561,7 +573,7 @@ export default function LeadsPage({ viewPath }) {
       {isLeadModalOpen ? (
         <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="lead-form-title">
           <div className="master-modal__backdrop" onClick={resetLeadModal} />
-          <section className="master-card master-modal__panel">
+          <section className={`master-card master-modal__panel ${isAssigneeOnly ? "master-modal__panel--small" : ""}`}>
             <div className="master-card__header">
               <h3 id="lead-form-title">
                 {isAssigneeOnly ? "Update Assignee" : editingLeadId ? "Edit Lead" : "Add Lead"}
@@ -572,7 +584,7 @@ export default function LeadsPage({ viewPath }) {
             </div>
 
             <div className="master-modal__body">
-              <form className="master-form" onSubmit={handleLeadSubmit}>
+              <form className={`master-form ${isAssigneeOnly ? "master-form--single" : ""}`} onSubmit={handleLeadSubmit}>
                 {!isAssigneeOnly && (
                   <>
                     <label className="form-field">

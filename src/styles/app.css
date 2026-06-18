@@ -1081,6 +1081,10 @@ button {
   width: min(980px, 100%);
 }
 
+.master-modal__panel--small {
+  width: min(440px, 100%);
+}
+
 .master-modal__body {
   overflow-y: auto;
   max-height: calc(100vh - 180px);
@@ -1760,6 +1764,10 @@ button {
   .master-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
+  }
+
+  .master-form--single {
+    grid-template-columns: 1fr;
   }
 
   .master-modal__panel {

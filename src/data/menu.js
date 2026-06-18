@@ -30,6 +30,7 @@ export const menuSections = [
     path: "/leads",
     icon: "leads",
     items: [
+      { label: "All Leads", path: "/leads/all", countKey: "leads-all" },
       { label: "Add Lead", path: "/leads/add" },
       { label: "Pending Assigning", path: "/leads/pending-assigning", countKey: "leads-pending-assigning" },
       {
