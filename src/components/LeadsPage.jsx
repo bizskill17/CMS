@@ -431,6 +431,12 @@ export default function LeadsPage({ viewPath }) {
   };
 
   const renderLeadActions = (lead) => {
+    if (viewPath === "/leads/pending-assigning") {
+      return (
+        <ActionIconButton icon="table" label="Update Assignee" onClick={() => openEditLead(lead)} />
+      );
+    }
+
     const canFollowUp = !finalLeadStatuses.includes(String(lead.lead_status || ""));
 
     return (
@@ -502,16 +508,6 @@ export default function LeadsPage({ viewPath }) {
 
             <div className="master-modal__body">
               <form className="master-form" onSubmit={handleLeadSubmit}>
-                <label className="form-field">
-                  <FormLabel required>Lead Date</FormLabel>
-                  <input
-                    type="date"
-                    required
-                    value={leadForm.lead_date}
-                    onChange={(event) => handleLeadFormChange("lead_date", event.target.value)}
-                  />
-                </label>
-
                 <label className="form-field">
                   <FormLabel>Description</FormLabel>
                   <input
