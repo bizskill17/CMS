@@ -185,7 +185,6 @@ export default function LeadsPage({ viewPath }) {
   const [updateForm, setUpdateForm] = useState(() => emptyUpdateForm());
   const [editingLeadId, setEditingLeadId] = useState(null);
   const [selectedLead, setSelectedLead] = useState(null);
-  const [selectedHistoryLead, setSelectedHistoryLead] = useState(null);
   const [leadHistory, setLeadHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
@@ -362,16 +361,7 @@ export default function LeadsPage({ viewPath }) {
       next_follow_up_date: String(lead.next_follow_up_date || "").slice(0, 10)
     });
     setIsUpdateModalOpen(true);
-    await loadLeadHistory(lead, { syncModalSelection: false });
-  };
-
-  const loadLeadHistory = async (lead, options = {}) => {
-    const { syncModalSelection = true } = options;
-
     setHistoryLoading(true);
-    if (syncModalSelection) {
-      setSelectedHistoryLead(lead);
-    }
 
     try {
       const response = await fetch(`${API_BASE}/leads/${lead.id}/updates`);
@@ -522,7 +512,7 @@ export default function LeadsPage({ viewPath }) {
         ) : null}
         <ActionIconButton icon="pencil" label="Edit Lead" onClick={() => openEditLead(lead)} />
         {canFollowUp ? (
-          <ActionIconButton icon="tick" label="Update Lead" tone="primary" onClick={() => openUpdateLead(lead)} />
+          <ActionIconButton icon="call" label="Update Lead" tone="primary" onClick={() => openUpdateLead(lead)} />
         ) : null}
         <ActionIconButton icon="delete" label="Delete Lead" tone="danger" onClick={() => deleteLead(lead)} />
       </div>
@@ -566,15 +556,6 @@ export default function LeadsPage({ viewPath }) {
           filterConfigs={filterConfigs}
           renderActions={isActivityLog ? null : renderLeadActions}
           rowKey={isActivityLog ? "activity_key" : "id"}
-          onRowClick={
-            !isActivityLog
-              ? (lead) => {
-                  setSelectedHistoryLead(lead);
-                  loadLeadHistory(lead);
-                }
-              : null
-          }
-          selectedRowKey={!isActivityLog ? selectedHistoryLead?.id ?? null : null}
           headerExtras={
             !isActivityLog ? (
               <button type="button" className="primary-button" onClick={openAddLead}>
@@ -588,64 +569,6 @@ export default function LeadsPage({ viewPath }) {
           onClearCustomFilters={() => {}}
         />
       </section>
-
-      {!isActivityLog && selectedHistoryLead ? (
-        <section className="master-card issue-policy-card">
-          <div className="master-card__header">
-            <h3>Activity History</h3>
-          </div>
-
-          <div className="lead-summary-grid">
-            <div className="record-card__field">
-              <span>Client Name</span>
-              <strong>{formatCellValue(selectedHistoryLead.client_name)}</strong>
-            </div>
-            <div className="record-card__field">
-              <span>Assigned To</span>
-              <strong>{formatCellValue(selectedHistoryLead.assigned_to_name)}</strong>
-            </div>
-          </div>
-
-          {historyLoading ? (
-            <div className="table-state">
-              <Spinner label="Loading lead activity..." />
-            </div>
-          ) : (
-            <div className="table-wrap">
-              <table className="master-table">
-                <thead>
-                  <tr>
-                    <th>Sl.No.</th>
-                    <th>Status</th>
-                    <th>Update Date</th>
-                    <th>Next Follow Up Date</th>
-                    <th>Remarks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leadHistory.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="table-state">
-                        No follow up activity found for this lead.
-                      </td>
-                    </tr>
-                  ) : (
-                    leadHistory.map((item, index) => (
-                      <tr key={item.id || `${item.update_date}-${index + 1}`}>
-                        <td>{index + 1}</td>
-                        <td>{formatCellValue(item.status)}</td>
-                        <td>{formatCellValue(item.update_date)}</td>
-                        <td>{formatCellValue(item.next_follow_up_date)}</td>
-                        <td>{formatCellValue(item.remarks)}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      ) : null}
 
       {isLeadModalOpen ? (
         <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="lead-form-title">

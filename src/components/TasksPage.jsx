@@ -160,7 +160,6 @@ export default function TasksPage({ viewPath }) {
   const [updateForm, setUpdateForm] = useState(() => emptyUpdateForm());
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
-  const [selectedHistoryTask, setSelectedHistoryTask] = useState(null);
   const [taskHistory, setTaskHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -364,16 +363,7 @@ export default function TasksPage({ viewPath }) {
       next_follow_up_date: String(task.next_follow_up_date || "").slice(0, 10)
     });
     setIsUpdateModalOpen(true);
-    await loadTaskHistory(task, { syncModalSelection: false });
-  };
-
-  const loadTaskHistory = async (task, options = {}) => {
-    const { syncModalSelection = true } = options;
-
     setHistoryLoading(true);
-    if (syncModalSelection) {
-      setSelectedHistoryTask(task);
-    }
 
     try {
       const response = await fetch(`${API_BASE}/tasks/${task.id}/updates`);
@@ -557,15 +547,6 @@ export default function TasksPage({ viewPath }) {
           filterConfigs={filterConfigs}
           renderActions={isActivityLog ? null : renderTaskActions}
           rowKey={isActivityLog ? "activity_key" : "id"}
-          onRowClick={
-            !isActivityLog
-              ? (task) => {
-                  setSelectedHistoryTask(task);
-                  loadTaskHistory(task);
-                }
-              : null
-          }
-          selectedRowKey={!isActivityLog ? selectedHistoryTask?.id ?? null : null}
           headerExtras={
             !isActivityLog ? (
               <button type="button" className="primary-button" onClick={openAddTask}>
@@ -577,64 +558,6 @@ export default function TasksPage({ viewPath }) {
           onClearCustomFilters={() => {}}
         />
       </section>
-
-      {!isActivityLog && selectedHistoryTask ? (
-        <section className="master-card issue-policy-card">
-          <div className="master-card__header">
-            <h3>Activity History</h3>
-          </div>
-
-          <div className="lead-summary-grid">
-            <div className="record-card__field">
-              <span>Client Name</span>
-              <strong>{formatCellValue(selectedHistoryTask.client_name)}</strong>
-            </div>
-            <div className="record-card__field">
-              <span>Assigned To</span>
-              <strong>{formatCellValue(selectedHistoryTask.assigned_to_name)}</strong>
-            </div>
-          </div>
-
-          {historyLoading ? (
-            <div className="table-state">
-              <Spinner label="Loading task activity..." />
-            </div>
-          ) : (
-            <div className="table-wrap">
-              <table className="master-table">
-                <thead>
-                  <tr>
-                    <th>Sl.No.</th>
-                    <th>Status</th>
-                    <th>Update Date</th>
-                    <th>Next Follow Up Date</th>
-                    <th>Remarks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {taskHistory.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="table-state">
-                        No activity found for this task.
-                      </td>
-                    </tr>
-                  ) : (
-                    taskHistory.map((item, index) => (
-                      <tr key={item.id || `${item.update_date}-${index + 1}`}>
-                        <td>{index + 1}</td>
-                        <td>{formatCellValue(item.status)}</td>
-                        <td>{formatCellValue(item.update_date)}</td>
-                        <td>{formatCellValue(item.next_follow_up_date)}</td>
-                        <td>{formatCellValue(item.remarks)}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      ) : null}
 
       {isTaskModalOpen ? (
         <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="task-form-title">

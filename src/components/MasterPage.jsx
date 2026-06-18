@@ -1469,6 +1469,10 @@ export default function MasterPage({ resourceKey }) {
 	                  if (field.type === "select") {
                     const dynamicOptions = field.optionsFrom
                       ? (optionsMap[field.optionsFrom] || []).filter((option) => {
+                          if (field.optionFilter && !field.optionFilter(option, formState)) {
+                            return false;
+                          }
+
                           if (!field.dependsOn || !field.dependsOnKey) {
                             return true;
                           }

@@ -17,7 +17,7 @@ export const menuSections = [
       { label: "States", path: "/masters/states", countKey: "states" },
       { label: "Cities", path: "/masters/cities", countKey: "cities" },
       { label: "Product Categories", path: "/masters/product-categories", countKey: "product-categories" },
-      { label: "Insurance Products", path: "/masters/insurance-products", countKey: "insurance-products" },
+      { label: "Products", path: "/masters/insurance-products", countKey: "insurance-products" },
       { label: "Document Types", path: "/masters/document-types", countKey: "document-types" },
       { label: "Users", path: "/masters/users", countKey: "users" },
       { label: "Agents", path: "/masters/agents", countKey: "agents" },

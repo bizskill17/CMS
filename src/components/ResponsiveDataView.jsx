@@ -85,9 +85,7 @@ export default function ResponsiveDataView({
   initialSort = null,
   headerExtras = null,
   customFilterContent = null,
-  onClearCustomFilters = null,
-  onRowClick = null,
-  selectedRowKey = null
+  onClearCustomFilters = null
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState(initialSort);
@@ -147,10 +145,6 @@ export default function ResponsiveDataView({
   };
 
   const detailRows = useMemo(() => {
-    if (onRowClick) {
-      return [];
-    }
-
     if (!selectedRecord) {
       return [];
     }
@@ -303,15 +297,8 @@ export default function ResponsiveDataView({
                   paginatedRecords.map((record, index) => (
                     <tr
                       key={record[rowKey] ?? index}
-                      className={`master-table__row ${selectedRowKey !== null && selectedRowKey === record[rowKey] ? "is-selected" : ""}`}
-                      onClick={() => {
-                        if (onRowClick) {
-                          onRowClick(record);
-                          return;
-                        }
-
-                        setSelectedRecord(record);
-                      }}
+                      className="master-table__row"
+                      onClick={() => setSelectedRecord(record)}
                     >
                       <td style={{ width: "72px", minWidth: "72px", maxWidth: "72px" }}>
                         {pageStart + index + 1}
@@ -361,15 +348,13 @@ export default function ResponsiveDataView({
               onPageSizeChange={setPageSize}
             />
           ) : null}
-          {!onRowClick ? (
-            <RecordDetailModal
-              isOpen={Boolean(selectedRecord)}
-              title={title}
-              rows={detailRows}
-              actions={selectedRecord && renderActions ? renderActions(selectedRecord) : null}
-              onClose={() => setSelectedRecord(null)}
-            />
-          ) : null}
+          <RecordDetailModal
+            isOpen={Boolean(selectedRecord)}
+            title={title}
+            rows={detailRows}
+            actions={selectedRecord && renderActions ? renderActions(selectedRecord) : null}
+            onClose={() => setSelectedRecord(null)}
+          />
         </>
       )}
     </>

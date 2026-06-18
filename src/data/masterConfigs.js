@@ -131,7 +131,7 @@ export const masterConfigs = {
     ]
   },
   "insurance-products": {
-    title: "Insurance Products",
+    title: "Product",
     resource: "insurance-products",
     tableColumns: [
       { key: "product_name", label: "Product" },
@@ -143,8 +143,26 @@ export const masterConfigs = {
     fields: [
       { name: "company_id", label: "Company", type: "select", optionsFrom: "insurance-companies", required: true },
       { name: "product_name", label: "Product Name", type: "text", required: true },
-      { name: "category_id", label: "Category", type: "select", optionsFrom: "product-categories" },
-      { name: "sub_category_name", label: "Sub Category", type: "text" },
+      {
+        name: "category_id",
+        label: "Category",
+        type: "select",
+        optionsFrom: "product-categories",
+        optionLabelKey: "category_name",
+        optionFilter: (option) => !option.parent_category_id,
+        resetsFields: ["sub_category_name"],
+        required: true
+      },
+      {
+        name: "sub_category_name",
+        label: "Sub Category",
+        type: "select",
+        optionsFrom: "product-categories",
+        optionValueKey: "category_name",
+        optionLabelKey: "category_name",
+        dependsOn: "category_id",
+        dependsOnKey: "parent_category_id"
+      },
       { name: "is_active", label: "Active", type: "checkbox" }
     ]
   },
