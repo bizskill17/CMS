@@ -404,7 +404,7 @@ try {
             exit;
         }
 
-        foreach (['lead_date', 'client_name', 'description', 'due_date', 'priority'] as $requiredField) {
+        foreach (['lead_date', 'client_name', 'description', 'due_date', 'priority', 'category_id', 'sub_category_id'] as $requiredField) {
             if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
                 Response::json([
                     'status' => 'error',
@@ -502,7 +502,7 @@ try {
             exit;
         }
 
-        foreach (['lead_date', 'client_name', 'description', 'due_date', 'priority'] as $requiredField) {
+        foreach (['lead_date', 'client_name', 'description', 'due_date', 'priority', 'category_id', 'sub_category_id'] as $requiredField) {
             if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
                 Response::json([
                     'status' => 'error',

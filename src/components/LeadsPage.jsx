@@ -652,8 +652,9 @@ export default function LeadsPage({ viewPath }) {
                 {!isAssigneeOnly && (
                   <>
                     <label className="form-field">
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel required>Category</FormLabel>
                       <select
+                        required
                         value={leadForm.category_id}
                         onChange={(event) => handleLeadFormChange("category_id", event.target.value)}
                       >
@@ -667,8 +668,9 @@ export default function LeadsPage({ viewPath }) {
                     </label>
 
                     <label className="form-field">
-                      <FormLabel>Sub - Category</FormLabel>
+                      <FormLabel required>Sub - Category</FormLabel>
                       <select
+                        required
                         value={leadForm.sub_category_id}
                         onChange={(event) => handleLeadFormChange("sub_category_id", event.target.value)}
                         disabled={!leadForm.category_id}
