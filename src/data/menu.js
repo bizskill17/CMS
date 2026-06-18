@@ -54,12 +54,12 @@ export const menuSections = [
     path: "/tasks",
     icon: "tasks",
     items: [
-      { label: "All Tasks", path: "/tasks/all", countKey: "leads-all" },
+      { label: "All Tasks", path: "/tasks/all", countKey: "tasks-all" },
       { label: "Add Task", path: "/tasks/add" },
-      { label: "Pending Tasks", path: "/tasks/pending", countKey: "leads-pending-first-follow-up" },
-      { label: "Completed", path: "/tasks/completed", countKey: "leads-converted" },
-      { label: "Canceled", path: "/tasks/canceled", countKey: "leads-canceled" },
-      { label: "Action Log", path: "/tasks/action-log", countKey: "leads-activity-log" }
+      { label: "Pending Tasks", path: "/tasks/pending", countKey: "tasks-pending" },
+      { label: "Completed", path: "/tasks/completed", countKey: "tasks-completed" },
+      { label: "Canceled", path: "/tasks/canceled", countKey: "tasks-canceled" },
+      { label: "Action Log", path: "/tasks/action-log", countKey: "tasks-activity-log" }
     ]
   },
   {

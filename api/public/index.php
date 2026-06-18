@@ -95,6 +95,42 @@ function deriveLeadStatusFromUpdate(string $updateStatus, ?string $nextFollowUpD
     };
 }
 
+function isFinalTaskStatus(string $status): bool
+{
+    return in_array($status, ['Completed', 'Canceled'], true);
+}
+
+function normalizeTaskUpdateStatus(string $status): string
+{
+    $normalized = strtolower(trim($status));
+
+    return match ($normalized) {
+        'success' => 'Success',
+        'follow up again' => 'Follow Up Again',
+        'cancel' => 'Cancel',
+        default => '',
+    };
+}
+
+function deriveTaskStatusFromAssignment(?int $assignedToUserId, bool $hasUpdates, ?string $currentStatus = null): string
+{
+    if ($currentStatus !== null && isFinalTaskStatus($currentStatus)) {
+        return $currentStatus;
+    }
+
+    return 'Pending';
+}
+
+function deriveTaskStatusFromUpdate(string $updateStatus, ?string $nextFollowUpDate): string
+{
+    return match ($updateStatus) {
+        'Success' => $nextFollowUpDate ? 'Pending' : 'Completed',
+        'Follow Up Again' => 'Pending',
+        'Cancel' => 'Canceled',
+        default => 'Pending',
+    };
+}
+
 try {
     if ($path === '/api/health' && $method === 'GET') {
         $pdo = Database::connection();
@@ -141,6 +177,19 @@ try {
             'SELECT count(*) FROM leads WHERE lead_status = "Canceled"'
         )->fetchColumn();
         $counts['leads-activity-log'] = (int) $pdo->query('SELECT count(*) FROM lead_updates')->fetchColumn();
+
+        // Tasks counts
+        $counts['tasks-all'] = (int) $pdo->query('SELECT count(*) FROM tasks')->fetchColumn();
+        $counts['tasks-pending'] = (int) $pdo->query(
+            'SELECT count(*) FROM tasks WHERE task_status = "Pending"'
+        )->fetchColumn();
+        $counts['tasks-completed'] = (int) $pdo->query(
+            'SELECT count(*) FROM tasks WHERE task_status = "Completed"'
+        )->fetchColumn();
+        $counts['tasks-canceled'] = (int) $pdo->query(
+            'SELECT count(*) FROM tasks WHERE task_status = "Canceled"'
+        )->fetchColumn();
+        $counts['tasks-activity-log'] = (int) $pdo->query('SELECT count(*) FROM task_updates')->fetchColumn();
 
         // Policies counts
         $counts['all-policies'] = (int) $pdo->query('SELECT count(*) FROM policies')->fetchColumn();
@@ -391,6 +440,98 @@ try {
         exit;
     }
 
+    if ($path === '/api/tasks/activity' && $method === 'GET') {
+        $pdo = Database::connection();
+        $statement = $pdo->query(
+            'SELECT *
+             FROM (
+                SELECT
+                    concat("task-", t.id) AS activity_key,
+                    "Task Created" AS activity_type,
+                    t.client_name,
+                    t.task_status,
+                    null AS update_status,
+                    t.task_date AS activity_date,
+                    u.full_name AS assigned_to_name,
+                    t.next_follow_up_date,
+                    t.notes AS remarks,
+                    t.created_at AS sort_at
+                FROM tasks t
+                LEFT JOIN users u ON u.id = t.assigned_to_user_id
+
+                UNION ALL
+
+                SELECT
+                    concat("task-update-", tu.id) AS activity_key,
+                    "Task Follow Up" AS activity_type,
+                    t.client_name,
+                    t.task_status,
+                    tu.status AS update_status,
+                    tu.update_date AS activity_date,
+                    u.full_name AS assigned_to_name,
+                    tu.next_follow_up_date,
+                    tu.remarks AS remarks,
+                    tu.created_at AS sort_at
+                FROM task_updates tu
+                INNER JOIN tasks t ON t.id = tu.task_id
+                LEFT JOIN users u ON u.id = t.assigned_to_user_id
+             ) activity
+             ORDER BY sort_at DESC'
+        );
+
+        Response::json([
+            'status' => 'ok',
+            'data' => $statement->fetchAll()
+        ]);
+        exit;
+    }
+
+    if ($path === '/api/tasks' && $method === 'GET') {
+        $pdo = Database::connection();
+        $view = trim((string) ($_GET['view'] ?? 'all'));
+        $whereClause = '';
+
+        if ($view === 'pending') {
+            $whereClause = 'WHERE t.task_status = "Pending"';
+        } elseif ($view === 'completed') {
+            $whereClause = 'WHERE t.task_status = "Completed"';
+        } elseif ($view === 'canceled') {
+            $whereClause = 'WHERE t.task_status = "Canceled"';
+        }
+
+        $statement = $pdo->query(
+            "SELECT
+                t.id,
+                t.task_date,
+                t.description,
+                t.due_date,
+                t.client_name,
+                t.priority,
+                t.assigned_to_user_id,
+                t.category_id,
+                t.sub_category_id,
+                t.notes,
+                t.task_status,
+                t.latest_update_date,
+                t.next_follow_up_date,
+                u.full_name AS assigned_to_name,
+                c.category_name,
+                sc.category_name AS sub_category_name
+             FROM tasks t
+             LEFT JOIN users u ON u.id = t.assigned_to_user_id
+             LEFT JOIN product_categories c ON c.id = t.category_id
+             LEFT JOIN product_categories sc ON sc.id = t.sub_category_id
+             $whereClause
+             ORDER BY t.id DESC"
+        );
+
+        Response::json([
+            'status' => 'ok',
+            'data' => $statement->fetchAll()
+        ]);
+        exit;
+    }
+
     if ($path === '/api/leads' && $method === 'POST') {
         $pdo = Database::connection();
         $rawBody = file_get_contents('php://input');
@@ -465,6 +606,85 @@ try {
         Response::json([
             'status' => 'ok',
             'message' => 'Lead created successfully.',
+            'id' => (int) $pdo->lastInsertId()
+        ], 201);
+        exit;
+    }
+
+    if ($path === '/api/tasks' && $method === 'POST') {
+        $pdo = Database::connection();
+        $rawBody = file_get_contents('php://input');
+        $payload = json_decode($rawBody ?: '[]', true);
+
+        if (!is_array($payload)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Invalid JSON payload'
+            ], 422);
+            exit;
+        }
+
+        foreach (['task_date', 'client_name', 'description', 'due_date', 'priority', 'category_id', 'sub_category_id'] as $requiredField) {
+            if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
+                Response::json([
+                    'status' => 'error',
+                    'message' => sprintf('Field "%s" is required.', $requiredField)
+                ], 422);
+                exit;
+            }
+        }
+
+        $assignedToUserId = trim((string) ($payload['assigned_to_user_id'] ?? '')) !== ''
+            ? (int) $payload['assigned_to_user_id']
+            : null;
+        $categoryId = trim((string) ($payload['category_id'] ?? '')) !== ''
+            ? (int) $payload['category_id']
+            : null;
+        $subCategoryId = trim((string) ($payload['sub_category_id'] ?? '')) !== ''
+            ? (int) $payload['sub_category_id']
+            : null;
+        $taskStatus = deriveTaskStatusFromAssignment($assignedToUserId, false);
+
+        $statement = $pdo->prepare(
+            'INSERT INTO tasks (
+                task_date,
+                description,
+                due_date,
+                client_name,
+                priority,
+                assigned_to_user_id,
+                category_id,
+                sub_category_id,
+                notes,
+                task_status
+             ) VALUES (
+                :task_date,
+                :description,
+                :due_date,
+                :client_name,
+                :priority,
+                :assigned_to_user_id,
+                :category_id,
+                :sub_category_id,
+                :notes,
+                :task_status
+             )'
+        );
+        $statement->bindValue(':task_date', $payload['task_date']);
+        $statement->bindValue(':description', trim((string) ($payload['description'] ?? '')) !== '' ? $payload['description'] : null);
+        $statement->bindValue(':due_date', trim((string) ($payload['due_date'] ?? '')) !== '' ? $payload['due_date'] : null);
+        $statement->bindValue(':client_name', $payload['client_name']);
+        $statement->bindValue(':priority', trim((string) ($payload['priority'] ?? '')) !== '' ? $payload['priority'] : 'Medium');
+        $statement->bindValue(':assigned_to_user_id', $assignedToUserId, $assignedToUserId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $statement->bindValue(':category_id', $categoryId, $categoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $statement->bindValue(':sub_category_id', $subCategoryId, $subCategoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $statement->bindValue(':notes', trim((string) ($payload['notes'] ?? '')) !== '' ? $payload['notes'] : null);
+        $statement->bindValue(':task_status', $taskStatus);
+        $statement->execute();
+
+        Response::json([
+            'status' => 'ok',
+            'message' => 'Task created successfully.',
             'id' => (int) $pdo->lastInsertId()
         ], 201);
         exit;
@@ -564,6 +784,100 @@ try {
         exit;
     }
 
+    if (preg_match('#^/api/tasks/(\d+)$#', $path, $matches) === 1 && $method === 'PUT') {
+        $pdo = Database::connection();
+        $taskId = (int) $matches[1];
+        $rawBody = file_get_contents('php://input');
+        $payload = json_decode($rawBody ?: '[]', true);
+
+        if (!is_array($payload)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Invalid JSON payload'
+            ], 422);
+            exit;
+        }
+
+        $existingTaskStatement = $pdo->prepare(
+            'SELECT id, task_status
+             FROM tasks
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $existingTaskStatement->bindValue(':id', $taskId, PDO::PARAM_INT);
+        $existingTaskStatement->execute();
+        $existingTask = $existingTaskStatement->fetch();
+
+        if (!$existingTask) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Task not found.'
+            ], 404);
+            exit;
+        }
+
+        foreach (['task_date', 'client_name', 'description', 'due_date', 'priority', 'category_id', 'sub_category_id'] as $requiredField) {
+            if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
+                Response::json([
+                    'status' => 'error',
+                    'message' => sprintf('Field "%s" is required.', $requiredField)
+                ], 422);
+                exit;
+            }
+        }
+
+        $updatesCountStatement = $pdo->prepare(
+            'SELECT count(*) FROM task_updates WHERE task_id = :task_id'
+        );
+        $updatesCountStatement->bindValue(':task_id', $taskId, PDO::PARAM_INT);
+        $updatesCountStatement->execute();
+        $hasUpdates = (int) $updatesCountStatement->fetchColumn() > 0;
+
+        $assignedToUserId = trim((string) ($payload['assigned_to_user_id'] ?? '')) !== ''
+            ? (int) $payload['assigned_to_user_id']
+            : null;
+        $categoryId = trim((string) ($payload['category_id'] ?? '')) !== ''
+            ? (int) $payload['category_id']
+            : null;
+        $subCategoryId = trim((string) ($payload['sub_category_id'] ?? '')) !== ''
+            ? (int) $payload['sub_category_id']
+            : null;
+        $taskStatus = deriveTaskStatusFromAssignment($assignedToUserId, $hasUpdates, (string) $existingTask['task_status']);
+
+        $statement = $pdo->prepare(
+            'UPDATE tasks
+             SET task_date = :task_date,
+                 description = :description,
+                 due_date = :due_date,
+                 client_name = :client_name,
+                 priority = :priority,
+                 assigned_to_user_id = :assigned_to_user_id,
+                 category_id = :category_id,
+                 sub_category_id = :sub_category_id,
+                 notes = :notes,
+                 task_status = :task_status
+             WHERE id = :id'
+        );
+        $statement->bindValue(':task_date', $payload['task_date']);
+        $statement->bindValue(':description', trim((string) ($payload['description'] ?? '')) !== '' ? $payload['description'] : null);
+        $statement->bindValue(':due_date', trim((string) ($payload['due_date'] ?? '')) !== '' ? $payload['due_date'] : null);
+        $statement->bindValue(':client_name', $payload['client_name']);
+        $statement->bindValue(':priority', trim((string) ($payload['priority'] ?? '')) !== '' ? $payload['priority'] : 'Medium');
+        $statement->bindValue(':assigned_to_user_id', $assignedToUserId, $assignedToUserId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $statement->bindValue(':category_id', $categoryId, $categoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $statement->bindValue(':sub_category_id', $subCategoryId, $subCategoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $statement->bindValue(':notes', trim((string) ($payload['notes'] ?? '')) !== '' ? $payload['notes'] : null);
+        $statement->bindValue(':task_status', $taskStatus);
+        $statement->bindValue(':id', $taskId, PDO::PARAM_INT);
+        $statement->execute();
+
+        Response::json([
+            'status' => 'ok',
+            'message' => 'Task updated successfully.'
+        ]);
+        exit;
+    }
+
     if (preg_match('#^/api/leads/(\d+)$#', $path, $matches) === 1 && $method === 'DELETE') {
         $pdo = Database::connection();
         $leadId = (int) $matches[1];
@@ -601,6 +915,41 @@ try {
         }
     }
 
+    if (preg_match('#^/api/tasks/(\d+)$#', $path, $matches) === 1 && $method === 'DELETE') {
+        $pdo = Database::connection();
+        $taskId = (int) $matches[1];
+
+        $pdo->beginTransaction();
+        try {
+            $deleteUpdates = $pdo->prepare('DELETE FROM task_updates WHERE task_id = :id');
+            $deleteUpdates->bindValue(':id', $taskId, PDO::PARAM_INT);
+            $deleteUpdates->execute();
+
+            $deleteTask = $pdo->prepare('DELETE FROM tasks WHERE id = :id');
+            $deleteTask->bindValue(':id', $taskId, PDO::PARAM_INT);
+            $deleteTask->execute();
+
+            if ($deleteTask->rowCount() === 0) {
+                $pdo->rollBack();
+                Response::json([
+                    'status' => 'error',
+                    'message' => 'Task not found.'
+                ], 404);
+                exit;
+            }
+
+            $pdo->commit();
+            Response::json([
+                'status' => 'ok',
+                'message' => 'Task deleted successfully.'
+            ]);
+            exit;
+        } catch (Throwable $throwable) {
+            $pdo->rollBack();
+            throw $throwable;
+        }
+    }
+
     if (preg_match('#^/api/leads/(\d+)/updates$#', $path, $matches) === 1 && $method === 'GET') {
         $pdo = Database::connection();
         $leadId = (int) $matches[1];
@@ -611,6 +960,25 @@ try {
              ORDER BY update_date DESC, id DESC'
         );
         $statement->bindValue(':lead_id', $leadId, PDO::PARAM_INT);
+        $statement->execute();
+
+        Response::json([
+            'status' => 'ok',
+            'data' => $statement->fetchAll()
+        ]);
+        exit;
+    }
+
+    if (preg_match('#^/api/tasks/(\d+)/updates$#', $path, $matches) === 1 && $method === 'GET') {
+        $pdo = Database::connection();
+        $taskId = (int) $matches[1];
+        $statement = $pdo->prepare(
+            'SELECT id, status, update_date, next_follow_up_date, remarks, created_at
+             FROM task_updates
+             WHERE task_id = :task_id
+             ORDER BY update_date DESC, id DESC'
+        );
+        $statement->bindValue(':task_id', $taskId, PDO::PARAM_INT);
         $statement->execute();
 
         Response::json([
@@ -1729,6 +2097,121 @@ try {
                     'client_payment_status' => $clientPaymentStatus,
                 ],
             ]);
+            exit;
+        } catch (Throwable $throwable) {
+            $pdo->rollBack();
+            throw $throwable;
+        }
+    }
+
+    if (preg_match('#^/api/tasks/(\d+)/updates$#', $path, $matches) === 1 && $method === 'POST') {
+        $pdo = Database::connection();
+        $taskId = (int) $matches[1];
+        $rawBody = file_get_contents('php://input');
+        $payload = json_decode($rawBody ?: '[]', true);
+
+        if (!is_array($payload)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Invalid JSON payload'
+            ], 422);
+            exit;
+        }
+
+        $taskStatement = $pdo->prepare(
+            'SELECT id, task_status, assigned_to_user_id
+             FROM tasks
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $taskStatement->bindValue(':id', $taskId, PDO::PARAM_INT);
+        $taskStatement->execute();
+        $task = $taskStatement->fetch();
+
+        if (!$task) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Task not found.'
+            ], 404);
+            exit;
+        }
+
+        if (isFinalTaskStatus((string) $task['task_status'])) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'This task is already closed and cannot be updated.'
+            ], 409);
+            exit;
+        }
+
+        $updateStatus = normalizeTaskUpdateStatus((string) ($payload['status'] ?? ''));
+        $updateDate = trim((string) ($payload['update_date'] ?? ''));
+        $nextFollowUpDate = trim((string) ($payload['next_follow_up_date'] ?? ''));
+
+        if ($updateStatus === '') {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Field "status" is required.'
+            ], 422);
+            exit;
+        }
+
+        if ($updateDate === '') {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Field "update_date" is required.'
+            ], 422);
+            exit;
+        }
+
+        $taskStatus = deriveTaskStatusFromUpdate($updateStatus, $nextFollowUpDate !== '' ? $nextFollowUpDate : null);
+
+        $pdo->beginTransaction();
+
+        try {
+            $insertUpdate = $pdo->prepare(
+                'INSERT INTO task_updates (
+                    task_id,
+                    status,
+                    update_date,
+                    next_follow_up_date,
+                    remarks
+                 ) VALUES (
+                    :task_id,
+                    :status,
+                    :update_date,
+                    :next_follow_up_date,
+                    :remarks
+                 )'
+            );
+            $insertUpdate->bindValue(':task_id', $taskId, PDO::PARAM_INT);
+            $insertUpdate->bindValue(':status', $updateStatus);
+            $insertUpdate->bindValue(':update_date', $updateDate);
+            $insertUpdate->bindValue(':next_follow_up_date', $nextFollowUpDate !== '' ? $nextFollowUpDate : null);
+            $insertUpdate->bindValue(':remarks', trim((string) ($payload['remarks'] ?? '')) !== '' ? $payload['remarks'] : null);
+            $insertUpdate->execute();
+
+            $updateTask = $pdo->prepare(
+                'UPDATE tasks
+                 SET task_status = :task_status,
+                     latest_update_date = :latest_update_date,
+                     next_follow_up_date = :next_follow_up_date
+                 WHERE id = :id'
+            );
+            $updateTask->bindValue(':task_status', $taskStatus);
+            $updateTask->bindValue(':latest_update_date', $updateDate);
+            $updateTask->bindValue(
+                ':next_follow_up_date',
+                $taskStatus === 'Pending' ? ($nextFollowUpDate !== '' ? $nextFollowUpDate : null) : null
+            );
+            $updateTask->bindValue(':id', $taskId, PDO::PARAM_INT);
+            $updateTask->execute();
+
+            $pdo->commit();
+            Response::json([
+                'status' => 'ok',
+                'message' => 'Task update saved successfully.'
+            ], 201);
             exit;
         } catch (Throwable $throwable) {
             $pdo->rollBack();

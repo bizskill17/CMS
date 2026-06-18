@@ -8,58 +8,43 @@ import { ButtonSpinner, Spinner } from "./Spinner";
 import { buildFilterOptions } from "../utils/dataView";
 import { formatCellValue } from "../utils/formatting";
 
-const leadViewConfigs = {
-  "/leads/all": {
-    title: "All Leads",
-    endpoint: `${API_BASE}/leads?view=all`,
-    emptyMessage: "No leads found."
+const taskViewConfigs = {
+  "/tasks/all": {
+    title: "All Tasks",
+    endpoint: `${API_BASE}/tasks?view=all`,
+    emptyMessage: "No tasks found."
   },
-  "/leads/add": {
-    title: "Add Lead",
-    endpoint: `${API_BASE}/leads?view=all`,
-    emptyMessage: "No leads found.",
+  "/tasks/add": {
+    title: "Add Task",
+    endpoint: `${API_BASE}/tasks?view=all`,
+    emptyMessage: "No tasks found.",
     autoOpenAdd: true
   },
-  "/leads/pending-assigning": {
-    title: "Pending Assigning",
-    endpoint: `${API_BASE}/leads?view=pending-assigning`,
-    emptyMessage: "No leads are pending assigning."
+  "/tasks/pending": {
+    title: "Pending Tasks",
+    endpoint: `${API_BASE}/tasks?view=pending`,
+    emptyMessage: "No pending tasks found."
   },
-  "/leads/pending-first-follow-up": {
-    title: "Pending First Follow Up",
-    endpoint: `${API_BASE}/leads?view=pending-first-follow-up`,
-    emptyMessage: "No leads are pending first follow up."
+  "/tasks/completed": {
+    title: "Completed",
+    endpoint: `${API_BASE}/tasks?view=completed`,
+    emptyMessage: "No completed tasks found."
   },
-  "/leads/pending-repeat-follow-up": {
-    title: "Pending Repeat Follow Up",
-    endpoint: `${API_BASE}/leads?view=pending-repeat-follow-up`,
-    emptyMessage: "No leads are pending repeat follow up."
+  "/tasks/canceled": {
+    title: "Canceled",
+    endpoint: `${API_BASE}/tasks?view=canceled`,
+    emptyMessage: "No canceled tasks found."
   },
-  "/leads/converted": {
-    title: "Converted Leads",
-    endpoint: `${API_BASE}/leads?view=converted`,
-    emptyMessage: "No converted leads found."
-  },
-  "/leads/lost": {
-    title: "Lost Leads",
-    endpoint: `${API_BASE}/leads?view=lost`,
-    emptyMessage: "No lost leads found."
-  },
-  "/leads/canceled": {
-    title: "Canceled Leads",
-    endpoint: `${API_BASE}/leads?view=canceled`,
-    emptyMessage: "No canceled leads found."
-  },
-  "/leads/activity-log": {
-    title: "Lead Activity Log",
-    endpoint: `${API_BASE}/leads/activity`,
-    emptyMessage: "No lead activity found.",
+  "/tasks/action-log": {
+    title: "Action Log",
+    endpoint: `${API_BASE}/tasks/activity`,
+    emptyMessage: "No task activity found.",
     activityLog: true
   }
 };
 
-const leadColumns = [
-  { key: "lead_date", label: "Lead Date" },
+const taskColumns = [
+  { key: "task_date", label: "Task Date" },
   { key: "description", label: "Description", width: "220px" },
   { key: "due_date", label: "Due Date" },
   { key: "client_name", label: "Client Name", width: "170px" },
@@ -67,26 +52,14 @@ const leadColumns = [
   { key: "assigned_to_name", label: "Assigned To", width: "160px" },
   { key: "category_name", label: "Category", width: "160px" },
   { key: "sub_category_name", label: "Sub - Category", width: "170px" },
-  { key: "lead_status", label: "Status", width: "170px" },
+  { key: "task_status", label: "Status", width: "170px" },
   { key: "next_follow_up_date", label: "Next Follow Up Date", width: "140px" }
-];
-
-const pendingAssigningColumns = [
-  { key: "lead_date", label: "Lead Date" },
-  { key: "description", label: "Description", width: "220px" },
-  { key: "due_date", label: "Due Date" },
-  { key: "client_name", label: "Client Name", width: "170px" },
-  { key: "priority", label: "Priority" },
-  { key: "assigned_to_name", label: "Assigned To", width: "160px" },
-  { key: "category_name", label: "Category", width: "160px" },
-  { key: "sub_category_name", label: "Sub - Category", width: "170px" },
-  { key: "lead_status", label: "Status", width: "170px" }
 ];
 
 const activityColumns = [
   { key: "activity_type", label: "Activity Type", width: "130px" },
   { key: "client_name", label: "Client Name", width: "170px" },
-  { key: "lead_status", label: "Lead Status", width: "170px" },
+  { key: "task_status", label: "Task Status", width: "170px" },
   { key: "update_status", label: "Update Status", width: "120px" },
   { key: "activity_date", label: "Date", width: "120px" },
   { key: "assigned_to_name", label: "Assigned To", width: "160px" },
@@ -95,8 +68,8 @@ const activityColumns = [
 ];
 
 const priorityOptions = ["High", "Medium", "Low"];
-const updateStatusOptions = ["Success", "Follow Up Again", "Lost", "Cancel"];
-const finalLeadStatuses = ["Converted", "Lost", "Canceled"];
+const updateStatusOptions = ["Success", "Follow Up Again", "Cancel"];
+const finalTaskStatuses = ["Completed", "Canceled"];
 
 function todayInputValue() {
   const now = new Date();
@@ -106,9 +79,9 @@ function todayInputValue() {
   return `${year}-${month}-${day}`;
 }
 
-function emptyLeadForm() {
+function emptyTaskForm() {
   return {
-    lead_date: todayInputValue(),
+    task_date: todayInputValue(),
     description: "",
     due_date: todayInputValue(),
     client_name: "",
@@ -157,23 +130,23 @@ async function readApiJson(response) {
   }
 }
 
-function normalizeLeadToForm(lead) {
+function normalizeTaskToForm(task) {
   return {
-    lead_date: String(lead.lead_date || "").slice(0, 10),
-    description: lead.description || "",
-    due_date: String(lead.due_date || "").slice(0, 10),
-    client_name: lead.client_name || "",
-    priority: lead.priority || "Medium",
-    assigned_to_user_id: lead.assigned_to_user_id ? String(lead.assigned_to_user_id) : "",
-    category_id: lead.category_id ? String(lead.category_id) : "",
-    sub_category_id: lead.sub_category_id ? String(lead.sub_category_id) : "",
-    notes: lead.notes || ""
+    task_date: String(task.task_date || "").slice(0, 10),
+    description: task.description || "",
+    due_date: String(task.due_date || "").slice(0, 10),
+    client_name: task.client_name || "",
+    priority: task.priority || "Medium",
+    assigned_to_user_id: task.assigned_to_user_id ? String(task.assigned_to_user_id) : "",
+    category_id: task.category_id ? String(task.category_id) : "",
+    sub_category_id: task.sub_category_id ? String(task.sub_category_id) : "",
+    notes: task.notes || ""
   };
 }
 
-export default function LeadsPage({ viewPath }) {
+export default function TasksPage({ viewPath }) {
   const navigate = useNavigate();
-  const viewConfig = leadViewConfigs[viewPath] || leadViewConfigs["/leads/all"];
+  const viewConfig = taskViewConfigs[viewPath] || taskViewConfigs["/tasks/all"];
   const isActivityLog = Boolean(viewConfig.activityLog);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -181,16 +154,16 @@ export default function LeadsPage({ viewPath }) {
   const [message, setMessage] = useState("");
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [leadForm, setLeadForm] = useState(() => emptyLeadForm());
+  const [taskForm, setTaskForm] = useState(() => emptyTaskForm());
   const [updateForm, setUpdateForm] = useState(() => emptyUpdateForm());
-  const [editingLeadId, setEditingLeadId] = useState(null);
-  const [selectedLead, setSelectedLead] = useState(null);
-  const [leadHistory, setLeadHistory] = useState([]);
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [taskHistory, setTaskHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isAssigneeOnly, setIsAssigneeOnly] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [savingLead, setSavingLead] = useState(false);
+  const [savingTask, setSavingTask] = useState(false);
   const [savingUpdate, setSavingUpdate] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -203,7 +176,7 @@ export default function LeadsPage({ viewPath }) {
       const json = await readApiJson(response);
 
       if (!response.ok) {
-        throw new Error(json.message || "Failed to load leads.");
+        throw new Error(json.message || "Failed to load tasks.");
       }
 
       setRecords(json.data || []);
@@ -268,11 +241,11 @@ export default function LeadsPage({ viewPath }) {
 
   useEffect(() => {
     if (viewConfig.autoOpenAdd) {
-      setEditingLeadId(null);
-      setLeadForm(emptyLeadForm());
-      setIsLeadModalOpen(true);
+      setEditingTaskId(null);
+      setTaskForm(emptyTaskForm());
+      setIsTaskModalOpen(true);
     } else {
-      setIsLeadModalOpen(false);
+      setIsTaskModalOpen(false);
     }
   }, [viewConfig.autoOpenAdd, viewPath]);
 
@@ -284,94 +257,94 @@ export default function LeadsPage({ viewPath }) {
   const subCategories = useMemo(
     () =>
       categories.filter(
-        (category) => String(category.parent_category_id || "") === String(leadForm.category_id || "")
+        (category) => String(category.parent_category_id || "") === String(taskForm.category_id || "")
       ),
-    [categories, leadForm.category_id]
+    [categories, taskForm.category_id]
   );
 
   const filterConfigs = useMemo(() => {
     if (isActivityLog) {
       return [
         { key: "activity_type", label: "Activity Type", options: buildFilterOptions(records, "activity_type") },
-        { key: "lead_status", label: "Lead Status", options: buildFilterOptions(records, "lead_status") },
+        { key: "task_status", label: "Task Status", options: buildFilterOptions(records, "task_status") },
         { key: "assigned_to_name", label: "Assigned To", options: buildFilterOptions(records, "assigned_to_name") }
       ];
     }
 
     return [
       { key: "priority", label: "Priority", options: buildFilterOptions(records, "priority") },
-      { key: "lead_status", label: "Status", options: buildFilterOptions(records, "lead_status") },
+      { key: "task_status", label: "Status", options: buildFilterOptions(records, "task_status") },
       { key: "assigned_to_name", label: "Assigned To", options: buildFilterOptions(records, "assigned_to_name") },
       { key: "category_name", label: "Category", options: buildFilterOptions(records, "category_name") }
     ];
   }, [isActivityLog, records]);
 
-  const resetLeadModal = () => {
-    setIsLeadModalOpen(false);
+  const resetTaskModal = () => {
+    setIsTaskModalOpen(false);
     setIsAssigneeOnly(false);
-    setEditingLeadId(null);
-    setLeadForm(emptyLeadForm());
+    setEditingTaskId(null);
+    setTaskForm(emptyTaskForm());
 
-    if (viewPath === "/leads/add") {
-      navigate("/leads/all");
+    if (viewPath === "/tasks/add") {
+      navigate("/tasks/all");
     }
   };
 
   const resetUpdateModal = () => {
     setIsUpdateModalOpen(false);
-    setSelectedLead(null);
-    setLeadHistory([]);
+    setSelectedTask(null);
+    setTaskHistory([]);
     setHistoryLoading(false);
     setUpdateForm(emptyUpdateForm());
   };
 
-  const openAddLead = () => {
+  const openAddTask = () => {
     setMessage("");
     setError("");
-    setEditingLeadId(null);
-    setLeadForm(emptyLeadForm());
+    setEditingTaskId(null);
+    setTaskForm(emptyTaskForm());
     setIsAssigneeOnly(false);
-    setIsLeadModalOpen(true);
+    setIsTaskModalOpen(true);
   };
 
-  const openEditLead = (lead) => {
+  const openEditTask = (task) => {
     setMessage("");
     setError("");
-    setEditingLeadId(lead.id);
-    setLeadForm(normalizeLeadToForm(lead));
+    setEditingTaskId(task.id);
+    setTaskForm(normalizeTaskToForm(task));
     setIsAssigneeOnly(false);
-    setIsLeadModalOpen(true);
+    setIsTaskModalOpen(true);
   };
 
-  const openAssignLead = (lead) => {
+  const openAssignTask = (task) => {
     setMessage("");
     setError("");
-    setEditingLeadId(lead.id);
-    setLeadForm(normalizeLeadToForm(lead));
+    setEditingTaskId(task.id);
+    setTaskForm(normalizeTaskToForm(task));
     setIsAssigneeOnly(true);
-    setIsLeadModalOpen(true);
+    setIsTaskModalOpen(true);
   };
 
-  const openUpdateLead = async (lead) => {
+  const openUpdateTask = async (task) => {
     setMessage("");
     setError("");
-    setSelectedLead(lead);
+    setSelectedTask(task);
     setUpdateForm({
       ...emptyUpdateForm(),
-      next_follow_up_date: String(lead.next_follow_up_date || "").slice(0, 10)
+      next_follow_up_date: String(task.next_follow_up_date || "").slice(0, 10)
     });
     setIsUpdateModalOpen(true);
     setHistoryLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE}/leads/${lead.id}/updates`);
+      const response = await fetch(`${API_BASE}/tasks/${task.id}/updates`);
       const json = await readApiJson(response);
 
       if (!response.ok) {
-        throw new Error(json.message || "Failed to load lead activity.");
+        throw new Error(json.message || "Failed to load task activity.");
       }
 
-      setLeadHistory(json.data || []);
+      setTaskHistory(json.data || []);
     } catch (historyError) {
       setError(historyError.message);
     } finally {
@@ -379,8 +352,8 @@ export default function LeadsPage({ viewPath }) {
     }
   };
 
-  const handleLeadFormChange = (field, value) => {
-    setLeadForm((current) => ({
+  const handleTaskFormChange = (field, value) => {
+    setTaskForm((current) => ({
       ...current,
       ...(field === "category_id" ? { sub_category_id: "" } : {}),
       [field]: value
@@ -394,44 +367,44 @@ export default function LeadsPage({ viewPath }) {
     }));
   };
 
-  const handleLeadSubmit = async (event) => {
+  const handleTaskSubmit = async (event) => {
     event.preventDefault();
     setMessage("");
     setError("");
-    setSavingLead(true);
+    setSavingTask(true);
 
     try {
       const response = await fetch(
-        editingLeadId ? `${API_BASE}/leads/${editingLeadId}` : `${API_BASE}/leads`,
+        editingTaskId ? `${API_BASE}/tasks/${editingTaskId}` : `${API_BASE}/tasks`,
         {
-          method: editingLeadId ? "PUT" : "POST",
+          method: editingTaskId ? "PUT" : "POST",
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify(leadForm)
+          body: JSON.stringify(taskForm)
         }
       );
 
       const json = await readApiJson(response);
 
       if (!response.ok) {
-        throw new Error(json.message || "Failed to save lead.");
+        throw new Error(json.message || "Failed to save task.");
       }
 
-      setMessage(json.message || "Lead saved successfully.");
-      resetLeadModal();
+      setMessage(json.message || "Task saved successfully.");
+      resetTaskModal();
       window.dispatchEvent(new Event("refresh-counts"));
       await loadRecords();
     } catch (saveError) {
       setError(saveError.message);
     } finally {
-      setSavingLead(false);
+      setSavingTask(false);
     }
   };
 
   const handleUpdateSubmit = async (event) => {
     event.preventDefault();
-    if (!selectedLead) {
+    if (!selectedTask) {
       return;
     }
 
@@ -440,7 +413,7 @@ export default function LeadsPage({ viewPath }) {
     setSavingUpdate(true);
 
     try {
-      const response = await fetch(`${API_BASE}/leads/${selectedLead.id}/updates`, {
+      const response = await fetch(`${API_BASE}/tasks/${selectedTask.id}/updates`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -451,10 +424,10 @@ export default function LeadsPage({ viewPath }) {
       const json = await readApiJson(response);
 
       if (!response.ok) {
-        throw new Error(json.message || "Failed to save lead update.");
+        throw new Error(json.message || "Failed to save task update.");
       }
 
-      setMessage(json.message || "Lead update saved successfully.");
+      setMessage(json.message || "Task update saved successfully.");
       resetUpdateModal();
       window.dispatchEvent(new Event("refresh-counts"));
       await loadRecords();
@@ -465,20 +438,20 @@ export default function LeadsPage({ viewPath }) {
     }
   };
 
-  const deleteLead = async (lead) => {
-    if (!window.confirm(`Are you sure you want to delete lead for "${lead.client_name}"?`)) {
+  const deleteTask = async (task) => {
+    if (!window.confirm(`Are you sure you want to delete task for "${task.client_name}"?`)) {
       return;
     }
 
     try {
-      const response = await fetch(`${API_BASE}/leads/${lead.id}`, {
+      const response = await fetch(`${API_BASE}/tasks/${task.id}`, {
         method: "DELETE"
       });
 
       const json = await readApiJson(response);
 
       if (!response.ok) {
-        throw new Error(json.message || "Failed to delete lead.");
+        throw new Error(json.message || "Failed to delete task.");
       }
 
       window.dispatchEvent(new Event("refresh-counts"));
@@ -488,44 +461,27 @@ export default function LeadsPage({ viewPath }) {
     }
   };
 
-  const renderLeadActions = (lead) => {
-    const isUnassigned = !lead.assigned_to_user_id;
-
-    if (viewPath === "/leads/pending-assigning") {
-      return (
-        <div className="table-actions">
-          {isUnassigned ? (
-            <ActionIconButton icon="user" label="Update Assignee" onClick={() => openAssignLead(lead)} />
-          ) : null}
-          <ActionIconButton icon="pencil" label="Edit Lead" onClick={() => openEditLead(lead)} />
-          <ActionIconButton icon="delete" label="Delete Lead" tone="danger" onClick={() => deleteLead(lead)} />
-        </div>
-      );
-    }
-
-    const canFollowUp = !finalLeadStatuses.includes(String(lead.lead_status || ""));
+  const renderTaskActions = (task) => {
+    const isUnassigned = !task.assigned_to_user_id;
+    const canFollowUp = !finalTaskStatuses.includes(String(task.task_status || ""));
 
     return (
       <div className="table-actions">
         {isUnassigned ? (
-          <ActionIconButton icon="user" label="Update Assignee" onClick={() => openAssignLead(lead)} />
+          <ActionIconButton icon="user" label="Update Assignee" onClick={() => openAssignTask(task)} />
         ) : null}
-        <ActionIconButton icon="pencil" label="Edit Lead" onClick={() => openEditLead(lead)} />
+        <ActionIconButton icon="pencil" label="Edit Task" onClick={() => openEditTask(task)} />
         {canFollowUp ? (
-          <ActionIconButton icon="tick" label="Update Lead" tone="primary" onClick={() => openUpdateLead(lead)} />
+          <ActionIconButton icon="tick" label="Update Task" tone="primary" onClick={() => openUpdateTask(task)} />
         ) : null}
-        <ActionIconButton icon="delete" label="Delete Lead" tone="danger" onClick={() => deleteLead(lead)} />
+        <ActionIconButton icon="delete" label="Delete Task" tone="danger" onClick={() => deleteTask(task)} />
       </div>
     );
   };
 
-  const currentColumns = isActivityLog
-    ? activityColumns
-    : viewPath === "/leads/pending-assigning"
-    ? pendingAssigningColumns
-    : leadColumns;
+  const currentColumns = isActivityLog ? activityColumns : taskColumns;
   const currentSearchKeys = isActivityLog
-    ? ["activity_type", "client_name", "lead_status", "update_status", "assigned_to_name", "remarks"]
+    ? ["activity_type", "client_name", "task_status", "update_status", "assigned_to_name", "remarks"]
     : [
         "description",
         "client_name",
@@ -533,7 +489,7 @@ export default function LeadsPage({ viewPath }) {
         "assigned_to_name",
         "category_name",
         "sub_category_name",
-        "lead_status",
+        "task_status",
         "notes"
       ];
 
@@ -550,41 +506,39 @@ export default function LeadsPage({ viewPath }) {
           columns={currentColumns}
           loading={loading}
           error=""
-          loadingMessage={isActivityLog ? "Loading lead activity..." : "Loading leads..."}
+          loadingMessage={isActivityLog ? "Loading task activity..." : "Loading tasks..."}
           emptyMessage={viewConfig.emptyMessage}
           searchKeys={currentSearchKeys}
           filterConfigs={filterConfigs}
-          renderActions={isActivityLog ? null : renderLeadActions}
+          renderActions={isActivityLog ? null : renderTaskActions}
           rowKey={isActivityLog ? "activity_key" : "id"}
           headerExtras={
             !isActivityLog ? (
-              <button type="button" className="primary-button" onClick={openAddLead}>
-                Add Lead
+              <button type="button" className="primary-button" onClick={openAddTask}>
+                Add Task
               </button>
             ) : null
           }
-          customFilterContent={
-            null
-          }
+          customFilterContent={null}
           onClearCustomFilters={() => {}}
         />
       </section>
 
-      {isLeadModalOpen ? (
-        <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="lead-form-title">
-          <div className="master-modal__backdrop" onClick={resetLeadModal} />
+      {isTaskModalOpen ? (
+        <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="task-form-title">
+          <div className="master-modal__backdrop" onClick={resetTaskModal} />
           <section className={`master-card master-modal__panel ${isAssigneeOnly ? "master-modal__panel--small" : ""}`}>
             <div className="master-card__header">
-              <h3 id="lead-form-title">
-                {isAssigneeOnly ? "Update Assignee" : editingLeadId ? "Edit Lead" : "Add Lead"}
+              <h3 id="task-form-title">
+                {isAssigneeOnly ? "Update Assignee" : editingTaskId ? "Edit Task" : "Add Task"}
               </h3>
-              <button type="button" className="text-button" onClick={resetLeadModal}>
+              <button type="button" className="text-button" onClick={resetTaskModal}>
                 Cancel
               </button>
             </div>
 
             <div className="master-modal__body">
-              <form className={`master-form ${isAssigneeOnly ? "master-form--single" : ""}`} onSubmit={handleLeadSubmit}>
+              <form className={`master-form ${isAssigneeOnly ? "master-form--single" : ""}`} onSubmit={handleTaskSubmit}>
                 {!isAssigneeOnly && (
                   <>
                     <label className="form-field">
@@ -592,8 +546,8 @@ export default function LeadsPage({ viewPath }) {
                       <input
                         type="text"
                         required
-                        value={leadForm.description}
-                        onChange={(event) => handleLeadFormChange("description", event.target.value)}
+                        value={taskForm.description}
+                        onChange={(event) => handleTaskFormChange("description", event.target.value)}
                       />
                     </label>
 
@@ -602,8 +556,8 @@ export default function LeadsPage({ viewPath }) {
                       <input
                         type="date"
                         required
-                        value={leadForm.due_date}
-                        onChange={(event) => handleLeadFormChange("due_date", event.target.value)}
+                        value={taskForm.due_date}
+                        onChange={(event) => handleTaskFormChange("due_date", event.target.value)}
                       />
                     </label>
 
@@ -612,8 +566,8 @@ export default function LeadsPage({ viewPath }) {
                       <input
                         type="text"
                         required
-                        value={leadForm.client_name}
-                        onChange={(event) => handleLeadFormChange("client_name", event.target.value)}
+                        value={taskForm.client_name}
+                        onChange={(event) => handleTaskFormChange("client_name", event.target.value)}
                       />
                     </label>
 
@@ -621,8 +575,8 @@ export default function LeadsPage({ viewPath }) {
                       <FormLabel required>Priority</FormLabel>
                       <select
                         required
-                        value={leadForm.priority}
-                        onChange={(event) => handleLeadFormChange("priority", event.target.value)}
+                        value={taskForm.priority}
+                        onChange={(event) => handleTaskFormChange("priority", event.target.value)}
                       >
                         {priorityOptions.map((option) => (
                           <option key={option} value={option}>
@@ -631,14 +585,24 @@ export default function LeadsPage({ viewPath }) {
                         ))}
                       </select>
                     </label>
+
+                    <label className="form-field">
+                      <FormLabel required>Task Date</FormLabel>
+                      <input
+                        type="date"
+                        required
+                        value={taskForm.task_date}
+                        onChange={(event) => handleTaskFormChange("task_date", event.target.value)}
+                      />
+                    </label>
                   </>
                 )}
 
                 <label className="form-field">
                   <FormLabel>Assigned To</FormLabel>
                   <select
-                    value={leadForm.assigned_to_user_id}
-                    onChange={(event) => handleLeadFormChange("assigned_to_user_id", event.target.value)}
+                    value={taskForm.assigned_to_user_id}
+                    onChange={(event) => handleTaskFormChange("assigned_to_user_id", event.target.value)}
                   >
                     <option value="">Select User</option>
                     {users.map((user) => (
@@ -655,8 +619,8 @@ export default function LeadsPage({ viewPath }) {
                       <FormLabel required>Category</FormLabel>
                       <select
                         required
-                        value={leadForm.category_id}
-                        onChange={(event) => handleLeadFormChange("category_id", event.target.value)}
+                        value={taskForm.category_id}
+                        onChange={(event) => handleTaskFormChange("category_id", event.target.value)}
                       >
                         <option value="">Select Category</option>
                         {topLevelCategories.map((category) => (
@@ -671,9 +635,9 @@ export default function LeadsPage({ viewPath }) {
                       <FormLabel required>Sub - Category</FormLabel>
                       <select
                         required
-                        value={leadForm.sub_category_id}
-                        onChange={(event) => handleLeadFormChange("sub_category_id", event.target.value)}
-                        disabled={!leadForm.category_id}
+                        value={taskForm.sub_category_id}
+                        onChange={(event) => handleTaskFormChange("sub_category_id", event.target.value)}
+                        disabled={!taskForm.category_id}
                       >
                         <option value="">Select Sub - Category</option>
                         {subCategories.map((category) => (
@@ -688,25 +652,25 @@ export default function LeadsPage({ viewPath }) {
                       <FormLabel>Notes</FormLabel>
                       <textarea
                         rows="4"
-                        value={leadForm.notes}
-                        onChange={(event) => handleLeadFormChange("notes", event.target.value)}
+                        value={taskForm.notes}
+                        onChange={(event) => handleTaskFormChange("notes", event.target.value)}
                       />
                     </label>
                   </>
                 )}
 
                 <div className="form-actions">
-                  <button type="button" className="secondary-button form-actions__cancel" onClick={resetLeadModal}>
+                  <button type="button" className="secondary-button form-actions__cancel" onClick={resetTaskModal}>
                     Cancel
                   </button>
-                  <button type="submit" className="primary-button" disabled={savingLead}>
-                    {savingLead
+                  <button type="submit" className="primary-button" disabled={savingTask}>
+                    {savingTask
                       ? <ButtonSpinner label="Saving..." />
                       : isAssigneeOnly
                       ? "Update Assignee"
-                      : editingLeadId
-                      ? "Update Lead"
-                      : "Save Lead"}
+                      : editingTaskId
+                      ? "Update Task"
+                      : "Save Task"}
                   </button>
                 </div>
               </form>
@@ -715,12 +679,12 @@ export default function LeadsPage({ viewPath }) {
         </div>
       ) : null}
 
-      {isUpdateModalOpen && selectedLead ? (
-        <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="lead-update-title">
+      {isUpdateModalOpen && selectedTask ? (
+        <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="task-update-title">
           <div className="master-modal__backdrop" onClick={resetUpdateModal} />
           <section className="master-card master-modal__panel master-modal__panel--wide">
             <div className="master-card__header">
-              <h3 id="lead-update-title">Lead Update</h3>
+              <h3 id="task-update-title">Task Update</h3>
               <button type="button" className="text-button" onClick={resetUpdateModal}>
                 Cancel
               </button>
@@ -730,11 +694,11 @@ export default function LeadsPage({ viewPath }) {
               <div className="lead-summary-grid">
                 <div className="record-card__field">
                   <span>Client Name</span>
-                  <strong>{formatCellValue(selectedLead.client_name)}</strong>
+                  <strong>{formatCellValue(selectedTask.client_name)}</strong>
                 </div>
                 <div className="record-card__field">
                   <span>Assigned To</span>
-                  <strong>{formatCellValue(selectedLead.assigned_to_name)}</strong>
+                  <strong>{formatCellValue(selectedTask.assigned_to_name)}</strong>
                 </div>
               </div>
 
@@ -800,7 +764,7 @@ export default function LeadsPage({ viewPath }) {
 
                 {historyLoading ? (
                   <div className="table-state">
-                    <Spinner label="Loading lead activity..." />
+                    <Spinner label="Loading task activity..." />
                   </div>
                 ) : (
                   <div className="table-wrap">
@@ -815,14 +779,14 @@ export default function LeadsPage({ viewPath }) {
                         </tr>
                       </thead>
                       <tbody>
-                        {leadHistory.length === 0 ? (
+                        {taskHistory.length === 0 ? (
                           <tr>
                             <td colSpan="5" className="table-state">
-                              No follow up activity found for this lead.
+                              No activity found for this task.
                             </td>
                           </tr>
                         ) : (
-                          leadHistory.map((item, index) => (
+                          taskHistory.map((item, index) => (
                             <tr key={item.id || `${item.update_date}-${index + 1}`}>
                               <td>{index + 1}</td>
                               <td>{formatCellValue(item.status)}</td>

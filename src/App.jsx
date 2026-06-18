@@ -12,6 +12,7 @@ import PendingPaymentsPage from "./components/PendingPaymentsPage";
 import PagePlaceholder from "./components/PagePlaceholder";
 import ReportsTablePage from "./components/ReportsTablePage";
 import RenewPolicyPage from "./components/RenewPolicyPage";
+import TasksPage from "./components/TasksPage";
 import { menuSections } from "./data/menu";
 import { masterConfigs } from "./data/masterConfigs";
 
@@ -47,8 +48,10 @@ function buildRoutes(items) {
           <IssuePolicyPage />
         ) : item.path === "/policies/renew" ? (
           <RenewPolicyPage />
-        ) : item.section === "Leads" || item.section === "Tasks" ? (
+        ) : item.section === "Leads" ? (
           <LeadsPage viewPath={item.path} />
+        ) : item.section === "Tasks" ? (
+          <TasksPage viewPath={item.path} />
         ) : item.section === "Masters" && masterConfigs[item.resourceKey] ? (
           <MasterPage resourceKey={item.resourceKey} />
         ) : (

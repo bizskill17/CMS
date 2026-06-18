@@ -280,6 +280,45 @@ create table lead_updates (
     foreign key (lead_id) references leads(id)
 );
 
+create table tasks (
+  id bigint unsigned auto_increment primary key,
+  task_date date not null,
+  description text,
+  due_date date,
+  client_name varchar(150) not null,
+  priority varchar(20) not null default 'Medium',
+  assigned_to_user_id bigint unsigned null,
+  category_id bigint unsigned null,
+  sub_category_id bigint unsigned null,
+  notes text,
+  task_status varchar(40) not null default 'Pending',
+  latest_update_date date,
+  next_follow_up_date date,
+  created_at datetime not null default current_timestamp,
+  updated_at datetime not null default current_timestamp on update current_timestamp,
+  key idx_tasks_status (task_status),
+  key idx_tasks_due_date (due_date),
+  constraint fk_tasks_assigned_user
+    foreign key (assigned_to_user_id) references users(id),
+  constraint fk_tasks_category
+    foreign key (category_id) references product_categories(id),
+  constraint fk_tasks_sub_category
+    foreign key (sub_category_id) references product_categories(id)
+);
+
+create table task_updates (
+  id bigint unsigned auto_increment primary key,
+  task_id bigint unsigned not null,
+  status varchar(20) not null,
+  update_date date not null,
+  next_follow_up_date date,
+  remarks text,
+  created_at datetime not null default current_timestamp,
+  key idx_task_updates_date (update_date),
+  constraint fk_task_updates_task
+    foreign key (task_id) references tasks(id)
+);
+
 create table client_payments (
   id bigint unsigned auto_increment primary key,
   policy_id bigint unsigned not null,
