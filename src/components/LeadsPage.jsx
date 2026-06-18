@@ -420,8 +420,8 @@ export default function LeadsPage({ viewPath }) {
 
       setMessage(json.message || "Lead saved successfully.");
       resetLeadModal();
-      await loadRecords();
       window.dispatchEvent(new Event("refresh-counts"));
+      await loadRecords();
     } catch (saveError) {
       setError(saveError.message);
     } finally {
@@ -456,8 +456,8 @@ export default function LeadsPage({ viewPath }) {
 
       setMessage(json.message || "Lead update saved successfully.");
       resetUpdateModal();
-      await loadRecords();
       window.dispatchEvent(new Event("refresh-counts"));
+      await loadRecords();
     } catch (saveError) {
       setError(saveError.message);
     } finally {
@@ -481,8 +481,8 @@ export default function LeadsPage({ viewPath }) {
         throw new Error(json.message || "Failed to delete lead.");
       }
 
-      await loadRecords();
       window.dispatchEvent(new Event("refresh-counts"));
+      await loadRecords();
     } catch (deleteError) {
       alert(deleteError.message);
     }
