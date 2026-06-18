@@ -109,7 +109,7 @@ function emptyLeadForm() {
   return {
     lead_date: todayInputValue(),
     description: "",
-    due_date: "",
+    due_date: todayInputValue(),
     client_name: "",
     priority: "Medium",
     assigned_to_user_id: "",
