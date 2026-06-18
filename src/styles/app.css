@@ -1713,18 +1713,30 @@ button {
 }
 
 .icon-action-button--secondary {
-  background: #ebf2ff;
-  color: #2d57d7;
-}
-
-.icon-action-button--primary {
-  background: #2d57d7;
+  background: #1e293b;
   color: #fff;
 }
 
+.icon-action-button--secondary:hover {
+  background: #0f172a;
+}
+
+.icon-action-button--primary {
+  background: #1e3a8a;
+  color: #fff;
+}
+
+.icon-action-button--primary:hover {
+  background: #1e40af;
+}
+
 .icon-action-button--danger {
-  background: #fff5f5;
-  color: #e03131;
+  background: #7f1d1d;
+  color: #fff;
+}
+
+.icon-action-button--danger:hover {
+  background: #991b1b;
 }
 
 .master-card__actions .master-list-toolbar__search {
