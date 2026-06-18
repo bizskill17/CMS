@@ -241,6 +241,45 @@ create table follow_ups (
     foreign key (done_by_agent_id) references agents(id)
 );
 
+create table leads (
+  id bigint unsigned auto_increment primary key,
+  lead_date date not null,
+  description text,
+  due_date date,
+  client_name varchar(150) not null,
+  priority varchar(20) not null default 'Medium',
+  assigned_to_user_id bigint unsigned null,
+  category_id bigint unsigned null,
+  sub_category_id bigint unsigned null,
+  notes text,
+  lead_status varchar(40) not null default 'Pending Assigning',
+  latest_update_date date,
+  next_follow_up_date date,
+  created_at datetime not null default current_timestamp,
+  updated_at datetime not null default current_timestamp on update current_timestamp,
+  key idx_leads_status (lead_status),
+  key idx_leads_due_date (due_date),
+  constraint fk_leads_assigned_user
+    foreign key (assigned_to_user_id) references users(id),
+  constraint fk_leads_category
+    foreign key (category_id) references product_categories(id),
+  constraint fk_leads_sub_category
+    foreign key (sub_category_id) references product_categories(id)
+);
+
+create table lead_updates (
+  id bigint unsigned auto_increment primary key,
+  lead_id bigint unsigned not null,
+  status varchar(20) not null,
+  update_date date not null,
+  next_follow_up_date date,
+  remarks text,
+  created_at datetime not null default current_timestamp,
+  key idx_lead_updates_date (update_date),
+  constraint fk_lead_updates_lead
+    foreign key (lead_id) references leads(id)
+);
+
 create table client_payments (
   id bigint unsigned auto_increment primary key,
   policy_id bigint unsigned not null,

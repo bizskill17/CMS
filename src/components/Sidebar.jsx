@@ -19,6 +19,9 @@ function Icon({ name }) {
     masters: (
       <path d="M6 3h12l3 4v14H3V7l3-4Zm1 2-1.5 2H18.5L17 5H7Zm-2 4v10h14V9H5Zm3 2h8v2H8v-2Zm0 4h6v2H8v-2Z" />
     ),
+    leads: (
+      <path d="M6 4h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm8 1.5V10h4.5M8 12h8v2H8v-2Zm0 4h5v2H8v-2Z" />
+    ),
     policies: (
       <path d="M6 2h9l5 5v15H6V2Zm2 2v16h10V8h-4V4H8Zm2 7h6v2h-6v-2Zm0 4h6v2h-6v-2Z" />
     ),

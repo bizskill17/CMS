@@ -6,6 +6,7 @@ import DashboardPage from "./components/DashboardPage";
 import ExpiryReportsPage from "./components/ExpiryReportsPage";
 import ExpiryReportDetailPage from "./components/ExpiryReportDetailPage";
 import IssuePolicyPage from "./components/IssuePolicyPage";
+import LeadsPage from "./components/LeadsPage";
 import MasterPage from "./components/MasterPage";
 import PendingPaymentsPage from "./components/PendingPaymentsPage";
 import PagePlaceholder from "./components/PagePlaceholder";
@@ -46,6 +47,8 @@ function buildRoutes(items) {
           <IssuePolicyPage />
         ) : item.path === "/policies/renew" ? (
           <RenewPolicyPage />
+        ) : item.section === "Leads" ? (
+          <LeadsPage viewPath={item.path} />
         ) : item.section === "Masters" && masterConfigs[item.resourceKey] ? (
           <MasterPage resourceKey={item.resourceKey} />
         ) : (

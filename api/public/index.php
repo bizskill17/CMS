@@ -53,6 +53,46 @@ function linkedDeleteMessage(string $resource): string
     );
 }
 
+function isFinalLeadStatus(string $status): bool
+{
+    return in_array($status, ['Converted', 'Lost', 'Canceled'], true);
+}
+
+function normalizeLeadUpdateStatus(string $status): string
+{
+    $normalized = strtolower(trim($status));
+
+    return match ($normalized) {
+        'success' => 'Success',
+        'lost' => 'Lost',
+        'cancel' => 'Cancel',
+        default => '',
+    };
+}
+
+function deriveLeadStatusFromAssignment(?int $assignedToUserId, bool $hasUpdates, ?string $currentStatus = null): string
+{
+    if ($currentStatus !== null && isFinalLeadStatus($currentStatus)) {
+        return $currentStatus;
+    }
+
+    if ($assignedToUserId === null) {
+        return 'Pending Assigning';
+    }
+
+    return $hasUpdates ? 'Pending Repeat Follow Up' : 'Pending First Follow Up';
+}
+
+function deriveLeadStatusFromUpdate(string $updateStatus, ?string $nextFollowUpDate): string
+{
+    return match ($updateStatus) {
+        'Success' => $nextFollowUpDate ? 'Pending Repeat Follow Up' : 'Converted',
+        'Lost' => 'Lost',
+        'Cancel' => 'Canceled',
+        default => 'Pending Repeat Follow Up',
+    };
+}
+
 try {
     if ($path === '/api/health' && $method === 'GET') {
         $pdo = Database::connection();
@@ -77,6 +117,28 @@ try {
             $table = $config['table'];
             $counts[$key] = (int) $pdo->query("SELECT count(*) FROM $table")->fetchColumn();
         }
+
+        // Leads counts
+        $counts['leads-all'] = (int) $pdo->query('SELECT count(*) FROM leads')->fetchColumn();
+        $counts['leads-pending-assigning'] = (int) $pdo->query(
+            'SELECT count(*) FROM leads WHERE lead_status = "Pending Assigning"'
+        )->fetchColumn();
+        $counts['leads-pending-first-follow-up'] = (int) $pdo->query(
+            'SELECT count(*) FROM leads WHERE lead_status = "Pending First Follow Up"'
+        )->fetchColumn();
+        $counts['leads-pending-repeat-follow-up'] = (int) $pdo->query(
+            'SELECT count(*) FROM leads WHERE lead_status = "Pending Repeat Follow Up"'
+        )->fetchColumn();
+        $counts['leads-converted'] = (int) $pdo->query(
+            'SELECT count(*) FROM leads WHERE lead_status = "Converted"'
+        )->fetchColumn();
+        $counts['leads-lost'] = (int) $pdo->query(
+            'SELECT count(*) FROM leads WHERE lead_status = "Lost"'
+        )->fetchColumn();
+        $counts['leads-canceled'] = (int) $pdo->query(
+            'SELECT count(*) FROM leads WHERE lead_status = "Canceled"'
+        )->fetchColumn();
+        $counts['leads-activity-log'] = (int) $pdo->query('SELECT count(*) FROM lead_updates')->fetchColumn();
 
         // Policies counts
         $counts['all-policies'] = (int) $pdo->query('SELECT count(*) FROM policies')->fetchColumn();
@@ -226,6 +288,412 @@ try {
             'status' => 'ok',
             'data' => array_keys(MasterRegistry::all())
         ]);
+        exit;
+    }
+
+    if ($path === '/api/leads/activity' && $method === 'GET') {
+        $pdo = Database::connection();
+        $statement = $pdo->query(
+            'SELECT *
+             FROM (
+                SELECT
+                    concat("lead-", l.id) AS activity_key,
+                    "Lead Created" AS activity_type,
+                    l.client_name,
+                    l.lead_status,
+                    null AS update_status,
+                    l.lead_date AS activity_date,
+                    u.full_name AS assigned_to_name,
+                    l.next_follow_up_date,
+                    l.notes AS remarks,
+                    l.created_at AS sort_at
+                FROM leads l
+                LEFT JOIN users u ON u.id = l.assigned_to_user_id
+
+                UNION ALL
+
+                SELECT
+                    concat("update-", lu.id) AS activity_key,
+                    "Follow Up" AS activity_type,
+                    l.client_name,
+                    l.lead_status,
+                    lu.status AS update_status,
+                    lu.update_date AS activity_date,
+                    u.full_name AS assigned_to_name,
+                    lu.next_follow_up_date,
+                    lu.remarks AS remarks,
+                    lu.created_at AS sort_at
+                FROM lead_updates lu
+                INNER JOIN leads l ON l.id = lu.lead_id
+                LEFT JOIN users u ON u.id = l.assigned_to_user_id
+             ) activity
+             ORDER BY sort_at DESC'
+        );
+
+        Response::json([
+            'status' => 'ok',
+            'data' => $statement->fetchAll()
+        ]);
+        exit;
+    }
+
+    if ($path === '/api/leads' && $method === 'GET') {
+        $pdo = Database::connection();
+        $view = trim((string) ($_GET['view'] ?? 'all'));
+        $whereClause = '';
+
+        if ($view === 'pending-assigning') {
+            $whereClause = 'WHERE l.lead_status = "Pending Assigning"';
+        } elseif ($view === 'pending-first-follow-up') {
+            $whereClause = 'WHERE l.lead_status = "Pending First Follow Up"';
+        } elseif ($view === 'pending-repeat-follow-up') {
+            $whereClause = 'WHERE l.lead_status = "Pending Repeat Follow Up"';
+        } elseif ($view === 'converted') {
+            $whereClause = 'WHERE l.lead_status = "Converted"';
+        } elseif ($view === 'lost') {
+            $whereClause = 'WHERE l.lead_status = "Lost"';
+        } elseif ($view === 'canceled') {
+            $whereClause = 'WHERE l.lead_status = "Canceled"';
+        }
+
+        $statement = $pdo->query(
+            "SELECT
+                l.id,
+                l.lead_date,
+                l.description,
+                l.due_date,
+                l.client_name,
+                l.priority,
+                l.assigned_to_user_id,
+                l.category_id,
+                l.sub_category_id,
+                l.notes,
+                l.lead_status,
+                l.latest_update_date,
+                l.next_follow_up_date,
+                u.full_name AS assigned_to_name,
+                c.category_name,
+                sc.category_name AS sub_category_name
+             FROM leads l
+             LEFT JOIN users u ON u.id = l.assigned_to_user_id
+             LEFT JOIN product_categories c ON c.id = l.category_id
+             LEFT JOIN product_categories sc ON sc.id = l.sub_category_id
+             $whereClause
+             ORDER BY l.id DESC"
+        );
+
+        Response::json([
+            'status' => 'ok',
+            'data' => $statement->fetchAll()
+        ]);
+        exit;
+    }
+
+    if ($path === '/api/leads' && $method === 'POST') {
+        $pdo = Database::connection();
+        $rawBody = file_get_contents('php://input');
+        $payload = json_decode($rawBody ?: '[]', true);
+
+        if (!is_array($payload)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Invalid JSON payload'
+            ], 422);
+            exit;
+        }
+
+        foreach (['lead_date', 'client_name'] as $requiredField) {
+            if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
+                Response::json([
+                    'status' => 'error',
+                    'message' => sprintf('Field "%s" is required.', $requiredField)
+                ], 422);
+                exit;
+            }
+        }
+
+        $assignedToUserId = trim((string) ($payload['assigned_to_user_id'] ?? '')) !== ''
+            ? (int) $payload['assigned_to_user_id']
+            : null;
+        $categoryId = trim((string) ($payload['category_id'] ?? '')) !== ''
+            ? (int) $payload['category_id']
+            : null;
+        $subCategoryId = trim((string) ($payload['sub_category_id'] ?? '')) !== ''
+            ? (int) $payload['sub_category_id']
+            : null;
+        $leadStatus = deriveLeadStatusFromAssignment($assignedToUserId, false);
+
+        $statement = $pdo->prepare(
+            'INSERT INTO leads (
+                lead_date,
+                description,
+                due_date,
+                client_name,
+                priority,
+                assigned_to_user_id,
+                category_id,
+                sub_category_id,
+                notes,
+                lead_status
+             ) VALUES (
+                :lead_date,
+                :description,
+                :due_date,
+                :client_name,
+                :priority,
+                :assigned_to_user_id,
+                :category_id,
+                :sub_category_id,
+                :notes,
+                :lead_status
+             )'
+        );
+        $statement->bindValue(':lead_date', $payload['lead_date']);
+        $statement->bindValue(':description', trim((string) ($payload['description'] ?? '')) !== '' ? $payload['description'] : null);
+        $statement->bindValue(':due_date', trim((string) ($payload['due_date'] ?? '')) !== '' ? $payload['due_date'] : null);
+        $statement->bindValue(':client_name', $payload['client_name']);
+        $statement->bindValue(':priority', trim((string) ($payload['priority'] ?? '')) !== '' ? $payload['priority'] : 'Medium');
+        $statement->bindValue(':assigned_to_user_id', $assignedToUserId, $assignedToUserId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $statement->bindValue(':category_id', $categoryId, $categoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $statement->bindValue(':sub_category_id', $subCategoryId, $subCategoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $statement->bindValue(':notes', trim((string) ($payload['notes'] ?? '')) !== '' ? $payload['notes'] : null);
+        $statement->bindValue(':lead_status', $leadStatus);
+        $statement->execute();
+
+        Response::json([
+            'status' => 'ok',
+            'message' => 'Lead created successfully.',
+            'id' => (int) $pdo->lastInsertId()
+        ], 201);
+        exit;
+    }
+
+    if (preg_match('#^/api/leads/(\d+)$#', $path, $matches) === 1 && $method === 'PUT') {
+        $pdo = Database::connection();
+        $leadId = (int) $matches[1];
+        $rawBody = file_get_contents('php://input');
+        $payload = json_decode($rawBody ?: '[]', true);
+
+        if (!is_array($payload)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Invalid JSON payload'
+            ], 422);
+            exit;
+        }
+
+        $existingLeadStatement = $pdo->prepare(
+            'SELECT id, lead_status
+             FROM leads
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $existingLeadStatement->bindValue(':id', $leadId, PDO::PARAM_INT);
+        $existingLeadStatement->execute();
+        $existingLead = $existingLeadStatement->fetch();
+
+        if (!$existingLead) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Lead not found.'
+            ], 404);
+            exit;
+        }
+
+        foreach (['lead_date', 'client_name'] as $requiredField) {
+            if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
+                Response::json([
+                    'status' => 'error',
+                    'message' => sprintf('Field "%s" is required.', $requiredField)
+                ], 422);
+                exit;
+            }
+        }
+
+        $updatesCountStatement = $pdo->prepare(
+            'SELECT count(*) FROM lead_updates WHERE lead_id = :lead_id'
+        );
+        $updatesCountStatement->bindValue(':lead_id', $leadId, PDO::PARAM_INT);
+        $updatesCountStatement->execute();
+        $hasUpdates = (int) $updatesCountStatement->fetchColumn() > 0;
+
+        $assignedToUserId = trim((string) ($payload['assigned_to_user_id'] ?? '')) !== ''
+            ? (int) $payload['assigned_to_user_id']
+            : null;
+        $categoryId = trim((string) ($payload['category_id'] ?? '')) !== ''
+            ? (int) $payload['category_id']
+            : null;
+        $subCategoryId = trim((string) ($payload['sub_category_id'] ?? '')) !== ''
+            ? (int) $payload['sub_category_id']
+            : null;
+        $leadStatus = deriveLeadStatusFromAssignment($assignedToUserId, $hasUpdates, (string) $existingLead['lead_status']);
+
+        $statement = $pdo->prepare(
+            'UPDATE leads
+             SET lead_date = :lead_date,
+                 description = :description,
+                 due_date = :due_date,
+                 client_name = :client_name,
+                 priority = :priority,
+                 assigned_to_user_id = :assigned_to_user_id,
+                 category_id = :category_id,
+                 sub_category_id = :sub_category_id,
+                 notes = :notes,
+                 lead_status = :lead_status
+             WHERE id = :id'
+        );
+        $statement->bindValue(':lead_date', $payload['lead_date']);
+        $statement->bindValue(':description', trim((string) ($payload['description'] ?? '')) !== '' ? $payload['description'] : null);
+        $statement->bindValue(':due_date', trim((string) ($payload['due_date'] ?? '')) !== '' ? $payload['due_date'] : null);
+        $statement->bindValue(':client_name', $payload['client_name']);
+        $statement->bindValue(':priority', trim((string) ($payload['priority'] ?? '')) !== '' ? $payload['priority'] : 'Medium');
+        $statement->bindValue(':assigned_to_user_id', $assignedToUserId, $assignedToUserId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $statement->bindValue(':category_id', $categoryId, $categoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $statement->bindValue(':sub_category_id', $subCategoryId, $subCategoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $statement->bindValue(':notes', trim((string) ($payload['notes'] ?? '')) !== '' ? $payload['notes'] : null);
+        $statement->bindValue(':lead_status', $leadStatus);
+        $statement->bindValue(':id', $leadId, PDO::PARAM_INT);
+        $statement->execute();
+
+        Response::json([
+            'status' => 'ok',
+            'message' => 'Lead updated successfully.'
+        ]);
+        exit;
+    }
+
+    if (preg_match('#^/api/leads/(\d+)/updates$#', $path, $matches) === 1 && $method === 'GET') {
+        $pdo = Database::connection();
+        $leadId = (int) $matches[1];
+        $statement = $pdo->prepare(
+            'SELECT id, status, update_date, next_follow_up_date, remarks, created_at
+             FROM lead_updates
+             WHERE lead_id = :lead_id
+             ORDER BY update_date DESC, id DESC'
+        );
+        $statement->bindValue(':lead_id', $leadId, PDO::PARAM_INT);
+        $statement->execute();
+
+        Response::json([
+            'status' => 'ok',
+            'data' => $statement->fetchAll()
+        ]);
+        exit;
+    }
+
+    if (preg_match('#^/api/leads/(\d+)/updates$#', $path, $matches) === 1 && $method === 'POST') {
+        $pdo = Database::connection();
+        $leadId = (int) $matches[1];
+        $rawBody = file_get_contents('php://input');
+        $payload = json_decode($rawBody ?: '[]', true);
+
+        if (!is_array($payload)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Invalid JSON payload'
+            ], 422);
+            exit;
+        }
+
+        $leadStatement = $pdo->prepare(
+            'SELECT id, lead_status, assigned_to_user_id
+             FROM leads
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $leadStatement->bindValue(':id', $leadId, PDO::PARAM_INT);
+        $leadStatement->execute();
+        $lead = $leadStatement->fetch();
+
+        if (!$lead) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Lead not found.'
+            ], 404);
+            exit;
+        }
+
+        if (isFinalLeadStatus((string) $lead['lead_status'])) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'This lead is already closed and cannot be updated.'
+            ], 409);
+            exit;
+        }
+
+        $updateStatus = normalizeLeadUpdateStatus((string) ($payload['status'] ?? ''));
+        $updateDate = trim((string) ($payload['update_date'] ?? ''));
+        $nextFollowUpDate = trim((string) ($payload['next_follow_up_date'] ?? ''));
+
+        if ($updateStatus === '') {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Field "status" is required.'
+            ], 422);
+            exit;
+        }
+
+        if ($updateDate === '') {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Field "update_date" is required.'
+            ], 422);
+            exit;
+        }
+
+        $leadStatus = deriveLeadStatusFromUpdate($updateStatus, $nextFollowUpDate !== '' ? $nextFollowUpDate : null);
+
+        $pdo->beginTransaction();
+
+        try {
+            $insertUpdate = $pdo->prepare(
+                'INSERT INTO lead_updates (
+                    lead_id,
+                    status,
+                    update_date,
+                    next_follow_up_date,
+                    remarks
+                 ) VALUES (
+                    :lead_id,
+                    :status,
+                    :update_date,
+                    :next_follow_up_date,
+                    :remarks
+                 )'
+            );
+            $insertUpdate->bindValue(':lead_id', $leadId, PDO::PARAM_INT);
+            $insertUpdate->bindValue(':status', $updateStatus);
+            $insertUpdate->bindValue(':update_date', $updateDate);
+            $insertUpdate->bindValue(':next_follow_up_date', $nextFollowUpDate !== '' ? $nextFollowUpDate : null);
+            $insertUpdate->bindValue(':remarks', trim((string) ($payload['remarks'] ?? '')) !== '' ? $payload['remarks'] : null);
+            $insertUpdate->execute();
+
+            $updateLead = $pdo->prepare(
+                'UPDATE leads
+                 SET lead_status = :lead_status,
+                     latest_update_date = :latest_update_date,
+                     next_follow_up_date = :next_follow_up_date
+                 WHERE id = :id'
+            );
+            $updateLead->bindValue(':lead_status', $leadStatus);
+            $updateLead->bindValue(':latest_update_date', $updateDate);
+            $updateLead->bindValue(
+                ':next_follow_up_date',
+                $leadStatus === 'Pending Repeat Follow Up' ? $nextFollowUpDate : null
+            );
+            $updateLead->bindValue(':id', $leadId, PDO::PARAM_INT);
+            $updateLead->execute();
+
+            $pdo->commit();
+        } catch (Throwable $throwable) {
+            $pdo->rollBack();
+            throw $throwable;
+        }
+
+        Response::json([
+            'status' => 'ok',
+            'message' => 'Lead update saved successfully.'
+        ], 201);
         exit;
     }
 

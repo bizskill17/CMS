@@ -83,6 +83,7 @@ export default function ResponsiveDataView({
   renderActions,
   rowKey = "id",
   initialSort = null,
+  headerExtras = null,
   customFilterContent = null,
   onClearCustomFilters = null
 }) {
@@ -170,6 +171,7 @@ export default function ResponsiveDataView({
           </div>
 
           <span className="hide-mobile">{sortedRecords.length} records</span>
+          {headerExtras}
           {filterConfigs.length > 0 ? (
             <ActionIconDisplay
               icon="filter"

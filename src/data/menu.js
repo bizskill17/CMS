@@ -26,6 +26,30 @@ export const menuSections = [
     ]
   },
   {
+    label: "Leads",
+    path: "/leads",
+    icon: "leads",
+    items: [
+      { label: "Create View", path: "/leads/create-view", countKey: "leads-all" },
+      { label: "Add Lead", path: "/leads/add" },
+      { label: "Pending Assigning", path: "/leads/pending-assigning", countKey: "leads-pending-assigning" },
+      {
+        label: "Pending First Follow Up",
+        path: "/leads/pending-first-follow-up",
+        countKey: "leads-pending-first-follow-up"
+      },
+      {
+        label: "Pending Repeat Follow Up",
+        path: "/leads/pending-repeat-follow-up",
+        countKey: "leads-pending-repeat-follow-up"
+      },
+      { label: "Converted", path: "/leads/converted", countKey: "leads-converted" },
+      { label: "Lost", path: "/leads/lost", countKey: "leads-lost" },
+      { label: "Canceled", path: "/leads/canceled", countKey: "leads-canceled" },
+      { label: "Activity Log", path: "/leads/activity-log", countKey: "leads-activity-log" }
+    ]
+  },
+  {
     label: "Policies",
     path: "/policies",
     icon: "policies",

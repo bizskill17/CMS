@@ -1,0 +1,760 @@
+import { useEffect, useMemo, useState } from "react";
+import { ActionIconButton } from "./ActionIcon";
+import FormLabel from "./FormLabel";
+import ResponsiveDataView from "./ResponsiveDataView";
+import { API_BASE } from "../config/api";
+import { ButtonSpinner, Spinner } from "./Spinner";
+import { buildFilterOptions } from "../utils/dataView";
+import { formatCellValue } from "../utils/formatting";
+
+const leadViewConfigs = {
+  "/leads/create-view": {
+    title: "Lead List",
+    endpoint: `${API_BASE}/leads?view=all`,
+    emptyMessage: "No leads found."
+  },
+  "/leads/add": {
+    title: "Add Lead",
+    endpoint: `${API_BASE}/leads?view=all`,
+    emptyMessage: "No leads found.",
+    autoOpenAdd: true
+  },
+  "/leads/pending-assigning": {
+    title: "Pending Assigning",
+    endpoint: `${API_BASE}/leads?view=pending-assigning`,
+    emptyMessage: "No leads are pending assigning."
+  },
+  "/leads/pending-first-follow-up": {
+    title: "Pending First Follow Up",
+    endpoint: `${API_BASE}/leads?view=pending-first-follow-up`,
+    emptyMessage: "No leads are pending first follow up."
+  },
+  "/leads/pending-repeat-follow-up": {
+    title: "Pending Repeat Follow Up",
+    endpoint: `${API_BASE}/leads?view=pending-repeat-follow-up`,
+    emptyMessage: "No leads are pending repeat follow up."
+  },
+  "/leads/converted": {
+    title: "Converted Leads",
+    endpoint: `${API_BASE}/leads?view=converted`,
+    emptyMessage: "No converted leads found."
+  },
+  "/leads/lost": {
+    title: "Lost Leads",
+    endpoint: `${API_BASE}/leads?view=lost`,
+    emptyMessage: "No lost leads found."
+  },
+  "/leads/canceled": {
+    title: "Canceled Leads",
+    endpoint: `${API_BASE}/leads?view=canceled`,
+    emptyMessage: "No canceled leads found."
+  },
+  "/leads/activity-log": {
+    title: "Lead Activity Log",
+    endpoint: `${API_BASE}/leads/activity`,
+    emptyMessage: "No lead activity found.",
+    activityLog: true
+  }
+};
+
+const leadColumns = [
+  { key: "lead_date", label: "Lead Date" },
+  { key: "description", label: "Description", width: "220px" },
+  { key: "due_date", label: "Due Date" },
+  { key: "client_name", label: "Client Name", width: "170px" },
+  { key: "priority", label: "Priority" },
+  { key: "assigned_to_name", label: "Assigned To", width: "160px" },
+  { key: "category_name", label: "Category", width: "160px" },
+  { key: "sub_category_name", label: "Sub - Category", width: "170px" },
+  { key: "lead_status", label: "Status", width: "170px" },
+  { key: "next_follow_up_date", label: "Next Follow Up Date", width: "140px" }
+];
+
+const activityColumns = [
+  { key: "activity_type", label: "Activity Type", width: "130px" },
+  { key: "client_name", label: "Client Name", width: "170px" },
+  { key: "lead_status", label: "Lead Status", width: "170px" },
+  { key: "update_status", label: "Update Status", width: "120px" },
+  { key: "activity_date", label: "Date", width: "120px" },
+  { key: "assigned_to_name", label: "Assigned To", width: "160px" },
+  { key: "next_follow_up_date", label: "Next Follow Up Date", width: "140px" },
+  { key: "remarks", label: "Remarks", width: "240px" }
+];
+
+const priorityOptions = ["High", "Medium", "Low"];
+const updateStatusOptions = ["Success", "Lost", "Cancel"];
+const finalLeadStatuses = ["Converted", "Lost", "Canceled"];
+
+function todayInputValue() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function emptyLeadForm() {
+  return {
+    lead_date: todayInputValue(),
+    description: "",
+    due_date: "",
+    client_name: "",
+    priority: "Medium",
+    assigned_to_user_id: "",
+    category_id: "",
+    sub_category_id: "",
+    notes: ""
+  };
+}
+
+function emptyUpdateForm() {
+  return {
+    status: "Success",
+    update_date: todayInputValue(),
+    next_follow_up_date: "",
+    remarks: ""
+  };
+}
+
+async function readApiJson(response) {
+  const rawText = await response.text();
+  const contentType = response.headers.get("content-type") || "";
+
+  if (!rawText.trim()) {
+    throw new Error(
+      `API returned an empty response (${response.status} ${response.statusText || "Unknown Status"}).`
+    );
+  }
+
+  try {
+    return JSON.parse(rawText);
+  } catch {
+    const looksLikeHtml =
+      contentType.includes("text/html") || /^\s*<!doctype html|^\s*<html/i.test(rawText);
+
+    if (looksLikeHtml) {
+      throw new Error(
+        `API endpoint returned HTML instead of JSON (${response.status} ${response.statusText || "Unknown Status"}). Please check the API URL or server rewrite configuration.`
+      );
+    }
+
+    throw new Error(
+      `API returned an unreadable response (${response.status} ${response.statusText || "Unknown Status"}).`
+    );
+  }
+}
+
+function normalizeLeadToForm(lead) {
+  return {
+    lead_date: String(lead.lead_date || "").slice(0, 10),
+    description: lead.description || "",
+    due_date: String(lead.due_date || "").slice(0, 10),
+    client_name: lead.client_name || "",
+    priority: lead.priority || "Medium",
+    assigned_to_user_id: lead.assigned_to_user_id ? String(lead.assigned_to_user_id) : "",
+    category_id: lead.category_id ? String(lead.category_id) : "",
+    sub_category_id: lead.sub_category_id ? String(lead.sub_category_id) : "",
+    notes: lead.notes || ""
+  };
+}
+
+export default function LeadsPage({ viewPath }) {
+  const viewConfig = leadViewConfigs[viewPath] || leadViewConfigs["/leads/create-view"];
+  const isActivityLog = Boolean(viewConfig.activityLog);
+  const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [users, setUsers] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [leadForm, setLeadForm] = useState(() => emptyLeadForm());
+  const [updateForm, setUpdateForm] = useState(() => emptyUpdateForm());
+  const [editingLeadId, setEditingLeadId] = useState(null);
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [leadHistory, setLeadHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [savingLead, setSavingLead] = useState(false);
+  const [savingUpdate, setSavingUpdate] = useState(false);
+
+  const loadRecords = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(viewConfig.endpoint);
+      const json = await readApiJson(response);
+
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to load leads.");
+      }
+
+      setRecords(json.data || []);
+    } catch (loadError) {
+      setError(loadError.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRecords();
+  }, [viewConfig.endpoint]);
+
+  useEffect(() => {
+    if (isActivityLog) {
+      return;
+    }
+
+    let isActive = true;
+
+    const loadOptions = async () => {
+      try {
+        const [usersResponse, categoriesResponse] = await Promise.all([
+          fetch(`${API_BASE}/masters/users?limit=250`),
+          fetch(`${API_BASE}/masters/product-categories?limit=250`)
+        ]);
+
+        const [usersJson, categoriesJson] = await Promise.all([
+          readApiJson(usersResponse),
+          readApiJson(categoriesResponse)
+        ]);
+
+        if (!usersResponse.ok) {
+          throw new Error(usersJson.message || "Failed to load users.");
+        }
+
+        if (!categoriesResponse.ok) {
+          throw new Error(categoriesJson.message || "Failed to load categories.");
+        }
+
+        if (!isActive) {
+          return;
+        }
+
+        setUsers(usersJson.data || []);
+        setCategories(categoriesJson.data || []);
+      } catch (loadOptionsError) {
+        if (isActive) {
+          setError(loadOptionsError.message);
+        }
+      }
+    };
+
+    loadOptions();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isActivityLog]);
+
+  useEffect(() => {
+    if (viewConfig.autoOpenAdd) {
+      setEditingLeadId(null);
+      setLeadForm(emptyLeadForm());
+      setIsLeadModalOpen(true);
+    } else {
+      setIsLeadModalOpen(false);
+    }
+  }, [viewConfig.autoOpenAdd, viewPath]);
+
+  const topLevelCategories = useMemo(
+    () => categories.filter((category) => !category.parent_category_id),
+    [categories]
+  );
+
+  const subCategories = useMemo(
+    () =>
+      categories.filter(
+        (category) => String(category.parent_category_id || "") === String(leadForm.category_id || "")
+      ),
+    [categories, leadForm.category_id]
+  );
+
+  const filterConfigs = useMemo(() => {
+    if (isActivityLog) {
+      return [
+        { key: "activity_type", label: "Activity Type", options: buildFilterOptions(records, "activity_type") },
+        { key: "lead_status", label: "Lead Status", options: buildFilterOptions(records, "lead_status") },
+        { key: "assigned_to_name", label: "Assigned To", options: buildFilterOptions(records, "assigned_to_name") }
+      ];
+    }
+
+    return [
+      { key: "priority", label: "Priority", options: buildFilterOptions(records, "priority") },
+      { key: "lead_status", label: "Status", options: buildFilterOptions(records, "lead_status") },
+      { key: "assigned_to_name", label: "Assigned To", options: buildFilterOptions(records, "assigned_to_name") },
+      { key: "category_name", label: "Category", options: buildFilterOptions(records, "category_name") }
+    ];
+  }, [isActivityLog, records]);
+
+  const resetLeadModal = () => {
+    setIsLeadModalOpen(false);
+    setEditingLeadId(null);
+    setLeadForm(emptyLeadForm());
+  };
+
+  const resetUpdateModal = () => {
+    setIsUpdateModalOpen(false);
+    setSelectedLead(null);
+    setLeadHistory([]);
+    setHistoryLoading(false);
+    setUpdateForm(emptyUpdateForm());
+  };
+
+  const openAddLead = () => {
+    setMessage("");
+    setError("");
+    setEditingLeadId(null);
+    setLeadForm(emptyLeadForm());
+    setIsLeadModalOpen(true);
+  };
+
+  const openEditLead = (lead) => {
+    setMessage("");
+    setError("");
+    setEditingLeadId(lead.id);
+    setLeadForm(normalizeLeadToForm(lead));
+    setIsLeadModalOpen(true);
+  };
+
+  const openUpdateLead = async (lead) => {
+    setMessage("");
+    setError("");
+    setSelectedLead(lead);
+    setUpdateForm({
+      ...emptyUpdateForm(),
+      next_follow_up_date: String(lead.next_follow_up_date || "").slice(0, 10)
+    });
+    setIsUpdateModalOpen(true);
+    setHistoryLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/leads/${lead.id}/updates`);
+      const json = await readApiJson(response);
+
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to load lead activity.");
+      }
+
+      setLeadHistory(json.data || []);
+    } catch (historyError) {
+      setError(historyError.message);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleLeadFormChange = (field, value) => {
+    setLeadForm((current) => ({
+      ...current,
+      ...(field === "category_id" ? { sub_category_id: "" } : {}),
+      [field]: value
+    }));
+  };
+
+  const handleUpdateFormChange = (field, value) => {
+    setUpdateForm((current) => ({
+      ...current,
+      [field]: value
+    }));
+  };
+
+  const handleLeadSubmit = async (event) => {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+    setSavingLead(true);
+
+    try {
+      const response = await fetch(
+        editingLeadId ? `${API_BASE}/leads/${editingLeadId}` : `${API_BASE}/leads`,
+        {
+          method: editingLeadId ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(leadForm)
+        }
+      );
+
+      const json = await readApiJson(response);
+
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to save lead.");
+      }
+
+      setMessage(json.message || "Lead saved successfully.");
+      resetLeadModal();
+      await loadRecords();
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setSavingLead(false);
+    }
+  };
+
+  const handleUpdateSubmit = async (event) => {
+    event.preventDefault();
+    if (!selectedLead) {
+      return;
+    }
+
+    setMessage("");
+    setError("");
+    setSavingUpdate(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/leads/${selectedLead.id}/updates`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(updateForm)
+      });
+
+      const json = await readApiJson(response);
+
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to save lead update.");
+      }
+
+      setMessage(json.message || "Lead update saved successfully.");
+      resetUpdateModal();
+      await loadRecords();
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setSavingUpdate(false);
+    }
+  };
+
+  const renderLeadActions = (lead) => {
+    const canFollowUp = !finalLeadStatuses.includes(String(lead.lead_status || ""));
+
+    return (
+      <>
+        <ActionIconButton icon="table" label="Edit Lead" onClick={() => openEditLead(lead)} />
+        {canFollowUp ? (
+          <ActionIconButton icon="followup" label="Update Lead" tone="primary" onClick={() => openUpdateLead(lead)} />
+        ) : null}
+      </>
+    );
+  };
+
+  const currentColumns = isActivityLog ? activityColumns : leadColumns;
+  const currentSearchKeys = isActivityLog
+    ? ["activity_type", "client_name", "lead_status", "update_status", "assigned_to_name", "remarks"]
+    : [
+        "description",
+        "client_name",
+        "priority",
+        "assigned_to_name",
+        "category_name",
+        "sub_category_name",
+        "lead_status",
+        "notes"
+      ];
+
+  return (
+    <div className="page-shell issue-policy-page">
+      <section className="master-card issue-policy-card">
+        {message ? <p className="feedback feedback--success">{message}</p> : null}
+        {error ? <p className="feedback feedback--error">{error}</p> : null}
+
+        <ResponsiveDataView
+          title={viewConfig.title}
+          records={records}
+          columns={currentColumns}
+          loading={loading}
+          error=""
+          loadingMessage={isActivityLog ? "Loading lead activity..." : "Loading leads..."}
+          emptyMessage={viewConfig.emptyMessage}
+          searchKeys={currentSearchKeys}
+          filterConfigs={filterConfigs}
+          renderActions={isActivityLog ? null : renderLeadActions}
+          rowKey={isActivityLog ? "activity_key" : "id"}
+          headerExtras={
+            !isActivityLog ? (
+              <button type="button" className="primary-button" onClick={openAddLead}>
+                Add Lead
+              </button>
+            ) : null
+          }
+          customFilterContent={
+            null
+          }
+          onClearCustomFilters={() => {}}
+        />
+      </section>
+
+      {isLeadModalOpen ? (
+        <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="lead-form-title">
+          <div className="master-modal__backdrop" onClick={resetLeadModal} />
+          <section className="master-card master-modal__panel">
+            <div className="master-card__header">
+              <h3 id="lead-form-title">{editingLeadId ? "Edit Lead" : "Add Lead"}</h3>
+              <button type="button" className="text-button" onClick={resetLeadModal}>
+                Cancel
+              </button>
+            </div>
+
+            <div className="master-modal__body">
+              <form className="master-form" onSubmit={handleLeadSubmit}>
+                <label className="form-field">
+                  <FormLabel required>Lead Date</FormLabel>
+                  <input
+                    type="date"
+                    required
+                    value={leadForm.lead_date}
+                    onChange={(event) => handleLeadFormChange("lead_date", event.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FormLabel>Description</FormLabel>
+                  <input
+                    type="text"
+                    value={leadForm.description}
+                    onChange={(event) => handleLeadFormChange("description", event.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FormLabel>Due Date</FormLabel>
+                  <input
+                    type="date"
+                    value={leadForm.due_date}
+                    onChange={(event) => handleLeadFormChange("due_date", event.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FormLabel required>Client Name</FormLabel>
+                  <input
+                    type="text"
+                    required
+                    value={leadForm.client_name}
+                    onChange={(event) => handleLeadFormChange("client_name", event.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FormLabel>Priority</FormLabel>
+                  <select
+                    value={leadForm.priority}
+                    onChange={(event) => handleLeadFormChange("priority", event.target.value)}
+                  >
+                    {priorityOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="form-field">
+                  <FormLabel>Assigned To</FormLabel>
+                  <select
+                    value={leadForm.assigned_to_user_id}
+                    onChange={(event) => handleLeadFormChange("assigned_to_user_id", event.target.value)}
+                  >
+                    <option value="">Select User</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="form-field">
+                  <FormLabel>Category</FormLabel>
+                  <select
+                    value={leadForm.category_id}
+                    onChange={(event) => handleLeadFormChange("category_id", event.target.value)}
+                  >
+                    <option value="">Select Category</option>
+                    {topLevelCategories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.category_name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="form-field">
+                  <FormLabel>Sub - Category</FormLabel>
+                  <select
+                    value={leadForm.sub_category_id}
+                    onChange={(event) => handleLeadFormChange("sub_category_id", event.target.value)}
+                    disabled={!leadForm.category_id}
+                  >
+                    <option value="">Select Sub - Category</option>
+                    {subCategories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.category_name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="form-field">
+                  <FormLabel>Notes</FormLabel>
+                  <textarea
+                    rows="4"
+                    value={leadForm.notes}
+                    onChange={(event) => handleLeadFormChange("notes", event.target.value)}
+                  />
+                </label>
+
+                <div className="form-actions">
+                  <button type="button" className="secondary-button form-actions__cancel" onClick={resetLeadModal}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="primary-button" disabled={savingLead}>
+                    {savingLead ? <ButtonSpinner label="Saving..." /> : editingLeadId ? "Update Lead" : "Save Lead"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {isUpdateModalOpen && selectedLead ? (
+        <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="lead-update-title">
+          <div className="master-modal__backdrop" onClick={resetUpdateModal} />
+          <section className="master-card master-modal__panel master-modal__panel--wide">
+            <div className="master-card__header">
+              <h3 id="lead-update-title">Lead Update</h3>
+              <button type="button" className="text-button" onClick={resetUpdateModal}>
+                Cancel
+              </button>
+            </div>
+
+            <div className="master-modal__body">
+              <div className="lead-summary-grid">
+                <div className="record-card__field">
+                  <span>Client Name</span>
+                  <strong>{formatCellValue(selectedLead.client_name)}</strong>
+                </div>
+                <div className="record-card__field">
+                  <span>Current Status</span>
+                  <strong>{formatCellValue(selectedLead.lead_status)}</strong>
+                </div>
+                <div className="record-card__field">
+                  <span>Assigned To</span>
+                  <strong>{formatCellValue(selectedLead.assigned_to_name)}</strong>
+                </div>
+                <div className="record-card__field">
+                  <span>Next Follow Up Date</span>
+                  <strong>{formatCellValue(selectedLead.next_follow_up_date)}</strong>
+                </div>
+              </div>
+
+              <form className="master-form" onSubmit={handleUpdateSubmit}>
+                <label className="form-field">
+                  <FormLabel>Status</FormLabel>
+                  <select
+                    value={updateForm.status}
+                    onChange={(event) => handleUpdateFormChange("status", event.target.value)}
+                  >
+                    {updateStatusOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="form-field">
+                  <FormLabel required>Update Date</FormLabel>
+                  <input
+                    type="date"
+                    required
+                    value={updateForm.update_date}
+                    onChange={(event) => handleUpdateFormChange("update_date", event.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FormLabel>Next Follow Up Date</FormLabel>
+                  <input
+                    type="date"
+                    value={updateForm.next_follow_up_date}
+                    onChange={(event) => handleUpdateFormChange("next_follow_up_date", event.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <FormLabel>Remarks</FormLabel>
+                  <textarea
+                    rows="4"
+                    value={updateForm.remarks}
+                    onChange={(event) => handleUpdateFormChange("remarks", event.target.value)}
+                  />
+                </label>
+
+                <div className="form-actions">
+                  <button type="button" className="secondary-button form-actions__cancel" onClick={resetUpdateModal}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="primary-button" disabled={savingUpdate}>
+                    {savingUpdate ? <ButtonSpinner label="Saving..." /> : "Save Update"}
+                  </button>
+                </div>
+              </form>
+
+              <div className="lead-history">
+                <div className="master-card__header">
+                  <h3>Activity History</h3>
+                </div>
+
+                {historyLoading ? (
+                  <div className="table-state">
+                    <Spinner label="Loading lead activity..." />
+                  </div>
+                ) : (
+                  <div className="table-wrap">
+                    <table className="master-table">
+                      <thead>
+                        <tr>
+                          <th>Sl.No.</th>
+                          <th>Status</th>
+                          <th>Update Date</th>
+                          <th>Next Follow Up Date</th>
+                          <th>Remarks</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leadHistory.length === 0 ? (
+                          <tr>
+                            <td colSpan="5" className="table-state">
+                              No follow up activity found for this lead.
+                            </td>
+                          </tr>
+                        ) : (
+                          leadHistory.map((item, index) => (
+                            <tr key={item.id || `${item.update_date}-${index + 1}`}>
+                              <td>{index + 1}</td>
+                              <td>{formatCellValue(item.status)}</td>
+                              <td>{formatCellValue(item.update_date)}</td>
+                              <td>{formatCellValue(item.next_follow_up_date)}</td>
+                              <td>{formatCellValue(item.remarks)}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        </div>
+      ) : null}
+    </div>
+  );
+}
