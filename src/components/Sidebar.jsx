@@ -22,6 +22,9 @@ function Icon({ name }) {
     leads: (
       <path d="M6 4h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm8 1.5V10h4.5M8 12h8v2H8v-2Zm0 4h5v2H8v-2Z" />
     ),
+    tasks: (
+      <path d="M9 4h6l1 2h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l1-2Zm0 6h6v2H9v-2Zm0 4h6v2H9v-2Z" />
+    ),
     policies: (
       <path d="M6 2h9l5 5v15H6V2Zm2 2v16h10V8h-4V4H8Zm2 7h6v2h-6v-2Zm0 4h6v2h-6v-2Z" />
     ),

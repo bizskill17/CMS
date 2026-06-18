@@ -14,16 +14,32 @@ const leadViewConfigs = {
     endpoint: `${API_BASE}/leads?view=all`,
     emptyMessage: "No leads found."
   },
+  "/tasks/all": {
+    title: "All Tasks",
+    endpoint: `${API_BASE}/leads?view=all`,
+    emptyMessage: "No tasks found."
+  },
   "/leads/add": {
     title: "Add Lead",
     endpoint: `${API_BASE}/leads?view=all`,
     emptyMessage: "No leads found.",
     autoOpenAdd: true
   },
+  "/tasks/add": {
+    title: "Add Task",
+    endpoint: `${API_BASE}/leads?view=all`,
+    emptyMessage: "No tasks found.",
+    autoOpenAdd: true
+  },
   "/leads/pending-assigning": {
     title: "Pending Assigning",
     endpoint: `${API_BASE}/leads?view=pending-assigning`,
     emptyMessage: "No leads are pending assigning."
+  },
+  "/tasks/pending": {
+    title: "Pending Tasks",
+    endpoint: `${API_BASE}/leads?view=pending-first-follow-up`,
+    emptyMessage: "No tasks are pending."
   },
   "/leads/pending-first-follow-up": {
     title: "Pending First Follow Up",
@@ -40,6 +56,11 @@ const leadViewConfigs = {
     endpoint: `${API_BASE}/leads?view=converted`,
     emptyMessage: "No converted leads found."
   },
+  "/tasks/completed": {
+    title: "Completed",
+    endpoint: `${API_BASE}/leads?view=converted`,
+    emptyMessage: "No completed tasks found."
+  },
   "/leads/lost": {
     title: "Lost Leads",
     endpoint: `${API_BASE}/leads?view=lost`,
@@ -50,10 +71,21 @@ const leadViewConfigs = {
     endpoint: `${API_BASE}/leads?view=canceled`,
     emptyMessage: "No canceled leads found."
   },
+  "/tasks/canceled": {
+    title: "Canceled",
+    endpoint: `${API_BASE}/leads?view=canceled`,
+    emptyMessage: "No canceled tasks found."
+  },
   "/leads/activity-log": {
     title: "Lead Activity Log",
     endpoint: `${API_BASE}/leads/activity`,
     emptyMessage: "No lead activity found.",
+    activityLog: true
+  },
+  "/tasks/action-log": {
+    title: "Action Log",
+    endpoint: `${API_BASE}/leads/activity`,
+    emptyMessage: "No task activity found.",
     activityLog: true
   }
 };
@@ -315,6 +347,10 @@ export default function LeadsPage({ viewPath }) {
     if (viewPath === "/leads/add") {
       navigate("/leads/all");
     }
+
+    if (viewPath === "/tasks/add") {
+      navigate("/tasks/all");
+    }
   };
 
   const resetUpdateModal = () => {
@@ -559,7 +595,7 @@ export default function LeadsPage({ viewPath }) {
           headerExtras={
             !isActivityLog ? (
               <button type="button" className="primary-button" onClick={openAddLead}>
-                Add Lead
+                {viewPath.startsWith("/tasks") ? "Add Task" : "Add Lead"}
               </button>
             ) : null
           }

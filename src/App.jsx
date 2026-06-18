@@ -47,7 +47,7 @@ function buildRoutes(items) {
           <IssuePolicyPage />
         ) : item.path === "/policies/renew" ? (
           <RenewPolicyPage />
-        ) : item.section === "Leads" ? (
+        ) : item.section === "Leads" || item.section === "Tasks" ? (
           <LeadsPage viewPath={item.path} />
         ) : item.section === "Masters" && masterConfigs[item.resourceKey] ? (
           <MasterPage resourceKey={item.resourceKey} />
