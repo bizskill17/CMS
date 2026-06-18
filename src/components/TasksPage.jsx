@@ -719,11 +719,6 @@ export default function TasksPage({ viewPath }) {
                                     onClick={() => handleCustomerSelect(customer)}
                                   >
                                     <span className="customer-combobox__option-name">{customer.full_name}</span>
-                                    {customer.customer_code || customer.mobile ? (
-                                      <span className="customer-combobox__option-meta">
-                                        {[customer.customer_code, customer.mobile].filter(Boolean).join(" • ")}
-                                      </span>
-                                    ) : null}
                                   </button>
                                 ))
                               ) : (
@@ -982,3 +977,4 @@ export default function TasksPage({ viewPath }) {
     </div>
   );
 }
+
