@@ -483,7 +483,10 @@ export default function LeadsPage({ viewPath }) {
     if (viewPath === "/leads/pending-assigning") {
       return (
         <div className="table-actions">
-          <ActionIconButton icon="pencil" label="Update Assignee" onClick={() => openEditLead(lead)} />
+          {isUnassigned ? (
+            <ActionIconButton icon="user" label="Update Assignee" onClick={() => openAssignLead(lead)} />
+          ) : null}
+          <ActionIconButton icon="pencil" label="Edit Lead" onClick={() => openEditLead(lead)} />
           <ActionIconButton icon="delete" label="Delete Lead" tone="danger" onClick={() => deleteLead(lead)} />
         </div>
       );
