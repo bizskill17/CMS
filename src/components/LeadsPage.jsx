@@ -82,7 +82,7 @@ const activityColumns = [
 ];
 
 const priorityOptions = ["High", "Medium", "Low"];
-const updateStatusOptions = ["Success", "Lost", "Cancel"];
+const updateStatusOptions = ["Success", "Follow Up Again", "Lost", "Cancel"];
 const finalLeadStatuses = ["Converted", "Lost", "Canceled"];
 
 function todayInputValue() {
@@ -509,18 +509,20 @@ export default function LeadsPage({ viewPath }) {
             <div className="master-modal__body">
               <form className="master-form" onSubmit={handleLeadSubmit}>
                 <label className="form-field">
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel required>Description</FormLabel>
                   <input
                     type="text"
+                    required
                     value={leadForm.description}
                     onChange={(event) => handleLeadFormChange("description", event.target.value)}
                   />
                 </label>
 
                 <label className="form-field">
-                  <FormLabel>Due Date</FormLabel>
+                  <FormLabel required>Due Date</FormLabel>
                   <input
                     type="date"
+                    required
                     value={leadForm.due_date}
                     onChange={(event) => handleLeadFormChange("due_date", event.target.value)}
                   />
@@ -537,8 +539,9 @@ export default function LeadsPage({ viewPath }) {
                 </label>
 
                 <label className="form-field">
-                  <FormLabel>Priority</FormLabel>
+                  <FormLabel required>Priority</FormLabel>
                   <select
+                    required
                     value={leadForm.priority}
                     onChange={(event) => handleLeadFormChange("priority", event.target.value)}
                   >
@@ -676,18 +679,20 @@ export default function LeadsPage({ viewPath }) {
                 </label>
 
                 <label className="form-field">
-                  <FormLabel>Next Follow Up Date</FormLabel>
+                  <FormLabel required={updateForm.status === "Follow Up Again"}>Next Follow Up Date</FormLabel>
                   <input
                     type="date"
+                    required={updateForm.status === "Follow Up Again"}
                     value={updateForm.next_follow_up_date}
                     onChange={(event) => handleUpdateFormChange("next_follow_up_date", event.target.value)}
                   />
                 </label>
 
                 <label className="form-field">
-                  <FormLabel>Remarks</FormLabel>
+                  <FormLabel required={updateForm.status !== "Success"}>Remarks</FormLabel>
                   <textarea
                     rows="4"
+                    required={updateForm.status !== "Success"}
                     value={updateForm.remarks}
                     onChange={(event) => handleUpdateFormChange("remarks", event.target.value)}
                   />

@@ -64,6 +64,7 @@ function normalizeLeadUpdateStatus(string $status): string
 
     return match ($normalized) {
         'success' => 'Success',
+        'follow up again' => 'Follow Up Again',
         'lost' => 'Lost',
         'cancel' => 'Cancel',
         default => '',
@@ -87,6 +88,7 @@ function deriveLeadStatusFromUpdate(string $updateStatus, ?string $nextFollowUpD
 {
     return match ($updateStatus) {
         'Success' => $nextFollowUpDate ? 'Pending Repeat Follow Up' : 'Converted',
+        'Follow Up Again' => 'Pending Repeat Follow Up',
         'Lost' => 'Lost',
         'Cancel' => 'Canceled',
         default => 'Pending Repeat Follow Up',
@@ -402,7 +404,7 @@ try {
             exit;
         }
 
-        foreach (['lead_date', 'client_name'] as $requiredField) {
+        foreach (['lead_date', 'client_name', 'description', 'due_date', 'priority'] as $requiredField) {
             if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
                 Response::json([
                     'status' => 'error',
@@ -500,7 +502,7 @@ try {
             exit;
         }
 
-        foreach (['lead_date', 'client_name'] as $requiredField) {
+        foreach (['lead_date', 'client_name', 'description', 'due_date', 'priority'] as $requiredField) {
             if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
                 Response::json([
                     'status' => 'error',
