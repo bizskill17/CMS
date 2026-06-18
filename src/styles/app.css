@@ -1101,6 +1101,13 @@ button {
   gap: 7px;
 }
 
+.form-field__label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .form-field span,
 .checkbox-field span {
   font-size: 13px;
@@ -1144,6 +1151,116 @@ button {
   background: #e7ebf1;
   color: #5d6877;
   cursor: not-allowed;
+}
+
+.inline-icon-button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #c5d2e4;
+  border-radius: 999px;
+  background: #f8fbff;
+  color: var(--text-dark);
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.inline-icon-button:hover {
+  background: #eef5ff;
+}
+
+.customer-combobox {
+  position: relative;
+}
+
+.customer-combobox__trigger {
+  width: 100%;
+  border: 1px solid #c5d2e4;
+  border-radius: 10px;
+  padding: 11px 12px;
+  background: #f8fbff;
+  color: var(--text-dark);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.customer-combobox__trigger--placeholder {
+  color: #6f7b8c;
+}
+
+.customer-combobox__chevron {
+  color: #9aa8bc;
+  flex-shrink: 0;
+}
+
+.customer-combobox__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  border: 1px solid #d7e1ef;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 20px 40px rgba(26, 46, 79, 0.18);
+  padding: 10px;
+}
+
+.customer-combobox__search {
+  margin-bottom: 10px;
+}
+
+.customer-combobox__meta {
+  font-size: 12px;
+  font-weight: 600;
+  color: #536273;
+  padding: 0 4px 8px;
+}
+
+.customer-combobox__list {
+  max-height: 220px;
+  overflow-y: auto;
+  display: grid;
+}
+
+.customer-combobox__option {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 10px;
+  display: grid;
+  gap: 3px;
+  cursor: pointer;
+}
+
+.customer-combobox__option:hover,
+.customer-combobox__option--selected {
+  background: #eef5ff;
+}
+
+.customer-combobox__option-name {
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+.customer-combobox__option-meta,
+.customer-combobox__empty {
+  font-size: 12px;
+  color: #6f7b8c;
+}
+
+.customer-combobox__empty {
+  padding: 10px 12px;
 }
 
 .checkbox-field {

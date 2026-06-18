@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ActionIconButton } from "./ActionIcon";
 import FormLabel from "./FormLabel";
+import MasterPage from "./MasterPage";
 import ResponsiveDataView from "./ResponsiveDataView";
 import { API_BASE } from "../config/api";
 import { ButtonSpinner, Spinner } from "./Spinner";
@@ -146,6 +147,7 @@ function normalizeTaskToForm(task) {
 
 export default function TasksPage({ viewPath }) {
   const navigate = useNavigate();
+  const customerDropdownRef = useRef(null);
   const viewConfig = taskViewConfigs[viewPath] || taskViewConfigs["/tasks/all"];
   const isActivityLog = Boolean(viewConfig.activityLog);
   const [records, setRecords] = useState([]);
@@ -157,6 +159,8 @@ export default function TasksPage({ viewPath }) {
   const [categories, setCategories] = useState([]);
   const [taskForm, setTaskForm] = useState(() => emptyTaskForm());
   const [customerQuery, setCustomerQuery] = useState("");
+  const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
+  const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
   const [updateForm, setUpdateForm] = useState(() => emptyUpdateForm());
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -190,6 +194,38 @@ export default function TasksPage({ viewPath }) {
     }
   };
 
+  const loadTaskOptions = async () => {
+    const [usersResponse, customersResponse, categoriesResponse] = await Promise.all([
+      fetch(`${API_BASE}/masters/users?limit=250`),
+      fetch(`${API_BASE}/masters/customers?limit=250`),
+      fetch(`${API_BASE}/masters/product-categories?limit=250`)
+    ]);
+
+    const [usersJson, customersJson, categoriesJson] = await Promise.all([
+      readApiJson(usersResponse),
+      readApiJson(customersResponse),
+      readApiJson(categoriesResponse)
+    ]);
+
+    if (!usersResponse.ok) {
+      throw new Error(usersJson.message || "Failed to load users.");
+    }
+
+    if (!categoriesResponse.ok) {
+      throw new Error(categoriesJson.message || "Failed to load categories.");
+    }
+
+    if (!customersResponse.ok) {
+      throw new Error(customersJson.message || "Failed to load customers.");
+    }
+
+    return {
+      users: usersJson.data || [],
+      customers: customersJson.data || [],
+      categories: categoriesJson.data || []
+    };
+  };
+
   useEffect(() => {
     loadRecords();
   }, [viewConfig.endpoint]);
@@ -203,37 +239,15 @@ export default function TasksPage({ viewPath }) {
 
     const loadOptions = async () => {
       try {
-        const [usersResponse, customersResponse, categoriesResponse] = await Promise.all([
-          fetch(`${API_BASE}/masters/users?limit=250`),
-          fetch(`${API_BASE}/masters/customers?limit=250`),
-          fetch(`${API_BASE}/masters/product-categories?limit=250`)
-        ]);
-
-        const [usersJson, customersJson, categoriesJson] = await Promise.all([
-          readApiJson(usersResponse),
-          readApiJson(customersResponse),
-          readApiJson(categoriesResponse)
-        ]);
-
-        if (!usersResponse.ok) {
-          throw new Error(usersJson.message || "Failed to load users.");
-        }
-
-        if (!categoriesResponse.ok) {
-          throw new Error(categoriesJson.message || "Failed to load categories.");
-        }
-
-        if (!customersResponse.ok) {
-          throw new Error(customersJson.message || "Failed to load customers.");
-        }
+        const options = await loadTaskOptions();
 
         if (!isActive) {
           return;
         }
 
-        setUsers(usersJson.data || []);
-        setCustomers(customersJson.data || []);
-        setCategories(categoriesJson.data || []);
+        setUsers(options.users);
+        setCustomers(options.customers);
+        setCategories(options.categories);
       } catch (loadOptionsError) {
         if (isActive) {
           setError(loadOptionsError.message);
@@ -252,11 +266,30 @@ export default function TasksPage({ viewPath }) {
     if (viewConfig.autoOpenAdd) {
       setEditingTaskId(null);
       setTaskForm(emptyTaskForm());
+      setCustomerQuery("");
+      setIsCustomerDropdownOpen(false);
       setIsTaskModalOpen(true);
     } else {
       setIsTaskModalOpen(false);
     }
   }, [viewConfig.autoOpenAdd, viewPath]);
+
+  useEffect(() => {
+    if (!isCustomerDropdownOpen) {
+      return undefined;
+    }
+
+    const handlePointerDown = (event) => {
+      if (customerDropdownRef.current && !customerDropdownRef.current.contains(event.target)) {
+        setIsCustomerDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isCustomerDropdownOpen]);
 
   const topLevelCategories = useMemo(
     () => categories.filter((category) => !category.parent_category_id),
@@ -310,6 +343,7 @@ export default function TasksPage({ viewPath }) {
     setEditingTaskId(null);
     setTaskForm(emptyTaskForm());
     setCustomerQuery("");
+    setIsCustomerDropdownOpen(false);
 
     if (viewPath === "/tasks/add") {
       navigate("/tasks/all");
@@ -330,6 +364,7 @@ export default function TasksPage({ viewPath }) {
     setEditingTaskId(null);
     setTaskForm(emptyTaskForm());
     setCustomerQuery("");
+    setIsCustomerDropdownOpen(false);
     setIsAssigneeOnly(false);
     setIsTaskModalOpen(true);
   };
@@ -339,7 +374,8 @@ export default function TasksPage({ viewPath }) {
     setError("");
     setEditingTaskId(task.id);
     setTaskForm(normalizeTaskToForm(task));
-    setCustomerQuery(task.client_name || "");
+    setCustomerQuery("");
+    setIsCustomerDropdownOpen(false);
     setIsAssigneeOnly(false);
     setIsTaskModalOpen(true);
   };
@@ -349,7 +385,8 @@ export default function TasksPage({ viewPath }) {
     setError("");
     setEditingTaskId(task.id);
     setTaskForm(normalizeTaskToForm(task));
-    setCustomerQuery(task.client_name || "");
+    setCustomerQuery("");
+    setIsCustomerDropdownOpen(false);
     setIsAssigneeOnly(true);
     setIsTaskModalOpen(true);
   };
@@ -387,6 +424,34 @@ export default function TasksPage({ viewPath }) {
       ...(field === "category_id" ? { sub_category_id: "" } : {}),
       [field]: value
     }));
+  };
+
+  const handleCustomerSelect = (customer) => {
+    handleTaskFormChange("client_name", customer.full_name || "");
+    setCustomerQuery("");
+    setIsCustomerDropdownOpen(false);
+  };
+
+  const handleCustomerCreated = async (customer) => {
+    setIsAddCustomerModalOpen(false);
+
+    try {
+      const options = await loadTaskOptions();
+      setUsers(options.users);
+      setCustomers(options.customers);
+      setCategories(options.categories);
+
+      const matchedCustomer =
+        (customer && options.customers.find((item) => Number(item.id) === Number(customer.id))) ||
+        (customer && options.customers.find((item) => item.full_name === customer.full_name)) ||
+        null;
+
+      if (matchedCustomer) {
+        handleCustomerSelect(matchedCustomer);
+      }
+    } catch (loadOptionsError) {
+      setError(loadOptionsError.message);
+    }
   };
 
   const handleUpdateFormChange = (field, value) => {
@@ -597,27 +662,77 @@ export default function TasksPage({ viewPath }) {
                     </label>
 
                     <label className="form-field">
-                      <FormLabel required>Client Name</FormLabel>
-                      <input
-                        list="task-customer-options"
-                        required
-                        value={customerQuery}
-                        placeholder="Search customer by name, code, or mobile"
-                        onChange={(event) => {
-                          const nextValue = event.target.value;
-                          setCustomerQuery(nextValue);
-                          const match = filteredCustomers.find((customer) => customer.full_name === nextValue);
-                          handleTaskFormChange("client_name", match ? match.full_name : "");
-                        }}
-                      />
-                      <datalist id="task-customer-options">
-                        {filteredCustomers.map((customer) => (
-                          <option
-                            key={customer.id}
-                            value={customer.full_name}
-                          >{`${customer.customer_code || ""} ${customer.mobile || ""}`.trim()}</option>
-                        ))}
-                      </datalist>
+                      <div className="form-field__label-row">
+                        <FormLabel required>Client Name</FormLabel>
+                        <button
+                          type="button"
+                          className="inline-icon-button"
+                          onClick={() => setIsAddCustomerModalOpen(true)}
+                          aria-label="Add new client"
+                          title="Add new client"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div
+                        ref={customerDropdownRef}
+                        className={`customer-combobox ${isCustomerDropdownOpen ? "customer-combobox--open" : ""}`}
+                      >
+                        <button
+                          type="button"
+                          className={`customer-combobox__trigger ${taskForm.client_name ? "" : "customer-combobox__trigger--placeholder"}`}
+                          onClick={() => {
+                            setIsCustomerDropdownOpen((current) => {
+                              const nextOpen = !current;
+                              if (nextOpen) {
+                                setCustomerQuery("");
+                              }
+                              return nextOpen;
+                            });
+                          }}
+                          aria-haspopup="listbox"
+                          aria-expanded={isCustomerDropdownOpen}
+                        >
+                          <span>{taskForm.client_name || "Select"}</span>
+                          <span className="customer-combobox__chevron" aria-hidden="true">
+                            {isCustomerDropdownOpen ? "▴" : "▾"}
+                          </span>
+                        </button>
+
+                        {isCustomerDropdownOpen ? (
+                          <div className="customer-combobox__panel">
+                            <input
+                              type="text"
+                              value={customerQuery}
+                              className="customer-combobox__search"
+                              placeholder="Search..."
+                              onChange={(event) => setCustomerQuery(event.target.value)}
+                            />
+                            <div className="customer-combobox__meta">{filteredCustomers.length} Elements</div>
+                            <div className="customer-combobox__list" role="listbox">
+                              {filteredCustomers.length ? (
+                                filteredCustomers.map((customer) => (
+                                  <button
+                                    key={customer.id}
+                                    type="button"
+                                    className={`customer-combobox__option ${taskForm.client_name === customer.full_name ? "customer-combobox__option--selected" : ""}`}
+                                    onClick={() => handleCustomerSelect(customer)}
+                                  >
+                                    <span className="customer-combobox__option-name">{customer.full_name}</span>
+                                    {customer.customer_code || customer.mobile ? (
+                                      <span className="customer-combobox__option-meta">
+                                        {[customer.customer_code, customer.mobile].filter(Boolean).join(" • ")}
+                                      </span>
+                                    ) : null}
+                                  </button>
+                                ))
+                              ) : (
+                                <div className="customer-combobox__empty">No clients found.</div>
+                              )}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
                     </label>
 
                     <label className="form-field">
@@ -853,6 +968,16 @@ export default function TasksPage({ viewPath }) {
             </div>
           </section>
         </div>
+      ) : null}
+
+      {isAddCustomerModalOpen ? (
+        <MasterPage
+          resourceKey="customers"
+          embeddedFormOnly
+          autoOpenForm
+          onFormSaved={handleCustomerCreated}
+          onFormCancel={() => setIsAddCustomerModalOpen(false)}
+        />
       ) : null}
     </div>
   );

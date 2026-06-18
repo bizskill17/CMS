@@ -248,7 +248,13 @@ function isNameColumn(columnKey) {
   );
 }
 
-export default function MasterPage({ resourceKey }) {
+export default function MasterPage({
+  resourceKey,
+  embeddedFormOnly = false,
+  autoOpenForm = false,
+  onFormSaved,
+  onFormCancel
+}) {
   const config = masterConfigs[resourceKey];
   const isSettingsView = resourceKey === "settings";
   const [records, setRecords] = useState([]);
@@ -293,6 +299,16 @@ export default function MasterPage({ resourceKey }) {
     error: ""
   });
   const [selectedRecord, setSelectedRecord] = useState(null);
+
+  const closeForm = ({ notifyCancel = true } = {}) => {
+    setFormState(emptyState(config));
+    setEditingId(null);
+    setIsFormOpen(false);
+
+    if (notifyCancel && embeddedFormOnly && onFormCancel) {
+      onFormCancel();
+    }
+  };
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -396,6 +412,16 @@ export default function MasterPage({ resourceKey }) {
   }, [resourceKey, config]);
 
   useEffect(() => {
+    if (embeddedFormOnly && autoOpenForm) {
+      setFormState(emptyState(config));
+      setEditingId(null);
+      setMessage("");
+      setError("");
+      setIsFormOpen(true);
+    }
+  }, [autoOpenForm, embeddedFormOnly, config]);
+
+  useEffect(() => {
     const load = async () => {
       setLoading(true);
       setError("");
@@ -434,9 +460,7 @@ export default function MasterPage({ resourceKey }) {
   }, [config.resource, dependencies]);
 
   const resetForm = () => {
-    setFormState(emptyState(config));
-    setEditingId(null);
-    setIsFormOpen(false);
+    closeForm();
   };
 
   const handleAdd = () => {
@@ -570,15 +594,22 @@ export default function MasterPage({ resourceKey }) {
         throw new Error(formatMasterServerError(config, formState, json.message || "Save failed."));
       }
 
+      const savedRecordId = method === "POST" ? Number(json.id || 0) : Number(editingId || 0);
       setMessage(json.message || "Saved successfully.");
-      resetForm();
+      closeForm({ notifyCancel: false });
 
       const refresh = await fetch(`${API_BASE}/masters/${config.resource}?limit=100`);
       const refreshJson = await readApiJson(refresh);
       if (!refresh.ok) {
         throw new Error(refreshJson.message || "Refresh failed.");
       }
-      setRecords(refreshJson.data || []);
+      const nextRecords = refreshJson.data || [];
+      setRecords(nextRecords);
+
+      if (onFormSaved) {
+        const savedRecord = nextRecords.find((record) => Number(record.id) === savedRecordId) || null;
+        onFormSaved(savedRecord);
+      }
     } catch (saveError) {
       setError(saveError.message);
     } finally {
@@ -1119,6 +1150,145 @@ export default function MasterPage({ resourceKey }) {
     }));
   }, [config.tableColumns, selectedRecord]);
 
+  const formModal = isFormOpen ? (
+    <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="master-form-title">
+      <div className="master-modal__backdrop" onClick={resetForm} />
+      <section className="master-card master-modal__panel">
+        <div className="master-card__header">
+          <h3 id="master-form-title">{editingId ? `Edit ${config.title}` : `Add ${config.title}`}</h3>
+          <button type="button" className="text-button" onClick={resetForm}>
+            Cancel
+          </button>
+        </div>
+
+        <div className="master-modal__body">
+          <form className="master-form" onSubmit={handleSubmit}>
+            {config.fields.map((field) => {
+              if (field.type === "checkbox") {
+                return (
+                  <label key={field.name} className="checkbox-field">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(formState[field.name])}
+                      onChange={(event) => handleChange(field, event.target.checked)}
+                    />
+                    <span>{field.label}</span>
+                  </label>
+                );
+              }
+
+              if (field.type === "textarea") {
+                return (
+                  <label key={field.name} className="form-field">
+                    <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
+                    <textarea
+                      value={formState[field.name]}
+                      onChange={(event) => handleChange(field, event.target.value)}
+                      rows="3"
+                    />
+                  </label>
+                );
+              }
+
+              if (field.type === "file") {
+                return (
+                  <label key={field.name} className="form-field">
+                    <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(event) => handleChange(field, event.target.files?.[0] || null)}
+                    />
+                  </label>
+                );
+              }
+
+              if (field.type === "select") {
+                const dynamicOptions = field.optionsFrom
+                  ? (optionsMap[field.optionsFrom] || []).filter((option) => {
+                      if (field.optionFilter && !field.optionFilter(option, formState)) {
+                        return false;
+                      }
+
+                      if (!field.dependsOn || !field.dependsOnKey) {
+                        return true;
+                      }
+
+                      const parentValue = formState[field.dependsOn];
+                      if (!parentValue) {
+                        return false;
+                      }
+
+                      return String(option[field.dependsOnKey] ?? "") === String(parentValue);
+                    })
+                  : field.staticOptions || [];
+
+                return (
+                  <label key={field.name} className="form-field">
+                    <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
+                    <select
+                      value={formState[field.name]}
+                      onChange={(event) => handleChange(field, event.target.value)}
+                    >
+                      {!field.staticOptions ? <option value="">Select {field.label}</option> : null}
+                      {field.staticOptions
+                        ? field.staticOptions.map((option) => (
+                            <option key={`${field.name}-${option.value}`} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))
+                        : dynamicOptions.map((option) => (
+                            <option
+                              key={`${field.name}-${field.optionValueKey || "id"}-${getOptionValue(field, option)}`}
+                              value={getOptionValue(field, option)}
+                            >
+                              {field.optionLabelKey
+                                ? option[field.optionLabelKey]
+                                : getOptionLabel(field.optionsFrom, option)}
+                            </option>
+                          ))}
+                    </select>
+                  </label>
+                );
+              }
+
+              return (
+                <label key={field.name} className="form-field">
+                  <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
+                  <input
+                    type={field.type || "text"}
+                    value={formState[field.name]}
+                    required={Boolean(field.required)}
+                    inputMode={field.validation?.pattern === "^\\d{10}$" ? "numeric" : undefined}
+                    pattern={field.validation?.pattern}
+                    title={field.validation?.message}
+                    maxLength={field.validation?.pattern === "^\\d{10}$" ? 10 : undefined}
+                    onChange={(event) => handleChange(field, event.target.value)}
+                  />
+                </label>
+              );
+            })}
+
+            <div className="form-actions">
+              <button type="button" className="secondary-button form-actions__cancel" onClick={resetForm}>
+                Cancel
+              </button>
+              <button type="submit" className="primary-button" disabled={saving}>
+                {saving ? <ButtonSpinner label="Saving..." /> : editingId ? "Update Record" : "Save Record"}
+              </button>
+            </div>
+          </form>
+
+          {error ? <p className="feedback feedback--error">{error}</p> : null}
+        </div>
+      </section>
+    </div>
+  ) : null;
+
+  if (embeddedFormOnly) {
+    return formModal;
+  }
+
   return (
     <div className="master-page">
       <div className="master-grid master-grid--list-only">
@@ -1413,140 +1583,7 @@ export default function MasterPage({ resourceKey }) {
         </section>
       </div>
 
-      {isFormOpen ? (
-        <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="master-form-title">
-          <div className="master-modal__backdrop" onClick={resetForm} />
-          <section className="master-card master-modal__panel">
-            <div className="master-card__header">
-              <h3 id="master-form-title">{editingId ? `Edit ${config.title}` : `Add ${config.title}`}</h3>
-              <button type="button" className="text-button" onClick={resetForm}>
-                Cancel
-              </button>
-            </div>
-
-            <div className="master-modal__body">
-              <form className="master-form" onSubmit={handleSubmit}>
-                {config.fields.map((field) => {
-                  if (field.type === "checkbox") {
-                    return (
-                      <label key={field.name} className="checkbox-field">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(formState[field.name])}
-                          onChange={(event) => handleChange(field, event.target.checked)}
-                        />
-                        <span>{field.label}</span>
-                      </label>
-                    );
-                  }
-
-	                  if (field.type === "textarea") {
-	                    return (
-	                      <label key={field.name} className="form-field">
-                        <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
-                        <textarea
-                          value={formState[field.name]}
-                          onChange={(event) => handleChange(field, event.target.value)}
-                          rows="3"
-                        />
-                      </label>
-	                    );
-	                  }
-
-                    if (field.type === "file") {
-                      return (
-                        <label key={field.name} className="form-field">
-                          <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(event) => handleChange(field, event.target.files?.[0] || null)}
-                          />
-                        </label>
-                      );
-                    }
-
-	                  if (field.type === "select") {
-                    const dynamicOptions = field.optionsFrom
-                      ? (optionsMap[field.optionsFrom] || []).filter((option) => {
-                          if (field.optionFilter && !field.optionFilter(option, formState)) {
-                            return false;
-                          }
-
-                          if (!field.dependsOn || !field.dependsOnKey) {
-                            return true;
-                          }
-
-                          const parentValue = formState[field.dependsOn];
-                          if (!parentValue) {
-                            return false;
-                          }
-
-                          return String(option[field.dependsOnKey] ?? "") === String(parentValue);
-                        })
-                      : field.staticOptions || [];
-
-                    return (
-                      <label key={field.name} className="form-field">
-                        <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
-                        <select
-                          value={formState[field.name]}
-                          onChange={(event) => handleChange(field, event.target.value)}
-                        >
-                          {!field.staticOptions ? <option value="">Select {field.label}</option> : null}
-                          {field.staticOptions
-                            ? field.staticOptions.map((option) => (
-                                <option key={`${field.name}-${option.value}`} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))
-                            : dynamicOptions.map((option) => (
-                                <option
-                                  key={`${field.name}-${field.optionValueKey || "id"}-${getOptionValue(field, option)}`}
-                                  value={getOptionValue(field, option)}
-                                >
-                                  {field.optionLabelKey
-                                    ? option[field.optionLabelKey]
-                                    : getOptionLabel(field.optionsFrom, option)}
-                                </option>
-                              ))}
-                        </select>
-                      </label>
-                    );
-                  }
-
-                  return (
-                    <label key={field.name} className="form-field">
-                      <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
-                      <input
-                        type={field.type || "text"}
-                        value={formState[field.name]}
-                        required={Boolean(field.required)}
-                        inputMode={field.validation?.pattern === "^\\d{10}$" ? "numeric" : undefined}
-                        pattern={field.validation?.pattern}
-                        title={field.validation?.message}
-                        maxLength={field.validation?.pattern === "^\\d{10}$" ? 10 : undefined}
-                        onChange={(event) => handleChange(field, event.target.value)}
-                      />
-                    </label>
-                  );
-                })}
-
-                <div className="form-actions">
-                  <button type="button" className="secondary-button form-actions__cancel" onClick={resetForm}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="primary-button" disabled={saving}>
-                    {saving ? <ButtonSpinner label="Saving..." /> : editingId ? "Update Record" : "Save Record"}
-                  </button>
-                </div>
-              </form>
-
-              {error ? <p className="feedback feedback--error">{error}</p> : null}
-            </div>
-          </section>
-        </div>
-      ) : null}
+      {formModal}
 
       {isBulkUploadOpen ? (
         <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="bulk-upload-title">
