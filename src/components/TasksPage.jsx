@@ -153,8 +153,10 @@ export default function TasksPage({ viewPath }) {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [users, setUsers] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [taskForm, setTaskForm] = useState(() => emptyTaskForm());
+  const [customerQuery, setCustomerQuery] = useState("");
   const [updateForm, setUpdateForm] = useState(() => emptyUpdateForm());
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -201,13 +203,15 @@ export default function TasksPage({ viewPath }) {
 
     const loadOptions = async () => {
       try {
-        const [usersResponse, categoriesResponse] = await Promise.all([
+        const [usersResponse, customersResponse, categoriesResponse] = await Promise.all([
           fetch(`${API_BASE}/masters/users?limit=250`),
+          fetch(`${API_BASE}/masters/customers?limit=250`),
           fetch(`${API_BASE}/masters/product-categories?limit=250`)
         ]);
 
-        const [usersJson, categoriesJson] = await Promise.all([
+        const [usersJson, customersJson, categoriesJson] = await Promise.all([
           readApiJson(usersResponse),
+          readApiJson(customersResponse),
           readApiJson(categoriesResponse)
         ]);
 
@@ -219,11 +223,16 @@ export default function TasksPage({ viewPath }) {
           throw new Error(categoriesJson.message || "Failed to load categories.");
         }
 
+        if (!customersResponse.ok) {
+          throw new Error(customersJson.message || "Failed to load customers.");
+        }
+
         if (!isActive) {
           return;
         }
 
         setUsers(usersJson.data || []);
+        setCustomers(customersJson.data || []);
         setCategories(categoriesJson.data || []);
       } catch (loadOptionsError) {
         if (isActive) {
@@ -262,6 +271,22 @@ export default function TasksPage({ viewPath }) {
     [categories, taskForm.category_id]
   );
 
+  const filteredCustomers = useMemo(() => {
+    const query = customerQuery.trim().toLowerCase();
+
+    return customers.filter((customer) => {
+      if (!query) {
+        return true;
+      }
+
+      return (
+        String(customer.full_name || "").toLowerCase().includes(query) ||
+        String(customer.customer_code || "").toLowerCase().includes(query) ||
+        String(customer.mobile || "").toLowerCase().includes(query)
+      );
+    });
+  }, [customerQuery, customers]);
+
   const filterConfigs = useMemo(() => {
     if (isActivityLog) {
       return [
@@ -284,6 +309,7 @@ export default function TasksPage({ viewPath }) {
     setIsAssigneeOnly(false);
     setEditingTaskId(null);
     setTaskForm(emptyTaskForm());
+    setCustomerQuery("");
 
     if (viewPath === "/tasks/add") {
       navigate("/tasks/all");
@@ -303,6 +329,7 @@ export default function TasksPage({ viewPath }) {
     setError("");
     setEditingTaskId(null);
     setTaskForm(emptyTaskForm());
+    setCustomerQuery("");
     setIsAssigneeOnly(false);
     setIsTaskModalOpen(true);
   };
@@ -312,6 +339,7 @@ export default function TasksPage({ viewPath }) {
     setError("");
     setEditingTaskId(task.id);
     setTaskForm(normalizeTaskToForm(task));
+    setCustomerQuery(task.client_name || "");
     setIsAssigneeOnly(false);
     setIsTaskModalOpen(true);
   };
@@ -321,6 +349,7 @@ export default function TasksPage({ viewPath }) {
     setError("");
     setEditingTaskId(task.id);
     setTaskForm(normalizeTaskToForm(task));
+    setCustomerQuery(task.client_name || "");
     setIsAssigneeOnly(true);
     setIsTaskModalOpen(true);
   };
@@ -371,6 +400,12 @@ export default function TasksPage({ viewPath }) {
     event.preventDefault();
     setMessage("");
     setError("");
+
+    if (!taskForm.client_name) {
+      setError("Please select a valid customer from Master Customers.");
+      return;
+    }
+
     setSavingTask(true);
 
     try {
@@ -564,11 +599,25 @@ export default function TasksPage({ viewPath }) {
                     <label className="form-field">
                       <FormLabel required>Client Name</FormLabel>
                       <input
-                        type="text"
+                        list="task-customer-options"
                         required
-                        value={taskForm.client_name}
-                        onChange={(event) => handleTaskFormChange("client_name", event.target.value)}
+                        value={customerQuery}
+                        placeholder="Search customer by name, code, or mobile"
+                        onChange={(event) => {
+                          const nextValue = event.target.value;
+                          setCustomerQuery(nextValue);
+                          const match = filteredCustomers.find((customer) => customer.full_name === nextValue);
+                          handleTaskFormChange("client_name", match ? match.full_name : "");
+                        }}
                       />
+                      <datalist id="task-customer-options">
+                        {filteredCustomers.map((customer) => (
+                          <option
+                            key={customer.id}
+                            value={customer.full_name}
+                          >{`${customer.customer_code || ""} ${customer.mobile || ""}`.trim()}</option>
+                        ))}
+                      </datalist>
                     </label>
 
                     <label className="form-field">
