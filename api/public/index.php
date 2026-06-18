@@ -564,6 +564,43 @@ try {
         exit;
     }
 
+    if (preg_match('#^/api/leads/(\d+)$#', $path, $matches) === 1 && $method === 'DELETE') {
+        $pdo = Database::connection();
+        $leadId = (int) $matches[1];
+
+        $pdo->beginTransaction();
+        try {
+            // Delete related updates first
+            $deleteUpdates = $pdo->prepare('DELETE FROM lead_updates WHERE lead_id = :id');
+            $deleteUpdates->bindValue(':id', $leadId, PDO::PARAM_INT);
+            $deleteUpdates->execute();
+
+            // Delete the lead
+            $deleteLead = $pdo->prepare('DELETE FROM leads WHERE id = :id');
+            $deleteLead->bindValue(':id', $leadId, PDO::PARAM_INT);
+            $deleteLead->execute();
+
+            if ($deleteLead->rowCount() === 0) {
+                $pdo->rollBack();
+                Response::json([
+                    'status' => 'error',
+                    'message' => 'Lead not found.'
+                ], 404);
+                exit;
+            }
+
+            $pdo->commit();
+            Response::json([
+                'status' => 'ok',
+                'message' => 'Lead deleted successfully.'
+            ]);
+            exit;
+        } catch (Throwable $throwable) {
+            $pdo->rollBack();
+            throw $throwable;
+        }
+    }
+
     if (preg_match('#^/api/leads/(\d+)/updates$#', $path, $matches) === 1 && $method === 'GET') {
         $pdo = Database::connection();
         $leadId = (int) $matches[1];

@@ -1718,6 +1718,11 @@ button {
   color: #fff;
 }
 
+.icon-action-button--danger {
+  background: #fff5f5;
+  color: #e03131;
+}
+
 .master-card__actions .master-list-toolbar__search {
   flex: 1;
   min-width: 180px;

@@ -70,6 +70,18 @@ const leadColumns = [
   { key: "next_follow_up_date", label: "Next Follow Up Date", width: "140px" }
 ];
 
+const pendingAssigningColumns = [
+  { key: "lead_date", label: "Lead Date" },
+  { key: "description", label: "Description", width: "220px" },
+  { key: "due_date", label: "Due Date" },
+  { key: "client_name", label: "Client Name", width: "170px" },
+  { key: "priority", label: "Priority" },
+  { key: "assigned_to_name", label: "Assigned To", width: "160px" },
+  { key: "category_name", label: "Category", width: "160px" },
+  { key: "sub_category_name", label: "Sub - Category", width: "170px" },
+  { key: "lead_status", label: "Status", width: "170px" }
+];
+
 const activityColumns = [
   { key: "activity_type", label: "Activity Type", width: "130px" },
   { key: "client_name", label: "Client Name", width: "170px" },
@@ -174,6 +186,7 @@ export default function LeadsPage({ viewPath }) {
   const [leadHistory, setLeadHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+  const [isAssigneeOnly, setIsAssigneeOnly] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [savingLead, setSavingLead] = useState(false);
   const [savingUpdate, setSavingUpdate] = useState(false);
@@ -291,6 +304,7 @@ export default function LeadsPage({ viewPath }) {
 
   const resetLeadModal = () => {
     setIsLeadModalOpen(false);
+    setIsAssigneeOnly(false);
     setEditingLeadId(null);
     setLeadForm(emptyLeadForm());
   };
@@ -308,6 +322,7 @@ export default function LeadsPage({ viewPath }) {
     setError("");
     setEditingLeadId(null);
     setLeadForm(emptyLeadForm());
+    setIsAssigneeOnly(false);
     setIsLeadModalOpen(true);
   };
 
@@ -316,6 +331,16 @@ export default function LeadsPage({ viewPath }) {
     setError("");
     setEditingLeadId(lead.id);
     setLeadForm(normalizeLeadToForm(lead));
+    setIsAssigneeOnly(false);
+    setIsLeadModalOpen(true);
+  };
+
+  const openAssignLead = (lead) => {
+    setMessage("");
+    setError("");
+    setEditingLeadId(lead.id);
+    setLeadForm(normalizeLeadToForm(lead));
+    setIsAssigneeOnly(true);
     setIsLeadModalOpen(true);
   };
 
@@ -430,26 +455,61 @@ export default function LeadsPage({ viewPath }) {
     }
   };
 
+  const deleteLead = async (lead) => {
+    if (!window.confirm(`Are you sure you want to delete lead for "${lead.client_name}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/leads/${lead.id}`, {
+        method: "DELETE"
+      });
+
+      const json = await readApiJson(response);
+
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to delete lead.");
+      }
+
+      await loadRecords();
+    } catch (deleteError) {
+      alert(deleteError.message);
+    }
+  };
+
   const renderLeadActions = (lead) => {
+    const isUnassigned = !lead.assigned_to_user_id;
+
     if (viewPath === "/leads/pending-assigning") {
       return (
-        <ActionIconButton icon="table" label="Update Assignee" onClick={() => openEditLead(lead)} />
+        <div className="table-actions">
+          <ActionIconButton icon="pencil" label="Update Assignee" onClick={() => openEditLead(lead)} />
+          <ActionIconButton icon="delete" label="Delete Lead" tone="danger" onClick={() => deleteLead(lead)} />
+        </div>
       );
     }
 
     const canFollowUp = !finalLeadStatuses.includes(String(lead.lead_status || ""));
 
     return (
-      <>
-        <ActionIconButton icon="table" label="Edit Lead" onClick={() => openEditLead(lead)} />
-        {canFollowUp ? (
-          <ActionIconButton icon="followup" label="Update Lead" tone="primary" onClick={() => openUpdateLead(lead)} />
+      <div className="table-actions">
+        {isUnassigned ? (
+          <ActionIconButton icon="user" label="Update Assignee" onClick={() => openAssignLead(lead)} />
         ) : null}
-      </>
+        <ActionIconButton icon="pencil" label="Edit Lead" onClick={() => openEditLead(lead)} />
+        {canFollowUp ? (
+          <ActionIconButton icon="tick" label="Update Lead" tone="primary" onClick={() => openUpdateLead(lead)} />
+        ) : null}
+        <ActionIconButton icon="delete" label="Delete Lead" tone="danger" onClick={() => deleteLead(lead)} />
+      </div>
     );
   };
 
-  const currentColumns = isActivityLog ? activityColumns : leadColumns;
+  const currentColumns = isActivityLog
+    ? activityColumns
+    : viewPath === "/leads/pending-assigning"
+    ? pendingAssigningColumns
+    : leadColumns;
   const currentSearchKeys = isActivityLog
     ? ["activity_type", "client_name", "lead_status", "update_status", "assigned_to_name", "remarks"]
     : [
@@ -500,7 +560,9 @@ export default function LeadsPage({ viewPath }) {
           <div className="master-modal__backdrop" onClick={resetLeadModal} />
           <section className="master-card master-modal__panel">
             <div className="master-card__header">
-              <h3 id="lead-form-title">{editingLeadId ? "Edit Lead" : "Add Lead"}</h3>
+              <h3 id="lead-form-title">
+                {isAssigneeOnly ? "Update Assignee" : editingLeadId ? "Edit Lead" : "Add Lead"}
+              </h3>
               <button type="button" className="text-button" onClick={resetLeadModal}>
                 Cancel
               </button>
@@ -508,50 +570,54 @@ export default function LeadsPage({ viewPath }) {
 
             <div className="master-modal__body">
               <form className="master-form" onSubmit={handleLeadSubmit}>
-                <label className="form-field">
-                  <FormLabel required>Description</FormLabel>
-                  <input
-                    type="text"
-                    required
-                    value={leadForm.description}
-                    onChange={(event) => handleLeadFormChange("description", event.target.value)}
-                  />
-                </label>
+                {!isAssigneeOnly && (
+                  <>
+                    <label className="form-field">
+                      <FormLabel required>Description</FormLabel>
+                      <input
+                        type="text"
+                        required
+                        value={leadForm.description}
+                        onChange={(event) => handleLeadFormChange("description", event.target.value)}
+                      />
+                    </label>
 
-                <label className="form-field">
-                  <FormLabel required>Due Date</FormLabel>
-                  <input
-                    type="date"
-                    required
-                    value={leadForm.due_date}
-                    onChange={(event) => handleLeadFormChange("due_date", event.target.value)}
-                  />
-                </label>
+                    <label className="form-field">
+                      <FormLabel required>Due Date</FormLabel>
+                      <input
+                        type="date"
+                        required
+                        value={leadForm.due_date}
+                        onChange={(event) => handleLeadFormChange("due_date", event.target.value)}
+                      />
+                    </label>
 
-                <label className="form-field">
-                  <FormLabel required>Client Name</FormLabel>
-                  <input
-                    type="text"
-                    required
-                    value={leadForm.client_name}
-                    onChange={(event) => handleLeadFormChange("client_name", event.target.value)}
-                  />
-                </label>
+                    <label className="form-field">
+                      <FormLabel required>Client Name</FormLabel>
+                      <input
+                        type="text"
+                        required
+                        value={leadForm.client_name}
+                        onChange={(event) => handleLeadFormChange("client_name", event.target.value)}
+                      />
+                    </label>
 
-                <label className="form-field">
-                  <FormLabel required>Priority</FormLabel>
-                  <select
-                    required
-                    value={leadForm.priority}
-                    onChange={(event) => handleLeadFormChange("priority", event.target.value)}
-                  >
-                    {priorityOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    <label className="form-field">
+                      <FormLabel required>Priority</FormLabel>
+                      <select
+                        required
+                        value={leadForm.priority}
+                        onChange={(event) => handleLeadFormChange("priority", event.target.value)}
+                      >
+                        {priorityOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </>
+                )}
 
                 <label className="form-field">
                   <FormLabel>Assigned To</FormLabel>
@@ -568,52 +634,62 @@ export default function LeadsPage({ viewPath }) {
                   </select>
                 </label>
 
-                <label className="form-field">
-                  <FormLabel>Category</FormLabel>
-                  <select
-                    value={leadForm.category_id}
-                    onChange={(event) => handleLeadFormChange("category_id", event.target.value)}
-                  >
-                    <option value="">Select Category</option>
-                    {topLevelCategories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.category_name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                {!isAssigneeOnly && (
+                  <>
+                    <label className="form-field">
+                      <FormLabel>Category</FormLabel>
+                      <select
+                        value={leadForm.category_id}
+                        onChange={(event) => handleLeadFormChange("category_id", event.target.value)}
+                      >
+                        <option value="">Select Category</option>
+                        {topLevelCategories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.category_name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
 
-                <label className="form-field">
-                  <FormLabel>Sub - Category</FormLabel>
-                  <select
-                    value={leadForm.sub_category_id}
-                    onChange={(event) => handleLeadFormChange("sub_category_id", event.target.value)}
-                    disabled={!leadForm.category_id}
-                  >
-                    <option value="">Select Sub - Category</option>
-                    {subCategories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.category_name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    <label className="form-field">
+                      <FormLabel>Sub - Category</FormLabel>
+                      <select
+                        value={leadForm.sub_category_id}
+                        onChange={(event) => handleLeadFormChange("sub_category_id", event.target.value)}
+                        disabled={!leadForm.category_id}
+                      >
+                        <option value="">Select Sub - Category</option>
+                        {subCategories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.category_name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
 
-                <label className="form-field">
-                  <FormLabel>Notes</FormLabel>
-                  <textarea
-                    rows="4"
-                    value={leadForm.notes}
-                    onChange={(event) => handleLeadFormChange("notes", event.target.value)}
-                  />
-                </label>
+                    <label className="form-field">
+                      <FormLabel>Notes</FormLabel>
+                      <textarea
+                        rows="4"
+                        value={leadForm.notes}
+                        onChange={(event) => handleLeadFormChange("notes", event.target.value)}
+                      />
+                    </label>
+                  </>
+                )}
 
                 <div className="form-actions">
                   <button type="button" className="secondary-button form-actions__cancel" onClick={resetLeadModal}>
                     Cancel
                   </button>
                   <button type="submit" className="primary-button" disabled={savingLead}>
-                    {savingLead ? <ButtonSpinner label="Saving..." /> : editingLeadId ? "Update Lead" : "Save Lead"}
+                    {savingLead
+                      ? <ButtonSpinner label="Saving..." />
+                      : isAssigneeOnly
+                      ? "Update Assignee"
+                      : editingLeadId
+                      ? "Update Lead"
+                      : "Save Lead"}
                   </button>
                 </div>
               </form>
@@ -640,16 +716,8 @@ export default function LeadsPage({ viewPath }) {
                   <strong>{formatCellValue(selectedLead.client_name)}</strong>
                 </div>
                 <div className="record-card__field">
-                  <span>Current Status</span>
-                  <strong>{formatCellValue(selectedLead.lead_status)}</strong>
-                </div>
-                <div className="record-card__field">
                   <span>Assigned To</span>
                   <strong>{formatCellValue(selectedLead.assigned_to_name)}</strong>
-                </div>
-                <div className="record-card__field">
-                  <span>Next Follow Up Date</span>
-                  <strong>{formatCellValue(selectedLead.next_follow_up_date)}</strong>
                 </div>
               </div>
 
