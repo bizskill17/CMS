@@ -290,13 +290,15 @@ button {
 .login-card__header h1 {
   margin: 0 0 8px;
   font-size: 28px;
-  color: var(--text-dark);
+  color: #2f5ee5;
+  text-align: center;
 }
 
 .login-card__header p {
   margin: 0 0 20px;
   color: var(--text-soft);
   font-size: 14px;
+  text-align: center;
 }
 
 .login-form {
