@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { API_BASE } from "../config/api";
 import { menuSections } from "../data/menu";
 import Sidebar from "./Sidebar";
@@ -81,7 +81,7 @@ function getCurrentViewName(pathname) {
   return "";
 }
 
-export default function AppLayout() {
+export default function AppLayout({ currentUser, allowedMenuSections, allowedRoutes, onLogout }) {
   const location = useLocation();
   const topbarRef = useRef(null);
   const contentBodyRef = useRef(null);
@@ -92,6 +92,17 @@ export default function AppLayout() {
     logo: ""
   });
   const currentViewName = getCurrentViewName(location.pathname);
+  const fallbackPath = allowedRoutes[0]?.path || "/login";
+  const isAllowedPath = allowedRoutes.some((item) => {
+    if (item.path === location.pathname) {
+      return true;
+    }
+
+    return (item.matchPrefixes || []).some((prefix) => location.pathname.startsWith(prefix));
+  });
+  const isLegacyAliasAllowed =
+    location.pathname === "/reports/payments-received" &&
+    allowedRoutes.some((item) => item.path === "/payments/received");
 
   useEffect(() => {
     const handleResize = () => {
@@ -157,9 +168,20 @@ export default function AppLayout() {
     setIsSidebarOpen((current) => !current);
   };
 
+  if (!isAllowedPath && !isLegacyAliasAllowed) {
+    return <Navigate to={fallbackPath} replace />;
+  }
+
   return (
     <div className="app-shell">
-      <Sidebar isOpen={isSidebarOpen} isMobile={isMobile} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        isMobile={isMobile}
+        onClose={() => setIsSidebarOpen(false)}
+        menuSections={allowedMenuSections}
+        currentUser={currentUser}
+        onLogout={onLogout}
+      />
       <main className="content-area">
         <div ref={topbarRef} className="content-topbar">
           <button

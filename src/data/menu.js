@@ -123,6 +123,35 @@ export const menuSections = [
   }
 ];
 
+export function getMenuRouteEntries(sections = menuSections) {
+  return sections.flatMap((section) =>
+    section.items.map((item) => ({
+      ...item,
+      section: section.label,
+      resourceKey: section.label === "Masters" ? item.path.replace("/masters/", "") : undefined
+    }))
+  );
+}
+
+export function filterMenuSectionsByViews(allowedViews = [], sections = menuSections) {
+  const allowedSet = new Set(allowedViews);
+
+  return sections
+    .map((section) => {
+      const filteredItems = (section.items || []).filter((item) => allowedSet.has(item.path));
+
+      if (!filteredItems.length) {
+        return null;
+      }
+
+      return {
+        ...section,
+        items: filteredItems
+      };
+    })
+    .filter(Boolean);
+}
+
 export const menuViewOptions = menuSections.flatMap((section) =>
   (section.items || []).map((item) => ({
     value: item.path,

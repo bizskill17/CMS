@@ -204,7 +204,6 @@ export const masterConfigs = {
       { key: "email", label: "Email" },
       { key: "mobile", label: "Mobile" },
       { key: "role_name", label: "Role" },
-      { key: "views", label: "View", formatter: "view_list" },
       { key: "linked_agent_name", label: "Linked Agent" },
       { key: "is_active", label: "Active", type: "boolean" }
     ],

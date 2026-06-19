@@ -452,6 +452,81 @@ try {
         exit;
     }
 
+    if ($path === '/api/auth/login' && $method === 'POST') {
+        $pdo = Database::connection();
+        $rawBody = file_get_contents('php://input');
+        $payload = json_decode($rawBody ?: '[]', true);
+
+        if (!is_array($payload)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Invalid JSON payload'
+            ], 422);
+            exit;
+        }
+
+        $loginId = trim((string) ($payload['login_id'] ?? ''));
+        $password = trim((string) ($payload['password'] ?? ''));
+
+        if ($loginId === '' || $password === '') {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Log In Id and Password are required.'
+            ], 422);
+            exit;
+        }
+
+        $statement = $pdo->prepare(
+            'SELECT id, full_name, login_id, password, views, email, mobile, role_name, linked_agent_id, is_active
+             FROM users
+             WHERE login_id = :login_id
+             LIMIT 1'
+        );
+        $statement->bindValue(':login_id', $loginId);
+        $statement->execute();
+        $user = $statement->fetch();
+
+        if (!$user || (string) $user['password'] !== $password) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Invalid Log In Id or Password.'
+            ], 401);
+            exit;
+        }
+
+        if (!(bool) $user['is_active']) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'This user is inactive.'
+            ], 403);
+            exit;
+        }
+
+        $views = trim((string) ($user['views'] ?? ''));
+        if ($views === '' || $views === '[]') {
+            Response::json([
+                'status' => 'error',
+                'message' => 'No views assigned for this user.'
+            ], 403);
+            exit;
+        }
+
+        Response::json([
+            'status' => 'ok',
+            'data' => [
+                'id' => (int) $user['id'],
+                'full_name' => (string) $user['full_name'],
+                'login_id' => (string) $user['login_id'],
+                'views' => $user['views'],
+                'email' => $user['email'],
+                'mobile' => $user['mobile'],
+                'role_name' => $user['role_name'],
+                'linked_agent_id' => $user['linked_agent_id']
+            ]
+        ]);
+        exit;
+    }
+
     if ($path === '/api/tasks/activity' && $method === 'GET') {
         $pdo = Database::connection();
         $statement = $pdo->query(

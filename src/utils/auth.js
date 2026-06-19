@@ -1,0 +1,59 @@
+const AUTH_STORAGE_KEY = "insurance_auth_user";
+
+export function parseUserViews(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (typeof value !== "string" || value.trim() === "") {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+}
+
+export function normalizeAuthUser(user) {
+  if (!user || typeof user !== "object") {
+    return null;
+  }
+
+  return {
+    ...user,
+    views: parseUserViews(user.views)
+  };
+}
+
+export function getStoredAuthUser() {
+  try {
+    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    return normalizeAuthUser(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredAuthUser(user) {
+  const normalized = normalizeAuthUser(user);
+
+  if (!normalized) {
+    return;
+  }
+
+  window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(normalized));
+}
+
+export function clearStoredAuthUser() {
+  window.localStorage.removeItem(AUTH_STORAGE_KEY);
+}

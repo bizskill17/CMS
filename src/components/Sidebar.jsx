@@ -43,8 +43,16 @@ function Icon({ name }) {
   );
 }
 
-export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }) {
+export default function Sidebar({
+  isOpen,
+  isMobile = false,
+  onClose = () => {},
+  menuSections: providedMenuSections,
+  currentUser = null,
+  onLogout = () => {}
+}) {
   const location = useLocation();
+  const visibleMenuSections = providedMenuSections || menuSections;
   const [counts, setCounts] = useState({});
   const [appBrandName, setAppBrandName] = useState("Policy Management System");
 
@@ -111,11 +119,11 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
   }, [location.pathname]);
 
   const defaultOpenKey = useMemo(() => {
-    const matched = menuSections.find((section) =>
+    const matched = visibleMenuSections.find((section) =>
       section.items.some((item) => matchesMenuPath(location.pathname, item))
     );
     return matched?.standalone ? null : matched?.label ?? "Masters";
-  }, [location.pathname]);
+  }, [location.pathname, visibleMenuSections]);
 
   const [openGroup, setOpenGroup] = useState(defaultOpenKey);
 
@@ -149,7 +157,7 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
       
 
         <nav className="menu" aria-label="Primary">
-        {menuSections.map((section) => {
+        {visibleMenuSections.map((section) => {
           if (section.standalone) {
             return (
               <NavLink
@@ -227,9 +235,9 @@ export default function Sidebar({ isOpen, isMobile = false, onClose = () => {} }
 
         <div className="sidebar-footer">
           <p className="user-line">
-            Logged in as: <strong>Admin User</strong>
+            Logged in as: <strong>{currentUser?.full_name || currentUser?.login_id || "User"}</strong>
           </p>
-          <button className="logout-button" type="button">
+          <button className="logout-button" type="button" onClick={onLogout}>
             <span className="menu-icon">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M10 4h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-8v-2h8V6h-8V4Zm1.7 4.3L13 9.6 11.6 11H5v2h6.6L13 14.4l-1.3 1.3L8 12l3.7-3.7Z" />
