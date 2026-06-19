@@ -130,6 +130,14 @@ export const menuViewOptions = menuSections.flatMap((section) =>
   }))
 );
 
+export const menuViewGroups = menuSections.map((section) => ({
+  label: section.label,
+  options: (section.items || []).map((item) => ({
+    value: item.path,
+    label: item.label
+  }))
+}));
+
 export function formatMenuViews(value) {
   if (!value) {
     return "";

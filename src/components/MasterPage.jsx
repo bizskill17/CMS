@@ -1246,34 +1246,45 @@ export default function MasterPage({
                 return (
                   <div key={field.name} className="form-field checklist-field">
                     <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
-                    <div className="checklist-field__grid">
-                      {(field.staticOptions || []).map((option) => {
-                        const checked = Array.isArray(formState[field.name])
-                          ? formState[field.name].includes(option.value)
-                          : false;
+                    <div className="checklist-field__groups">
+                      {(field.optionGroups || []).map((group) => (
+                        <div key={`${field.name}-${group.label}`} className="checklist-field__group">
+                          <div className="checklist-field__group-title">{group.label}</div>
+                          <div className="checklist-field__table">
+                            {(group.options || []).map((option) => {
+                              const checked = Array.isArray(formState[field.name])
+                                ? formState[field.name].includes(option.value)
+                                : false;
 
-                        return (
-                          <label key={`${field.name}-${option.value}`} className="checklist-field__option">
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={(event) => {
-                                const nextValues = Array.isArray(formState[field.name])
-                                  ? [...formState[field.name]]
-                                  : [];
+                              return (
+                                <label key={`${field.name}-${option.value}`} className="checklist-field__row">
+                                  <span className="checklist-field__cell checklist-field__cell--checkbox">
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={(event) => {
+                                        const nextValues = Array.isArray(formState[field.name])
+                                          ? [...formState[field.name]]
+                                          : [];
 
-                                handleChange(
-                                  field,
-                                  event.target.checked
-                                    ? [...nextValues, option.value]
-                                    : nextValues.filter((item) => item !== option.value)
-                                );
-                              }}
-                            />
-                            <span>{option.label}</span>
-                          </label>
-                        );
-                      })}
+                                        handleChange(
+                                          field,
+                                          event.target.checked
+                                            ? [...nextValues, option.value]
+                                            : nextValues.filter((item) => item !== option.value)
+                                        );
+                                      }}
+                                    />
+                                  </span>
+                                  <span className="checklist-field__cell checklist-field__cell--label">
+                                    {option.label}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );

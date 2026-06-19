@@ -54,7 +54,8 @@ const taskColumns = [
   { key: "category_name", label: "Category", width: "160px" },
   { key: "sub_category_name", label: "Sub - Category", width: "170px" },
   { key: "task_status", label: "Status", width: "170px" },
-  { key: "next_follow_up_date", label: "Next Follow Up Date", width: "140px" }
+  { key: "next_follow_up_date", label: "Next Follow Up Date", width: "140px" },
+  { key: "update_by_name", label: "Update By", width: "160px" }
 ];
 
 const activityColumns = [
@@ -590,6 +591,7 @@ export default function TasksPage({ viewPath }) {
         "client_name",
         "priority",
         "assigned_to_name",
+        "update_by_name",
         "category_name",
         "sub_category_name",
         "task_status",

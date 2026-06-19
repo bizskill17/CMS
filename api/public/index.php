@@ -426,10 +426,19 @@ try {
                 l.latest_update_date,
                 l.next_follow_up_date,
                 u.full_name AS assigned_to_name,
+                uu.full_name AS update_by_name,
                 c.category_name,
                 sc.category_name AS sub_category_name
              FROM leads l
              LEFT JOIN users u ON u.id = l.assigned_to_user_id
+             LEFT JOIN lead_updates lu ON lu.id = (
+                SELECT lu2.id
+                FROM lead_updates lu2
+                WHERE lu2.lead_id = l.id
+                ORDER BY lu2.update_date DESC, lu2.id DESC
+                LIMIT 1
+             )
+             LEFT JOIN users uu ON uu.id = lu.update_by_user_id
              LEFT JOIN product_categories c ON c.id = l.category_id
              LEFT JOIN product_categories sc ON sc.id = l.sub_category_id
              $whereClause
@@ -521,10 +530,19 @@ try {
                 t.latest_update_date,
                 t.next_follow_up_date,
                 u.full_name AS assigned_to_name,
+                uu.full_name AS update_by_name,
                 c.category_name,
                 sc.category_name AS sub_category_name
              FROM tasks t
              LEFT JOIN users u ON u.id = t.assigned_to_user_id
+             LEFT JOIN task_updates tu ON tu.id = (
+                SELECT tu2.id
+                FROM task_updates tu2
+                WHERE tu2.task_id = t.id
+                ORDER BY tu2.update_date DESC, tu2.id DESC
+                LIMIT 1
+             )
+             LEFT JOIN users uu ON uu.id = tu.update_by_user_id
              LEFT JOIN product_categories c ON c.id = t.category_id
              LEFT JOIN product_categories sc ON sc.id = t.sub_category_id
              $whereClause

@@ -1273,10 +1273,9 @@ button {
   grid-column: 1 / -1;
 }
 
-.checklist-field__grid {
+.checklist-field__groups {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 14px;
+  gap: 14px;
   padding: 14px;
   border: 1px solid #d7e1ef;
   border-radius: 12px;
@@ -1285,19 +1284,52 @@ button {
   overflow-y: auto;
 }
 
-.checklist-field__option {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
+.checklist-field__group {
+  border: 1px solid #d9e3f2;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
 }
 
-.checklist-field__option input {
-  margin-top: 2px;
+.checklist-field__group-title {
+  padding: 10px 14px;
+  background: #eef4ff;
+  color: #2048b0;
+  font-size: 13px;
+  font-weight: 800;
+  border-bottom: 1px solid #d9e3f2;
 }
 
-.checklist-field__option span {
+.checklist-field__table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.checklist-field__row {
+  display: table-row;
+}
+
+.checklist-field__cell {
+  display: table-cell;
+  padding: 10px 14px;
+  border-bottom: 1px solid #edf2f9;
+  vertical-align: middle;
+}
+
+.checklist-field__row:last-child .checklist-field__cell {
+  border-bottom: none;
+}
+
+.checklist-field__cell--checkbox {
+  width: 48px;
+  text-align: center;
+}
+
+.checklist-field__cell--label {
   font-size: 13px;
   line-height: 1.45;
+  color: var(--text-dark);
 }
 
 .form-actions {

@@ -1,4 +1,4 @@
-import { menuViewOptions } from "./menu";
+import { menuViewGroups } from "./menu";
 
 const mobileFieldValidation = {
   pattern: "^\\d{10}$",
@@ -231,7 +231,7 @@ export const masterConfigs = {
         label: "View",
         type: "checklist",
         required: true,
-        staticOptions: menuViewOptions
+        optionGroups: menuViewGroups
       },
       { name: "linked_agent_id", label: "Linked Agent", type: "select", optionsFrom: "agents" },
       { name: "notes", label: "Notes", type: "textarea" },

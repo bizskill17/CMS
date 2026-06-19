@@ -68,7 +68,8 @@ const leadColumns = [
   { key: "category_name", label: "Category", width: "160px" },
   { key: "sub_category_name", label: "Sub - Category", width: "170px" },
   { key: "lead_status", label: "Status", width: "170px" },
-  { key: "next_follow_up_date", label: "Next Follow Up Date", width: "140px" }
+  { key: "next_follow_up_date", label: "Next Follow Up Date", width: "140px" },
+  { key: "update_by_name", label: "Update By", width: "160px" }
 ];
 
 const pendingAssigningColumns = [
@@ -80,7 +81,8 @@ const pendingAssigningColumns = [
   { key: "assigned_to_name", label: "Assigned To", width: "160px" },
   { key: "category_name", label: "Category", width: "160px" },
   { key: "sub_category_name", label: "Sub - Category", width: "170px" },
-  { key: "lead_status", label: "Status", width: "170px" }
+  { key: "lead_status", label: "Status", width: "170px" },
+  { key: "update_by_name", label: "Update By", width: "160px" }
 ];
 
 const activityColumns = [
@@ -534,6 +536,7 @@ export default function LeadsPage({ viewPath }) {
         "client_name",
         "priority",
         "assigned_to_name",
+        "update_by_name",
         "category_name",
         "sub_category_name",
         "lead_status",
