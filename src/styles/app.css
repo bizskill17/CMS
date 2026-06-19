@@ -1301,28 +1301,36 @@ button {
 }
 
 .checklist-field__table {
-  display: table;
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
-.checklist-field__row {
-  display: table-row;
+.checklist-field__head {
+  padding: 10px 14px;
+  border-bottom: 1px solid #d9e3f2;
+  background: #f8fbff;
+  color: #5d6c7f;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: left;
 }
 
 .checklist-field__cell {
-  display: table-cell;
   padding: 10px 14px;
   border-bottom: 1px solid #edf2f9;
   vertical-align: middle;
 }
 
-.checklist-field__row:last-child .checklist-field__cell {
+.checklist-field__group tbody tr:last-child .checklist-field__cell {
   border-bottom: none;
 }
 
+.checklist-field__head--checkbox,
 .checklist-field__cell--checkbox {
-  width: 48px;
+  width: 72px;
   text-align: center;
 }
 
