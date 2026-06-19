@@ -272,10 +272,13 @@ create table lead_updates (
   lead_id bigint unsigned not null,
   status varchar(20) not null,
   update_date date not null,
+  update_by_user_id bigint unsigned not null,
   next_follow_up_date date,
   remarks text,
   created_at datetime not null default current_timestamp,
   key idx_lead_updates_date (update_date),
+  constraint fk_lead_updates_user
+    foreign key (update_by_user_id) references users(id),
   constraint fk_lead_updates_lead
     foreign key (lead_id) references leads(id)
 );
@@ -311,10 +314,13 @@ create table task_updates (
   task_id bigint unsigned not null,
   status varchar(20) not null,
   update_date date not null,
+  update_by_user_id bigint unsigned not null,
   next_follow_up_date date,
   remarks text,
   created_at datetime not null default current_timestamp,
   key idx_task_updates_date (update_date),
+  constraint fk_task_updates_user
+    foreign key (update_by_user_id) references users(id),
   constraint fk_task_updates_task
     foreign key (task_id) references tasks(id)
 );

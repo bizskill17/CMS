@@ -355,6 +355,7 @@ try {
                     null AS update_status,
                     l.lead_date AS activity_date,
                     u.full_name AS assigned_to_name,
+                    null AS update_by_name,
                     l.next_follow_up_date,
                     l.notes AS remarks,
                     l.created_at AS sort_at
@@ -371,12 +372,14 @@ try {
                     lu.status AS update_status,
                     lu.update_date AS activity_date,
                     u.full_name AS assigned_to_name,
+                    uu.full_name AS update_by_name,
                     lu.next_follow_up_date,
                     lu.remarks AS remarks,
                     lu.created_at AS sort_at
                 FROM lead_updates lu
                 INNER JOIN leads l ON l.id = lu.lead_id
                 LEFT JOIN users u ON u.id = l.assigned_to_user_id
+                LEFT JOIN users uu ON uu.id = lu.update_by_user_id
              ) activity
              ORDER BY sort_at DESC'
         );
@@ -453,6 +456,7 @@ try {
                     null AS update_status,
                     t.task_date AS activity_date,
                     u.full_name AS assigned_to_name,
+                    null AS update_by_name,
                     t.next_follow_up_date,
                     t.notes AS remarks,
                     t.created_at AS sort_at
@@ -469,12 +473,14 @@ try {
                     tu.status AS update_status,
                     tu.update_date AS activity_date,
                     u.full_name AS assigned_to_name,
+                    uu.full_name AS update_by_name,
                     tu.next_follow_up_date,
                     tu.remarks AS remarks,
                     tu.created_at AS sort_at
                 FROM task_updates tu
                 INNER JOIN tasks t ON t.id = tu.task_id
                 LEFT JOIN users u ON u.id = t.assigned_to_user_id
+                LEFT JOIN users uu ON uu.id = tu.update_by_user_id
              ) activity
              ORDER BY sort_at DESC'
         );
@@ -954,10 +960,11 @@ try {
         $pdo = Database::connection();
         $leadId = (int) $matches[1];
         $statement = $pdo->prepare(
-            'SELECT id, status, update_date, next_follow_up_date, remarks, created_at
-             FROM lead_updates
-             WHERE lead_id = :lead_id
-             ORDER BY update_date DESC, id DESC'
+            'SELECT lu.id, lu.status, lu.update_date, lu.next_follow_up_date, lu.remarks, lu.created_at, uu.full_name AS update_by_name
+             FROM lead_updates lu
+             LEFT JOIN users uu ON uu.id = lu.update_by_user_id
+             WHERE lu.lead_id = :lead_id
+             ORDER BY lu.update_date DESC, lu.id DESC'
         );
         $statement->bindValue(':lead_id', $leadId, PDO::PARAM_INT);
         $statement->execute();
@@ -973,10 +980,11 @@ try {
         $pdo = Database::connection();
         $taskId = (int) $matches[1];
         $statement = $pdo->prepare(
-            'SELECT id, status, update_date, next_follow_up_date, remarks, created_at
-             FROM task_updates
-             WHERE task_id = :task_id
-             ORDER BY update_date DESC, id DESC'
+            'SELECT tu.id, tu.status, tu.update_date, tu.next_follow_up_date, tu.remarks, tu.created_at, uu.full_name AS update_by_name
+             FROM task_updates tu
+             LEFT JOIN users uu ON uu.id = tu.update_by_user_id
+             WHERE tu.task_id = :task_id
+             ORDER BY tu.update_date DESC, tu.id DESC'
         );
         $statement->bindValue(':task_id', $taskId, PDO::PARAM_INT);
         $statement->execute();
@@ -1030,6 +1038,9 @@ try {
 
         $updateStatus = normalizeLeadUpdateStatus((string) ($payload['status'] ?? ''));
         $updateDate = trim((string) ($payload['update_date'] ?? ''));
+        $updateByUserId = isset($payload['update_by_user_id']) && $payload['update_by_user_id'] !== ''
+            ? (int) $payload['update_by_user_id']
+            : 0;
         $nextFollowUpDate = trim((string) ($payload['next_follow_up_date'] ?? ''));
 
         if ($updateStatus === '') {
@@ -1048,6 +1059,14 @@ try {
             exit;
         }
 
+        if ($updateByUserId <= 0) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Field "update_by_user_id" is required.'
+            ], 422);
+            exit;
+        }
+
         $leadStatus = deriveLeadStatusFromUpdate($updateStatus, $nextFollowUpDate !== '' ? $nextFollowUpDate : null);
 
         $pdo->beginTransaction();
@@ -1058,12 +1077,14 @@ try {
                     lead_id,
                     status,
                     update_date,
+                    update_by_user_id,
                     next_follow_up_date,
                     remarks
                  ) VALUES (
                     :lead_id,
                     :status,
                     :update_date,
+                    :update_by_user_id,
                     :next_follow_up_date,
                     :remarks
                  )'
@@ -1071,6 +1092,7 @@ try {
             $insertUpdate->bindValue(':lead_id', $leadId, PDO::PARAM_INT);
             $insertUpdate->bindValue(':status', $updateStatus);
             $insertUpdate->bindValue(':update_date', $updateDate);
+            $insertUpdate->bindValue(':update_by_user_id', $updateByUserId, PDO::PARAM_INT);
             $insertUpdate->bindValue(':next_follow_up_date', $nextFollowUpDate !== '' ? $nextFollowUpDate : null);
             $insertUpdate->bindValue(':remarks', trim((string) ($payload['remarks'] ?? '')) !== '' ? $payload['remarks'] : null);
             $insertUpdate->execute();
@@ -2146,6 +2168,9 @@ try {
 
         $updateStatus = normalizeTaskUpdateStatus((string) ($payload['status'] ?? ''));
         $updateDate = trim((string) ($payload['update_date'] ?? ''));
+        $updateByUserId = isset($payload['update_by_user_id']) && $payload['update_by_user_id'] !== ''
+            ? (int) $payload['update_by_user_id']
+            : 0;
         $nextFollowUpDate = trim((string) ($payload['next_follow_up_date'] ?? ''));
 
         if ($updateStatus === '') {
@@ -2164,6 +2189,14 @@ try {
             exit;
         }
 
+        if ($updateByUserId <= 0) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Field "update_by_user_id" is required.'
+            ], 422);
+            exit;
+        }
+
         $taskStatus = deriveTaskStatusFromUpdate($updateStatus, $nextFollowUpDate !== '' ? $nextFollowUpDate : null);
 
         $pdo->beginTransaction();
@@ -2174,12 +2207,14 @@ try {
                     task_id,
                     status,
                     update_date,
+                    update_by_user_id,
                     next_follow_up_date,
                     remarks
                  ) VALUES (
                     :task_id,
                     :status,
                     :update_date,
+                    :update_by_user_id,
                     :next_follow_up_date,
                     :remarks
                  )'
@@ -2187,6 +2222,7 @@ try {
             $insertUpdate->bindValue(':task_id', $taskId, PDO::PARAM_INT);
             $insertUpdate->bindValue(':status', $updateStatus);
             $insertUpdate->bindValue(':update_date', $updateDate);
+            $insertUpdate->bindValue(':update_by_user_id', $updateByUserId, PDO::PARAM_INT);
             $insertUpdate->bindValue(':next_follow_up_date', $nextFollowUpDate !== '' ? $nextFollowUpDate : null);
             $insertUpdate->bindValue(':remarks', trim((string) ($payload['remarks'] ?? '')) !== '' ? $payload['remarks'] : null);
             $insertUpdate->execute();

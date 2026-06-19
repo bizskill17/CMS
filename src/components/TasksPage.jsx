@@ -64,6 +64,7 @@ const activityColumns = [
   { key: "update_status", label: "Update Status", width: "120px" },
   { key: "activity_date", label: "Date", width: "120px" },
   { key: "assigned_to_name", label: "Assigned To", width: "160px" },
+  { key: "update_by_name", label: "Update By", width: "160px" },
   { key: "next_follow_up_date", label: "Next Follow Up Date", width: "140px" },
   { key: "remarks", label: "Remarks", width: "240px" }
 ];
@@ -98,6 +99,7 @@ function emptyUpdateForm() {
   return {
     status: "Success",
     update_date: todayInputValue(),
+    update_by_user_id: "",
     next_follow_up_date: "",
     remarks: ""
   };
@@ -397,6 +399,7 @@ export default function TasksPage({ viewPath }) {
     setSelectedTask(task);
     setUpdateForm({
       ...emptyUpdateForm(),
+      update_by_user_id: task.assigned_to_user_id ? String(task.assigned_to_user_id) : "",
       next_follow_up_date: String(task.next_follow_up_date || "").slice(0, 10)
     });
     setIsUpdateModalOpen(true);
@@ -581,7 +584,7 @@ export default function TasksPage({ viewPath }) {
 
   const currentColumns = isActivityLog ? activityColumns : taskColumns;
   const currentSearchKeys = isActivityLog
-    ? ["activity_type", "client_name", "task_status", "update_status", "assigned_to_name", "remarks"]
+    ? ["activity_type", "client_name", "task_status", "update_status", "assigned_to_name", "update_by_name", "remarks"]
     : [
         "description",
         "client_name",
@@ -887,6 +890,22 @@ export default function TasksPage({ viewPath }) {
                 </label>
 
                 <label className="form-field">
+                  <FormLabel required>Update By</FormLabel>
+                  <select
+                    required
+                    value={updateForm.update_by_user_id}
+                    onChange={(event) => handleUpdateFormChange("update_by_user_id", event.target.value)}
+                  >
+                    <option value="">Select User</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="form-field">
                   <FormLabel required={updateForm.status === "Follow Up Again"}>Next Follow Up Date</FormLabel>
                   <input
                     type="date"
@@ -933,6 +952,7 @@ export default function TasksPage({ viewPath }) {
                           <th>Sl.No.</th>
                           <th>Status</th>
                           <th>Update Date</th>
+                          <th>Update By</th>
                           <th>Next Follow Up Date</th>
                           <th>Remarks</th>
                         </tr>
@@ -940,7 +960,7 @@ export default function TasksPage({ viewPath }) {
                       <tbody>
                         {taskHistory.length === 0 ? (
                           <tr>
-                            <td colSpan="5" className="table-state">
+                            <td colSpan="6" className="table-state">
                               No activity found for this task.
                             </td>
                           </tr>
@@ -950,6 +970,7 @@ export default function TasksPage({ viewPath }) {
                               <td>{index + 1}</td>
                               <td>{formatCellValue(item.status)}</td>
                               <td>{formatCellValue(item.update_date)}</td>
+                              <td>{formatCellValue(item.update_by_name)}</td>
                               <td>{formatCellValue(item.next_follow_up_date)}</td>
                               <td>{formatCellValue(item.remarks)}</td>
                             </tr>
