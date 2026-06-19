@@ -5,6 +5,18 @@ import { API_BASE } from "../config/api";
 
 const dashboardItems = [
   {
+    key: "renew-policy-today",
+    label: "Policy Renew Today",
+    tone: "warning",
+    path: "/policies/renew"
+  },
+  {
+    key: "policies-added",
+    label: "Add Policy Today",
+    tone: "info",
+    path: "/reports/policies-added"
+  },
+  {
     key: "renewals_next_7_days",
     label: "Policies Pending for Renewal in next 7 days",
     tone: "warning",
@@ -38,16 +50,22 @@ const pendingLeadItems = [
     path: "/leads/pending-assigning"
   },
   {
-    key: "leads-pending-first-follow-up",
-    label: "Pending First Follow Up",
+    key: "leads-converted-today",
+    label: "Converted Today",
     tone: "info",
-    path: "/leads/pending-first-follow-up"
+    path: "/leads/converted"
   },
   {
-    key: "leads-pending-repeat-follow-up",
-    label: "Pending Repeat Follow Up",
+    key: "leads-lost-today",
+    label: "Lost Today",
     tone: "danger",
-    path: "/leads/pending-repeat-follow-up"
+    path: "/leads/lost"
+  },
+  {
+    key: "leads-canceled-today",
+    label: "Canceled Today",
+    tone: "warning",
+    path: "/leads/canceled"
   }
 ];
 
@@ -59,14 +77,14 @@ const pendingTaskItems = [
     path: "/tasks/pending"
   },
   {
-    key: "tasks-completed",
-    label: "Completed Tasks",
+    key: "tasks-completed-today",
+    label: "Completed Today",
     tone: "info",
     path: "/tasks/completed"
   },
   {
-    key: "tasks-canceled",
-    label: "Canceled Tasks",
+    key: "tasks-canceled-today",
+    label: "Canceled Today",
     tone: "danger",
     path: "/tasks/canceled"
   }
@@ -110,11 +128,14 @@ export default function DashboardPage() {
   });
   const [menuCounts, setMenuCounts] = useState({
     "leads-pending-assigning": 0,
-    "leads-pending-first-follow-up": 0,
-    "leads-pending-repeat-follow-up": 0,
+    "leads-converted-today": 0,
+    "leads-lost-today": 0,
+    "leads-canceled-today": 0,
     "tasks-pending": 0,
-    "tasks-completed": 0,
-    "tasks-canceled": 0
+    "tasks-completed-today": 0,
+    "tasks-canceled-today": 0,
+    "renew-policy-today": 0,
+    "policies-added": 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -151,11 +172,14 @@ export default function DashboardPage() {
 
         setMenuCounts({
           "leads-pending-assigning": Number(countsJson.data["leads-pending-assigning"] || 0),
-          "leads-pending-first-follow-up": Number(countsJson.data["leads-pending-first-follow-up"] || 0),
-          "leads-pending-repeat-follow-up": Number(countsJson.data["leads-pending-repeat-follow-up"] || 0),
+          "leads-converted-today": Number(countsJson.data["leads-converted-today"] || 0),
+          "leads-lost-today": Number(countsJson.data["leads-lost-today"] || 0),
+          "leads-canceled-today": Number(countsJson.data["leads-canceled-today"] || 0),
           "tasks-pending": Number(countsJson.data["tasks-pending"] || 0),
-          "tasks-completed": Number(countsJson.data["tasks-completed"] || 0),
-          "tasks-canceled": Number(countsJson.data["tasks-canceled"] || 0)
+          "tasks-completed-today": Number(countsJson.data["tasks-completed-today"] || 0),
+          "tasks-canceled-today": Number(countsJson.data["tasks-canceled-today"] || 0),
+          "renew-policy-today": Number(countsJson.data["renew-policy-today"] || 0),
+          "policies-added": Number(countsJson.data["policies-added"] || 0)
         });
       } catch (loadError) {
         setError(loadError.message);
@@ -171,7 +195,7 @@ export default function DashboardPage() {
     <div className="dashboard-page">
       <section className="master-card dashboard-card">
         <div className="master-card__header">
-          <h3 className="responsive-data-view__title">Pending Insurance Tasks</h3>
+          <h3 className="responsive-data-view__title">Insurance</h3>
           <div className="master-card__actions master-card__actions--header"></div>
         </div>
 
@@ -196,7 +220,7 @@ export default function DashboardPage() {
                       <span className="text-blue">{item.label}</span>
                     </span>
                     <span className={`dashboard-table__count dashboard-table__count--${item.tone}`}>
-                      {summary[item.key]}
+                      {item.key in menuCounts ? menuCounts[item.key] : summary[item.key]}
                     </span>
                   </span>
                 </button>
@@ -205,7 +229,7 @@ export default function DashboardPage() {
 
             <div className="dashboard-section">
               <div className="master-card__header">
-                <h3 className="responsive-data-view__title">Pending Leads</h3>
+                <h3 className="responsive-data-view__title">Leads</h3>
               </div>
               <div className="dashboard-list">
                 {pendingLeadItems.map((item) => (
@@ -230,7 +254,7 @@ export default function DashboardPage() {
 
             <div className="dashboard-section">
               <div className="master-card__header">
-                <h3 className="responsive-data-view__title">Pending Tasks</h3>
+                <h3 className="responsive-data-view__title">Tasks</h3>
               </div>
               <div className="dashboard-list">
                 {pendingTaskItems.map((item) => (

@@ -170,11 +170,20 @@ try {
         $counts['leads-converted'] = (int) $pdo->query(
             'SELECT count(*) FROM leads WHERE lead_status = "Converted"'
         )->fetchColumn();
+        $counts['leads-converted-today'] = (int) $pdo->query(
+            'SELECT count(*) FROM leads WHERE lead_status = "Converted" AND latest_update_date = curdate()'
+        )->fetchColumn();
         $counts['leads-lost'] = (int) $pdo->query(
             'SELECT count(*) FROM leads WHERE lead_status = "Lost"'
         )->fetchColumn();
+        $counts['leads-lost-today'] = (int) $pdo->query(
+            'SELECT count(*) FROM leads WHERE lead_status = "Lost" AND latest_update_date = curdate()'
+        )->fetchColumn();
         $counts['leads-canceled'] = (int) $pdo->query(
             'SELECT count(*) FROM leads WHERE lead_status = "Canceled"'
+        )->fetchColumn();
+        $counts['leads-canceled-today'] = (int) $pdo->query(
+            'SELECT count(*) FROM leads WHERE lead_status = "Canceled" AND latest_update_date = curdate()'
         )->fetchColumn();
         $counts['leads-activity-log'] = (int) $pdo->query('SELECT count(*) FROM lead_updates')->fetchColumn();
 
@@ -186,8 +195,14 @@ try {
         $counts['tasks-completed'] = (int) $pdo->query(
             'SELECT count(*) FROM tasks WHERE task_status = "Completed"'
         )->fetchColumn();
+        $counts['tasks-completed-today'] = (int) $pdo->query(
+            'SELECT count(*) FROM tasks WHERE task_status = "Completed" AND latest_update_date = curdate()'
+        )->fetchColumn();
         $counts['tasks-canceled'] = (int) $pdo->query(
             'SELECT count(*) FROM tasks WHERE task_status = "Canceled"'
+        )->fetchColumn();
+        $counts['tasks-canceled-today'] = (int) $pdo->query(
+            'SELECT count(*) FROM tasks WHERE task_status = "Canceled" AND latest_update_date = curdate()'
         )->fetchColumn();
         $counts['tasks-activity-log'] = (int) $pdo->query('SELECT count(*) FROM task_updates')->fetchColumn();
 
@@ -197,6 +212,11 @@ try {
             'SELECT count(*) FROM policies 
              WHERE risk_end_date IS NOT NULL 
                AND risk_end_date >= curdate() 
+               AND coalesce(renewal_status, "") <> "Renewed"'
+        )->fetchColumn();
+        $counts['renew-policy-today'] = (int) $pdo->query(
+            'SELECT count(*) FROM policies 
+             WHERE risk_end_date = curdate()
                AND coalesce(renewal_status, "") <> "Renewed"'
         )->fetchColumn();
         
