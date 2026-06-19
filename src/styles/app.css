@@ -1273,71 +1273,106 @@ button {
   grid-column: 1 / -1;
 }
 
-.checklist-field__groups {
-  display: grid;
-  gap: 14px;
-  padding: 14px;
+.checklist-field__matrix-wrap {
   border: 1px solid #d7e1ef;
   border-radius: 12px;
   background: #f8fbff;
   max-height: 280px;
   overflow-y: auto;
+  overflow-x: auto;
 }
 
-.checklist-field__group {
-  border: 1px solid #d9e3f2;
-  border-radius: 12px;
-  background: #fff;
-  overflow: hidden;
-}
-
-.checklist-field__group-title {
-  padding: 10px 14px;
-  background: #eef4ff;
-  color: #2048b0;
-  font-size: 13px;
-  font-weight: 800;
-  border-bottom: 1px solid #d9e3f2;
-}
-
-.checklist-field__table {
+.checklist-field__matrix {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
+  min-width: 860px;
 }
 
-.checklist-field__head {
-  padding: 10px 14px;
-  border-bottom: 1px solid #d9e3f2;
-  background: #f8fbff;
-  color: #5d6c7f;
+.checklist-field__matrix-head {
+  padding: 12px 14px;
+  border: 1px solid #c9b08d;
+  background: linear-gradient(180deg, #fff8ef 0%, #f7eadc 100%);
+  color: #9a5600;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  text-align: left;
-}
-
-.checklist-field__cell {
-  padding: 10px 14px;
-  border-bottom: 1px solid #edf2f9;
-  vertical-align: middle;
-}
-
-.checklist-field__group tbody tr:last-child .checklist-field__cell {
-  border-bottom: none;
-}
-
-.checklist-field__head--checkbox,
-.checklist-field__cell--checkbox {
-  width: 72px;
   text-align: center;
 }
 
-.checklist-field__cell--label {
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--text-dark);
+.checklist-field__matrix-head--allow {
+  width: 70px;
+}
+
+.checklist-field__matrix-cell {
+  padding: 8px 12px;
+  border: 1px solid #d6dee9;
+  background: #fff;
+  vertical-align: middle;
+}
+
+.checklist-field__matrix-cell--allow {
+  width: 70px;
+  text-align: center;
+}
+
+.checklist-field__matrix-cell input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: #b66400;
+}
+
+.checklist-pill {
+  display: grid;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.checklist-pill__group {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(71, 48, 14, 0.72);
+}
+
+.checklist-pill__label {
+  font-size: 14px;
+  line-height: 1.35;
+  color: #6a3f00;
+}
+
+.checklist-pill--0 {
+  background: #fff0c9;
+  border-color: #f1d48a;
+}
+
+.checklist-pill--1 {
+  background: #dff0fb;
+  border-color: #badcf0;
+}
+
+.checklist-pill--2 {
+  background: #e3f4df;
+  border-color: #c8e6c1;
+}
+
+.checklist-pill--3 {
+  background: #f7dfe1;
+  border-color: #efc2c7;
+}
+
+.checklist-pill--4 {
+  background: #f6e4fb;
+  border-color: #dfc0ef;
+}
+
+.checklist-pill--5 {
+  background: #e5f7ef;
+  border-color: #c6e9dc;
 }
 
 .form-actions {

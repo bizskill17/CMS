@@ -182,6 +182,16 @@ function getFieldLabel(config, fieldName) {
   return config.fields.find((field) => field.name === fieldName)?.label || fieldName;
 }
 
+function chunkItems(items, size) {
+  const chunks = [];
+
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+
+  return chunks;
+}
+
 function formatBulkServerError(config, payload, message) {
   const duplicateMatch = String(message || "").match(/Duplicate entry '(.+)' for key '([^']+)'/i);
   if (!duplicateMatch) {
@@ -1243,56 +1253,83 @@ export default function MasterPage({
           <form className="master-form" onSubmit={handleSubmit}>
             {config.fields.map((field) => {
               if (field.type === "checklist") {
+                const checklistOptions = (field.optionGroups || []).flatMap((group) =>
+                  (group.options || []).map((option) => ({
+                    ...option,
+                    groupLabel: group.label
+                  }))
+                );
+                const checklistRows = chunkItems(checklistOptions, 3);
+
                 return (
                   <div key={field.name} className="form-field checklist-field">
                     <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
-                    <div className="checklist-field__groups">
-                      {(field.optionGroups || []).map((group) => (
-                        <div key={`${field.name}-${group.label}`} className="checklist-field__group">
-                          <div className="checklist-field__group-title">{group.label}</div>
-                          <table className="checklist-field__table">
-                            <thead>
-                              <tr>
-                                <th className="checklist-field__head checklist-field__head--checkbox">Select</th>
-                                <th className="checklist-field__head">View Name</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {(group.options || []).map((option) => {
+                    <div className="checklist-field__matrix-wrap">
+                      <table className="checklist-field__matrix">
+                        <thead>
+                          <tr>
+                            <th className="checklist-field__matrix-head">Menu</th>
+                            <th className="checklist-field__matrix-head checklist-field__matrix-head--allow">Allow</th>
+                            <th className="checklist-field__matrix-head">Menu</th>
+                            <th className="checklist-field__matrix-head checklist-field__matrix-head--allow">Allow</th>
+                            <th className="checklist-field__matrix-head">Menu</th>
+                            <th className="checklist-field__matrix-head checklist-field__matrix-head--allow">Allow</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {checklistRows.map((row, rowIndex) => (
+                            <tr key={`${field.name}-row-${rowIndex}`}>
+                              {[0, 1, 2].map((columnIndex) => {
+                                const option = row[columnIndex];
+
+                                if (!option) {
+                                  return [
+                                    <td key={`${field.name}-empty-menu-${rowIndex}-${columnIndex}`} className="checklist-field__matrix-cell" />,
+                                    <td
+                                      key={`${field.name}-empty-allow-${rowIndex}-${columnIndex}`}
+                                      className="checklist-field__matrix-cell checklist-field__matrix-cell--allow"
+                                    />
+                                  ];
+                                }
+
                                 const checked = Array.isArray(formState[field.name])
                                   ? formState[field.name].includes(option.value)
                                   : false;
 
-                                return (
-                                  <tr key={`${field.name}-${option.value}`} className="checklist-field__row">
-                                    <td className="checklist-field__cell checklist-field__cell--checkbox">
-                                      <input
-                                        type="checkbox"
-                                        checked={checked}
-                                        onChange={(event) => {
-                                          const nextValues = Array.isArray(formState[field.name])
-                                            ? [...formState[field.name]]
-                                            : [];
+                                return [
+                                  <td key={`${field.name}-menu-${option.value}`} className="checklist-field__matrix-cell">
+                                    <label className={`checklist-pill checklist-pill--${(rowIndex + columnIndex) % 6}`}>
+                                      <span className="checklist-pill__group">{option.groupLabel}</span>
+                                      <span className="checklist-pill__label">{option.label}</span>
+                                    </label>
+                                  </td>,
+                                  <td
+                                    key={`${field.name}-allow-${option.value}`}
+                                    className="checklist-field__matrix-cell checklist-field__matrix-cell--allow"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={(event) => {
+                                        const nextValues = Array.isArray(formState[field.name])
+                                          ? [...formState[field.name]]
+                                          : [];
 
-                                          handleChange(
-                                            field,
-                                            event.target.checked
-                                              ? [...nextValues, option.value]
-                                              : nextValues.filter((item) => item !== option.value)
-                                          );
-                                        }}
-                                      />
-                                    </td>
-                                    <td className="checklist-field__cell checklist-field__cell--label">
-                                      {option.label}
-                                    </td>
-                                  </tr>
-                                );
+                                        handleChange(
+                                          field,
+                                          event.target.checked
+                                            ? [...nextValues, option.value]
+                                            : nextValues.filter((item) => item !== option.value)
+                                        );
+                                      }}
+                                    />
+                                  </td>
+                                ];
                               })}
-                            </tbody>
-                          </table>
-                        </div>
-                      ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 );
