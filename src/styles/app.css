@@ -602,6 +602,12 @@ button {
   gap: 16px;
 }
 
+.dashboard-section {
+  display: grid;
+  gap: 16px;
+  margin-top: 28px;
+}
+
 .dashboard-tile {
   border: 1px solid #d5dfec;
   border-radius: 18px;

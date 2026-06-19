@@ -30,6 +30,48 @@ const dashboardItems = [
   }
 ];
 
+const pendingLeadItems = [
+  {
+    key: "leads-pending-assigning",
+    label: "Pending Assigning",
+    tone: "warning",
+    path: "/leads/pending-assigning"
+  },
+  {
+    key: "leads-pending-first-follow-up",
+    label: "Pending First Follow Up",
+    tone: "info",
+    path: "/leads/pending-first-follow-up"
+  },
+  {
+    key: "leads-pending-repeat-follow-up",
+    label: "Pending Repeat Follow Up",
+    tone: "danger",
+    path: "/leads/pending-repeat-follow-up"
+  }
+];
+
+const pendingTaskItems = [
+  {
+    key: "tasks-pending",
+    label: "Pending Tasks",
+    tone: "success",
+    path: "/tasks/pending"
+  },
+  {
+    key: "tasks-completed",
+    label: "Completed Tasks",
+    tone: "info",
+    path: "/tasks/completed"
+  },
+  {
+    key: "tasks-canceled",
+    label: "Canceled Tasks",
+    tone: "danger",
+    path: "/tasks/canceled"
+  }
+];
+
 async function readApiJson(response) {
   const rawText = await response.text();
   const contentType = response.headers.get("content-type") || "";
@@ -66,6 +108,14 @@ export default function DashboardPage() {
     renewals_overdue: 0,
     pending_client_collections: 0
   });
+  const [menuCounts, setMenuCounts] = useState({
+    "leads-pending-assigning": 0,
+    "leads-pending-first-follow-up": 0,
+    "leads-pending-repeat-follow-up": 0,
+    "tasks-pending": 0,
+    "tasks-completed": 0,
+    "tasks-canceled": 0
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -75,18 +125,37 @@ export default function DashboardPage() {
       setError("");
 
       try {
-        const response = await fetch(`${API_BASE}/dashboard/policy-summary`);
-        const json = await readApiJson(response);
+        const [summaryResponse, countsResponse] = await Promise.all([
+          fetch(`${API_BASE}/dashboard/policy-summary`),
+          fetch(`${API_BASE}/menu/counts`)
+        ]);
+        const [summaryJson, countsJson] = await Promise.all([
+          readApiJson(summaryResponse),
+          readApiJson(countsResponse)
+        ]);
 
-        if (!response.ok) {
-          throw new Error(json.message || "Failed to load dashboard summary.");
+        if (!summaryResponse.ok) {
+          throw new Error(summaryJson.message || "Failed to load dashboard summary.");
         }
 
         setSummary({
-          renewals_next_7_days: Number(json.data.renewals_next_7_days || 0),
-          pending_document_uploads: Number(json.data.pending_document_uploads || 0),
-          renewals_overdue: Number(json.data.renewals_overdue || 0),
-          pending_client_collections: Number(json.data.pending_client_collections || 0)
+          renewals_next_7_days: Number(summaryJson.data.renewals_next_7_days || 0),
+          pending_document_uploads: Number(summaryJson.data.pending_document_uploads || 0),
+          renewals_overdue: Number(summaryJson.data.renewals_overdue || 0),
+          pending_client_collections: Number(summaryJson.data.pending_client_collections || 0)
+        });
+
+        if (!countsResponse.ok) {
+          throw new Error(countsJson.message || "Failed to load menu counts.");
+        }
+
+        setMenuCounts({
+          "leads-pending-assigning": Number(countsJson.data["leads-pending-assigning"] || 0),
+          "leads-pending-first-follow-up": Number(countsJson.data["leads-pending-first-follow-up"] || 0),
+          "leads-pending-repeat-follow-up": Number(countsJson.data["leads-pending-repeat-follow-up"] || 0),
+          "tasks-pending": Number(countsJson.data["tasks-pending"] || 0),
+          "tasks-completed": Number(countsJson.data["tasks-completed"] || 0),
+          "tasks-canceled": Number(countsJson.data["tasks-canceled"] || 0)
         });
       } catch (loadError) {
         setError(loadError.message);
@@ -103,8 +172,7 @@ export default function DashboardPage() {
       <section className="master-card dashboard-card">
         <div className="master-card__header">
           <h3 className="responsive-data-view__title">Pending Insurance Tasks</h3>
-          <div className="master-card__actions master-card__actions--header">
-          </div>
+          <div className="master-card__actions master-card__actions--header"></div>
         </div>
 
         {loading ? (
@@ -114,25 +182,77 @@ export default function DashboardPage() {
         ) : error ? (
           <p className="feedback feedback--error">{error}</p>
         ) : (
-          <div className="dashboard-list">
-            {dashboardItems.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                className="dashboard-tile"
-                onClick={() => navigate(item.path)}
-              >
-                <span className="dashboard-tile__content">
-                  <span className="dashboard-table__item">
-                    <span className="text-blue">{item.label}</span>
+          <>
+            <div className="dashboard-list">
+              {dashboardItems.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  className="dashboard-tile"
+                  onClick={() => navigate(item.path)}
+                >
+                  <span className="dashboard-tile__content">
+                    <span className="dashboard-table__item">
+                      <span className="text-blue">{item.label}</span>
+                    </span>
+                    <span className={`dashboard-table__count dashboard-table__count--${item.tone}`}>
+                      {summary[item.key]}
+                    </span>
                   </span>
-                  <span className={`dashboard-table__count dashboard-table__count--${item.tone}`}>
-                    {summary[item.key]}
-                  </span>
-                </span>
-              </button>
-            ))}
-          </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="dashboard-section">
+              <div className="master-card__header">
+                <h3 className="responsive-data-view__title">Pending Leads</h3>
+              </div>
+              <div className="dashboard-list">
+                {pendingLeadItems.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className="dashboard-tile"
+                    onClick={() => navigate(item.path)}
+                  >
+                    <span className="dashboard-tile__content">
+                      <span className="dashboard-table__item">
+                        <span className="text-blue">{item.label}</span>
+                      </span>
+                      <span className={`dashboard-table__count dashboard-table__count--${item.tone}`}>
+                        {menuCounts[item.key]}
+                      </span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="dashboard-section">
+              <div className="master-card__header">
+                <h3 className="responsive-data-view__title">Pending Tasks</h3>
+              </div>
+              <div className="dashboard-list">
+                {pendingTaskItems.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className="dashboard-tile"
+                    onClick={() => navigate(item.path)}
+                  >
+                    <span className="dashboard-tile__content">
+                      <span className="dashboard-table__item">
+                        <span className="text-blue">{item.label}</span>
+                      </span>
+                      <span className={`dashboard-table__count dashboard-table__count--${item.tone}`}>
+                        {menuCounts[item.key]}
+                      </span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
         )}
       </section>
     </div>
