@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { ActionIconDisplay } from "./ActionIcon";
 import { API_BASE } from "../config/api";
 import { masterConfigs } from "../data/masterConfigs";
+import { formatMenuViews } from "../data/menu";
 import { buildFilterOptions, filterRecords, sortRecords } from "../utils/dataView";
 import { downloadCsv, downloadPdf } from "../utils/export";
 import { formatAccountType, formatCellValue } from "../utils/formatting";
@@ -41,7 +42,14 @@ async function readApiJson(response) {
 
 function emptyState(config) {
   return config.fields.reduce((acc, field) => {
-    acc[field.name] = field.type === "checkbox" ? true : field.type === "file" ? null : "";
+    acc[field.name] =
+      field.type === "checkbox"
+        ? true
+        : field.type === "file"
+        ? null
+        : field.type === "checklist"
+        ? []
+        : "";
     return acc;
   }, {});
 }
@@ -61,6 +69,10 @@ function getOptionValue(field, option) {
 }
 
 function validateField(field, value) {
+  if (field.required && field.type === "checklist" && (!Array.isArray(value) || value.length === 0)) {
+    return `${field.label} is required.`;
+  }
+
   const normalizedValue = String(value ?? "").trim();
 
   if (!normalizedValue) {
@@ -144,6 +156,26 @@ function parseCheckboxValue(value) {
   if (["true", "yes", "1", "active"].includes(normalized)) return true;
   if (["false", "no", "0", "inactive"].includes(normalized)) return false;
   return null;
+}
+
+function parseChecklistValue(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (typeof value !== "string" || value.trim() === "") {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
 }
 
 function getFieldLabel(config, fieldName) {
@@ -327,7 +359,10 @@ export default function MasterPage({
   const filterableColumns = useMemo(
     () =>
       config.tableColumns.filter(
-        (column) => column.type !== "boolean" && !["notes", "description"].includes(column.key)
+        (column) =>
+          column.type !== "boolean" &&
+          column.formatter !== "view_list" &&
+          !["notes", "description", "password"].includes(column.key)
       ),
     [config.tableColumns]
   );
@@ -519,6 +554,8 @@ export default function MasterPage({
       nextState[field.name] =
         field.type === "checkbox"
           ? Boolean(record[field.name])
+          : field.type === "checklist"
+          ? parseChecklistValue(record[field.name])
           : record[field.name] ?? "";
     }
     setFormState(nextState);
@@ -580,12 +617,19 @@ export default function MasterPage({
           body: payload
         });
       } else {
+        const serializedState = Object.fromEntries(
+          config.fields.map((field) => [
+            field.name,
+            field.type === "checklist" ? JSON.stringify(formState[field.name] || []) : formState[field.name]
+          ])
+        );
+
         response = await fetch(url, {
           method,
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify(formState)
+          body: JSON.stringify(serializedState)
         });
       }
 
@@ -1123,6 +1167,10 @@ export default function MasterPage({
       return formatAccountType(record[column.key]);
     }
 
+    if (column.formatter === "view_list") {
+      return formatCellValue(formatMenuViews(record[column.key]));
+    }
+
     if (column.type === "boolean") {
       return record[column.key] ? "Yes" : "No";
     }
@@ -1150,6 +1198,36 @@ export default function MasterPage({
     }));
   }, [config.tableColumns, selectedRecord]);
 
+  const formatColumnValue = (record, column) => {
+    if (column.formatter === "account_type") {
+      return formatAccountType(record[column.key]);
+    }
+
+    if (column.formatter === "view_list") {
+      return formatCellValue(formatMenuViews(record[column.key]));
+    }
+
+    if (column.type === "boolean") {
+      return record[column.key] ? "Yes" : "No";
+    }
+
+    if (column.type === "image" && record[column.key]) {
+      return (
+        <img
+          src={
+            /^https?:\/\//i.test(record[column.key])
+              ? record[column.key]
+              : `${API_BASE}/${String(record[column.key]).replace(/^\/+/, "")}`
+          }
+          alt="Logo"
+          className="master-table__logo"
+        />
+      );
+    }
+
+    return formatCellValue(record[column.key]);
+  };
+
   const formModal = isFormOpen ? (
     <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="master-form-title">
       <div className="master-modal__backdrop" onClick={resetForm} />
@@ -1164,6 +1242,43 @@ export default function MasterPage({
         <div className="master-modal__body">
           <form className="master-form" onSubmit={handleSubmit}>
             {config.fields.map((field) => {
+              if (field.type === "checklist") {
+                return (
+                  <div key={field.name} className="form-field checklist-field">
+                    <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
+                    <div className="checklist-field__grid">
+                      {(field.staticOptions || []).map((option) => {
+                        const checked = Array.isArray(formState[field.name])
+                          ? formState[field.name].includes(option.value)
+                          : false;
+
+                        return (
+                          <label key={`${field.name}-${option.value}`} className="checklist-field__option">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(event) => {
+                                const nextValues = Array.isArray(formState[field.name])
+                                  ? [...formState[field.name]]
+                                  : [];
+
+                                handleChange(
+                                  field,
+                                  event.target.checked
+                                    ? [...nextValues, option.value]
+                                    : nextValues.filter((item) => item !== option.value)
+                                );
+                              }}
+                            />
+                            <span>{option.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              }
+
               if (field.type === "checkbox") {
                 return (
                   <label key={field.name} className="checkbox-field">
@@ -1325,16 +1440,20 @@ export default function MasterPage({
 	                    onClick={() =>
 	                      downloadCsv({
 	                        title: config.title,
-	                        columns: config.tableColumns,
-	                        records: sortedRecords,
-	                        mapRecord: (record) =>
-	                          Object.fromEntries(
-	                            config.tableColumns.map((column) => [
-	                              column.key,
-	                              column.type === "boolean" ? (record[column.key] ? "Yes" : "No") : record[column.key]
-	                            ])
-	                          )
-	                      })
+		                        columns: config.tableColumns,
+		                        records: sortedRecords,
+		                        mapRecord: (record) =>
+		                          Object.fromEntries(
+		                            config.tableColumns.map((column) => [
+		                              column.key,
+		                              column.formatter === "view_list"
+		                                ? formatMenuViews(record[column.key])
+		                                : column.type === "boolean"
+		                                ? (record[column.key] ? "Yes" : "No")
+		                                : record[column.key]
+		                            ])
+		                          )
+		                      })
 	                    }
 	                  />
 	                  <ActionIconDisplay
@@ -1345,16 +1464,20 @@ export default function MasterPage({
 	                    onClick={() =>
 	                      downloadPdf({
 	                        title: config.title,
-	                        columns: config.tableColumns,
-	                        records: sortedRecords,
-	                        mapRecord: (record) =>
-	                          Object.fromEntries(
-	                            config.tableColumns.map((column) => [
-	                              column.key,
-	                              column.type === "boolean" ? (record[column.key] ? "Yes" : "No") : record[column.key]
-	                            ])
-	                          )
-	                      })
+		                        columns: config.tableColumns,
+		                        records: sortedRecords,
+		                        mapRecord: (record) =>
+		                          Object.fromEntries(
+		                            config.tableColumns.map((column) => [
+		                              column.key,
+		                              column.formatter === "view_list"
+		                                ? formatMenuViews(record[column.key])
+		                                : column.type === "boolean"
+		                                ? (record[column.key] ? "Yes" : "No")
+		                                : record[column.key]
+		                            ])
+		                          )
+		                      })
 	                    }
 	                  />
 	                  <button
@@ -1487,25 +1610,7 @@ export default function MasterPage({
                                         key={`${record.id}-${column.key}`}
                                         className={isNameColumn(column.key) ? "text-blue" : ""}
                                       >
-                                        {column.formatter === "account_type"
-                                          ? formatAccountType(record[column.key])
-                                          : column.type === "boolean"
-                                          ? record[column.key]
-                                            ? "Yes"
-                                            : "No"
-                                          : column.type === "image" && record[column.key]
-                                          ? (
-                                            <img 
-                                              src={
-                                                /^https?:\/\//i.test(record[column.key])
-                                                  ? record[column.key]
-                                                  : `${API_BASE}/${String(record[column.key]).replace(/^\/+/, "")}`
-                                              } 
-                                              alt="Logo" 
-                                              className="master-table__logo"
-                                            />
-                                          )
-                                          : formatCellValue(record[column.key])}
+                                        {formatColumnValue(record, column)}
                                       </td>
                                     );
                                   })}
@@ -1530,25 +1635,7 @@ export default function MasterPage({
                                 key={`${record.id}-${column.key}`}
                                 className={isNameColumn(column.key) ? "text-blue" : ""}
                               >
-                                {column.formatter === "account_type"
-                                  ? formatAccountType(record[column.key])
-                                  : column.type === "boolean"
-                                  ? record[column.key]
-                                    ? "Yes"
-                                    : "No"
-                                  : column.type === "image" && record[column.key]
-                                  ? (
-                                    <img 
-                                      src={
-                                        /^https?:\/\//i.test(record[column.key])
-                                          ? record[column.key]
-                                          : `${API_BASE}/${String(record[column.key]).replace(/^\/+/, "")}`
-                                      } 
-                                      alt="Logo" 
-                                      className="master-table__logo"
-                                    />
-                                  )
-                                  : formatCellValue(record[column.key])}
+                                {formatColumnValue(record, column)}
                               </td>
                             );
                           })}

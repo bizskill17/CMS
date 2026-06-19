@@ -1,3 +1,5 @@
+import { menuViewOptions } from "./menu";
+
 const mobileFieldValidation = {
   pattern: "^\\d{10}$",
   message: "Mobile number must be exactly 10 digits."
@@ -197,14 +199,19 @@ export const masterConfigs = {
     resource: "users",
     tableColumns: [
       { key: "full_name", label: "User Name" },
+      { key: "login_id", label: "Log In Id" },
+      { key: "password", label: "Password" },
       { key: "email", label: "Email" },
       { key: "mobile", label: "Mobile" },
       { key: "role_name", label: "Role" },
+      { key: "views", label: "View", formatter: "view_list" },
       { key: "linked_agent_name", label: "Linked Agent" },
       { key: "is_active", label: "Active", type: "boolean" }
     ],
     fields: [
       { name: "full_name", label: "Full Name", type: "text", required: true },
+      { name: "login_id", label: "Log In Id", type: "text", required: true },
+      { name: "password", label: "Password", type: "password", required: true },
       { name: "email", label: "Email", type: "email", required: true },
       { name: "mobile", label: "Mobile", type: "text", validation: mobileFieldValidation },
       {
@@ -218,6 +225,13 @@ export const masterConfigs = {
           { value: "Manager", label: "Manager" },
           { value: "Executive", label: "Executive" }
         ]
+      },
+      {
+        name: "views",
+        label: "View",
+        type: "checklist",
+        required: true,
+        staticOptions: menuViewOptions
       },
       { name: "linked_agent_id", label: "Linked Agent", type: "select", optionsFrom: "agents" },
       { name: "notes", label: "Notes", type: "textarea" },

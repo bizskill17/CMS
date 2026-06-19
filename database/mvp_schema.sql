@@ -12,6 +12,9 @@ create table agents (
 create table users (
   id bigint unsigned auto_increment primary key,
   full_name varchar(150) not null,
+  login_id varchar(120) not null unique,
+  password varchar(255) not null,
+  views longtext,
   email varchar(150) not null unique,
   mobile varchar(20),
   role_name varchar(50) not null,

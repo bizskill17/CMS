@@ -122,3 +122,39 @@ export const menuSections = [
     ]
   }
 ];
+
+export const menuViewOptions = menuSections.flatMap((section) =>
+  (section.items || []).map((item) => ({
+    value: item.path,
+    label: `${section.label} / ${item.label}`
+  }))
+);
+
+export function formatMenuViews(value) {
+  if (!value) {
+    return "";
+  }
+
+  let selectedViews = value;
+
+  if (typeof value === "string") {
+    try {
+      selectedViews = JSON.parse(value);
+    } catch {
+      selectedViews = value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+  }
+
+  if (!Array.isArray(selectedViews)) {
+    return String(value);
+  }
+
+  const labelMap = new Map(menuViewOptions.map((option) => [option.value, option.label]));
+
+  return selectedViews
+    .map((item) => labelMap.get(item) || item)
+    .join(", ");
+}
