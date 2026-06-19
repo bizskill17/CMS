@@ -362,8 +362,7 @@ export default function LeadsPage({ viewPath }) {
     setSelectedLead(lead);
     setUpdateForm({
       ...emptyUpdateForm(),
-      update_by_user_id: lead.assigned_to_user_id ? String(lead.assigned_to_user_id) : "",
-      next_follow_up_date: String(lead.next_follow_up_date || "").slice(0, 10)
+      update_by_user_id: lead.assigned_to_user_id ? String(lead.assigned_to_user_id) : ""
     });
     setIsUpdateModalOpen(true);
     setHistoryLoading(true);

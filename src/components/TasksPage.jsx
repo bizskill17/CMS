@@ -400,8 +400,7 @@ export default function TasksPage({ viewPath }) {
     setSelectedTask(task);
     setUpdateForm({
       ...emptyUpdateForm(),
-      update_by_user_id: task.assigned_to_user_id ? String(task.assigned_to_user_id) : "",
-      next_follow_up_date: String(task.next_follow_up_date || "").slice(0, 10)
+      update_by_user_id: task.assigned_to_user_id ? String(task.assigned_to_user_id) : ""
     });
     setIsUpdateModalOpen(true);
     setHistoryLoading(true);
