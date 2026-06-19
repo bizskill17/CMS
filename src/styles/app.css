@@ -1286,7 +1286,7 @@ button {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  min-width: 860px;
+  min-width: 580px;
 }
 
 .checklist-field__matrix-head {
@@ -1331,18 +1331,11 @@ button {
   border: 1px solid transparent;
 }
 
-.checklist-pill__group {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(71, 48, 14, 0.72);
-}
-
 .checklist-pill__label {
   font-size: 14px;
   line-height: 1.35;
   color: #6a3f00;
+  font-weight: 700;
 }
 
 .checklist-pill--0 {

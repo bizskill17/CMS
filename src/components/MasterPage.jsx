@@ -1259,7 +1259,7 @@ export default function MasterPage({
                     groupLabel: group.label
                   }))
                 );
-                const checklistRows = chunkItems(checklistOptions, 3);
+                const checklistRows = chunkItems(checklistOptions, 2);
 
                 return (
                   <div key={field.name} className="form-field checklist-field">
@@ -1272,14 +1272,12 @@ export default function MasterPage({
                             <th className="checklist-field__matrix-head checklist-field__matrix-head--allow">Allow</th>
                             <th className="checklist-field__matrix-head">Menu</th>
                             <th className="checklist-field__matrix-head checklist-field__matrix-head--allow">Allow</th>
-                            <th className="checklist-field__matrix-head">Menu</th>
-                            <th className="checklist-field__matrix-head checklist-field__matrix-head--allow">Allow</th>
                           </tr>
                         </thead>
                         <tbody>
                           {checklistRows.map((row, rowIndex) => (
                             <tr key={`${field.name}-row-${rowIndex}`}>
-                              {[0, 1, 2].map((columnIndex) => {
+                              {[0, 1].map((columnIndex) => {
                                 const option = row[columnIndex];
 
                                 if (!option) {
@@ -1299,7 +1297,6 @@ export default function MasterPage({
                                 return [
                                   <td key={`${field.name}-menu-${option.value}`} className="checklist-field__matrix-cell">
                                     <label className={`checklist-pill checklist-pill--${(rowIndex + columnIndex) % 6}`}>
-                                      <span className="checklist-pill__group">{option.groupLabel}</span>
                                       <span className="checklist-pill__label">{option.label}</span>
                                     </label>
                                   </td>,
