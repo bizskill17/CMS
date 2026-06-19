@@ -4,7 +4,7 @@ export const menuSections = [
     path: "/dashboard",
     standalone: true,
     icon: "dashboard",
-    items: [{ label: "Overview", path: "/dashboard" }]
+    items: [{ label: "Dashboard", path: "/dashboard" }]
   },
   {
     label: "Masters",
