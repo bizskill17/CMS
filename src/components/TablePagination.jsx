@@ -1,3 +1,4 @@
+import SearchableSelect from "./SearchableSelect";
 const pageSizeOptions = [10, 25, 50, 100];
 
 function buildVisiblePages(currentPage, totalPages) {
@@ -82,13 +83,13 @@ export default function TablePagination({
 
       <div className="table-pagination__size">
         <label className="table-pagination__select-wrap">
-          <select value={pageSize} onChange={(event) => onPageSizeChange(Number(event.target.value))}>
+          <SearchableSelect value={pageSize} onChange={(event) => onPageSizeChange(Number(event.target.value))}>
             {pageSizeOptions.map((option) => (
               <option key={option} value={option}>
                 {option}
               </option>
             ))}
-          </select>
+          </SearchableSelect>
         </label>
         <span>Items per page</span>
       </div>

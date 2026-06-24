@@ -38,7 +38,7 @@ export const masterConfigs = {
       { key: "is_active", label: "Active", type: "boolean" }
     ],
     fields: [
-      { name: "group_id", label: "Customer Group", templateLabel: "Group Name", importAliases: ["Group Name", "Customer Group Name"], type: "select", optionsFrom: "customer-groups" },
+      { name: "group_id", label: "Customer Group", templateLabel: "Group Name", importAliases: ["Group Name", "Customer Group Name"], type: "select", optionsFrom: "customer-groups", required: true },
       { name: "full_name", label: "Customer Name", type: "text", required: true },
       { name: "mobile", label: "Mobile", type: "text", validation: mobileFieldValidation },
       {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import FormLabel from "./FormLabel";
 import { ButtonSpinner } from "./Spinner";
+import SearchableSelect from "./SearchableSelect";
 
 const initialFormState = {
   follow_up_date: "",
@@ -134,7 +135,7 @@ export default function FollowUpModal({
 
             <label className="form-field">
               <FormLabel required>Follow Up By</FormLabel>
-              <select
+              <SearchableSelect
                 required
                 value={formState.follow_up_by}
                 onChange={(event) => handleChange("follow_up_by", event.target.value)}
@@ -145,12 +146,12 @@ export default function FollowUpModal({
                     {user.full_name}
                   </option>
                 ))}
-              </select>
+              </SearchableSelect>
             </label>
 
             <label className="form-field">
               <FormLabel required>Follow Up Mode</FormLabel>
-              <select
+              <SearchableSelect
                 required
                 value={formState.follow_up_mode}
                 onChange={(event) => handleChange("follow_up_mode", event.target.value)}
@@ -161,7 +162,7 @@ export default function FollowUpModal({
                     {mode}
                   </option>
                 ))}
-              </select>
+              </SearchableSelect>
             </label>
 
             <label className="form-field">
@@ -175,7 +176,7 @@ export default function FollowUpModal({
 
             <label className="form-field">
               <FormLabel required>Status</FormLabel>
-              <select
+              <SearchableSelect
                 required
                 value={formState.status}
                 onChange={(event) => handleChange("status", event.target.value)}
@@ -185,7 +186,7 @@ export default function FollowUpModal({
                     {status}
                   </option>
                 ))}
-              </select>
+              </SearchableSelect>
             </label>
 
             <label className="form-field issue-policy-form__wide">

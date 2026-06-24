@@ -8,6 +8,7 @@ import { API_BASE } from "../config/api";
 import { ButtonSpinner, Spinner } from "./Spinner";
 import { buildFilterOptions } from "../utils/dataView";
 import { formatCellValue } from "../utils/formatting";
+import SearchableSelect from "./SearchableSelect";
 
 const taskViewConfigs = {
   "/tasks/all": {
@@ -735,7 +736,7 @@ export default function TasksPage({ viewPath }) {
 
                     <label className="form-field">
                       <FormLabel required>Priority</FormLabel>
-                      <select
+                      <SearchableSelect
                         required
                         value={taskForm.priority}
                         onChange={(event) => handleTaskFormChange("priority", event.target.value)}
@@ -745,7 +746,7 @@ export default function TasksPage({ viewPath }) {
                             {option}
                           </option>
                         ))}
-                      </select>
+                      </SearchableSelect>
                     </label>
 
                     <label className="form-field">
@@ -762,7 +763,7 @@ export default function TasksPage({ viewPath }) {
 
                 <label className="form-field">
                   <FormLabel>Assigned To</FormLabel>
-                  <select
+                  <SearchableSelect
                     value={taskForm.assigned_to_user_id}
                     onChange={(event) => handleTaskFormChange("assigned_to_user_id", event.target.value)}
                   >
@@ -772,14 +773,14 @@ export default function TasksPage({ viewPath }) {
                         {user.full_name}
                       </option>
                     ))}
-                  </select>
+                  </SearchableSelect>
                 </label>
 
                 {!isAssigneeOnly && (
                   <>
                     <label className="form-field">
                       <FormLabel required>Category</FormLabel>
-                      <select
+                      <SearchableSelect
                         required
                         value={taskForm.category_id}
                         onChange={(event) => handleTaskFormChange("category_id", event.target.value)}
@@ -790,12 +791,12 @@ export default function TasksPage({ viewPath }) {
                             {category.category_name}
                           </option>
                         ))}
-                      </select>
+                      </SearchableSelect>
                     </label>
 
                     <label className="form-field">
                       <FormLabel required>Sub - Category</FormLabel>
-                      <select
+                      <SearchableSelect
                         required
                         value={taskForm.sub_category_id}
                         onChange={(event) => handleTaskFormChange("sub_category_id", event.target.value)}
@@ -807,7 +808,7 @@ export default function TasksPage({ viewPath }) {
                             {category.category_name}
                           </option>
                         ))}
-                      </select>
+                      </SearchableSelect>
                     </label>
 
                     <label className="form-field">
@@ -867,7 +868,7 @@ export default function TasksPage({ viewPath }) {
               <form className="master-form" onSubmit={handleUpdateSubmit}>
                 <label className="form-field">
                   <FormLabel>Status</FormLabel>
-                  <select
+                  <SearchableSelect
                     value={updateForm.status}
                     onChange={(event) => handleUpdateFormChange("status", event.target.value)}
                   >
@@ -876,7 +877,7 @@ export default function TasksPage({ viewPath }) {
                         {option}
                       </option>
                     ))}
-                  </select>
+                  </SearchableSelect>
                 </label>
 
                 <label className="form-field">
@@ -891,7 +892,7 @@ export default function TasksPage({ viewPath }) {
 
                 <label className="form-field">
                   <FormLabel required>Update By</FormLabel>
-                  <select
+                  <SearchableSelect
                     required
                     value={updateForm.update_by_user_id}
                     onChange={(event) => handleUpdateFormChange("update_by_user_id", event.target.value)}
@@ -902,7 +903,7 @@ export default function TasksPage({ viewPath }) {
                         {user.full_name}
                       </option>
                     ))}
-                  </select>
+                  </SearchableSelect>
                 </label>
 
                 <label className="form-field">

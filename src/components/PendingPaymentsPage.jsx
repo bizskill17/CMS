@@ -6,6 +6,7 @@ import FormLabel from "./FormLabel";
 import ResponsiveDataView from "./ResponsiveDataView";
 import { ButtonSpinner } from "./Spinner";
 import { buildFilterOptions } from "../utils/dataView";
+import SearchableSelect from "./SearchableSelect";
 
 const initialFormState = {
   payment_date: "",
@@ -413,7 +414,7 @@ export default function PendingPaymentsPage() {
 
                 <label className="form-field">
                   <FormLabel required>Payment Mode</FormLabel>
-                  <select
+                  <SearchableSelect
                     required
                     value={formState.payment_mode}
                     onChange={(event) => handleChange("payment_mode", event.target.value)}
@@ -422,12 +423,12 @@ export default function PendingPaymentsPage() {
                     <option value="Cheque">Cheque</option>
                     <option value="Online">Online</option>
                     <option value="Cash">Cash</option>
-                  </select>
+                  </SearchableSelect>
                 </label>
 
                 <label className="form-field">
                   <FormLabel>Agent Account</FormLabel>
-                  <select
+                  <SearchableSelect
                     value={formState.agent_account_id}
                     onChange={(event) => handleChange("agent_account_id", event.target.value)}
                   >
@@ -437,19 +438,19 @@ export default function PendingPaymentsPage() {
                         {acc.agent_name} - {acc.account_label} ({acc.bank_name || "N/A"})
                       </option>
                     ))}
-                  </select>
+                  </SearchableSelect>
                 </label>
 
                 <label className="form-field">
                   <FormLabel>Payment Status</FormLabel>
-                  <select
+                  <SearchableSelect
                     value={formState.payment_status}
                     onChange={(event) => handleChange("payment_status", event.target.value)}
                   >
                     <option value="Received">Received</option>
                     <option value="Pending">Pending</option>
                     <option value="Cleared">Cleared</option>
-                  </select>
+                  </SearchableSelect>
                 </label>
 
                 {showChequeFields ? (

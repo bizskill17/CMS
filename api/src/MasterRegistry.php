@@ -65,9 +65,8 @@ final class MasterRegistry
                     'is_active',
                     'notes'
                 ],
-                'required' => ['full_name'],
+                'required' => ['group_id', 'full_name'],
                 'nullable' => [
-                    'group_id',
                     'alternate_mobile',
                     'email',
                     'date_of_birth',

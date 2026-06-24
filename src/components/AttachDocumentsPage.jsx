@@ -5,6 +5,7 @@ import FormLabel from "./FormLabel";
 import ResponsiveDataView from "./ResponsiveDataView";
 import { ButtonSpinner } from "./Spinner";
 import { buildFilterOptions } from "../utils/dataView";
+import SearchableSelect from "./SearchableSelect";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -345,7 +346,7 @@ export default function AttachDocumentsPage() {
                         <div className="customer-document-card__grid">
                           <label className="form-field">
                             <FormLabel required>Document Type</FormLabel>
-                            <select
+                            <SearchableSelect
                               value={document.document_type_id}
                               required
                               onChange={(event) => handleDocumentChange(index, "document_type_id", event.target.value)}
@@ -356,7 +357,7 @@ export default function AttachDocumentsPage() {
                                   {documentType.name}
                                 </option>
                               ))}
-                            </select>
+                            </SearchableSelect>
                           </label>
 
                           <label className="form-field">

@@ -7,6 +7,7 @@ import { API_BASE } from "../config/api";
 import { ButtonSpinner, Spinner } from "./Spinner";
 import { buildFilterOptions } from "../utils/dataView";
 import { formatCellValue } from "../utils/formatting";
+import SearchableSelect from "./SearchableSelect";
 
 const leadViewConfigs = {
   "/leads/all": {
@@ -624,7 +625,7 @@ export default function LeadsPage({ viewPath }) {
 
                     <label className="form-field">
                       <FormLabel required>Priority</FormLabel>
-                      <select
+                      <SearchableSelect
                         required
                         value={leadForm.priority}
                         onChange={(event) => handleLeadFormChange("priority", event.target.value)}
@@ -634,14 +635,14 @@ export default function LeadsPage({ viewPath }) {
                             {option}
                           </option>
                         ))}
-                      </select>
+                      </SearchableSelect>
                     </label>
                   </>
                 )}
 
                 <label className="form-field">
                   <FormLabel>Assigned To</FormLabel>
-                  <select
+                  <SearchableSelect
                     value={leadForm.assigned_to_user_id}
                     onChange={(event) => handleLeadFormChange("assigned_to_user_id", event.target.value)}
                   >
@@ -651,14 +652,14 @@ export default function LeadsPage({ viewPath }) {
                         {user.full_name}
                       </option>
                     ))}
-                  </select>
+                  </SearchableSelect>
                 </label>
 
                 {!isAssigneeOnly && (
                   <>
                     <label className="form-field">
                       <FormLabel required>Category</FormLabel>
-                      <select
+                      <SearchableSelect
                         required
                         value={leadForm.category_id}
                         onChange={(event) => handleLeadFormChange("category_id", event.target.value)}
@@ -669,12 +670,12 @@ export default function LeadsPage({ viewPath }) {
                             {category.category_name}
                           </option>
                         ))}
-                      </select>
+                      </SearchableSelect>
                     </label>
 
                     <label className="form-field">
                       <FormLabel required>Sub - Category</FormLabel>
-                      <select
+                      <SearchableSelect
                         required
                         value={leadForm.sub_category_id}
                         onChange={(event) => handleLeadFormChange("sub_category_id", event.target.value)}
@@ -686,7 +687,7 @@ export default function LeadsPage({ viewPath }) {
                             {category.category_name}
                           </option>
                         ))}
-                      </select>
+                      </SearchableSelect>
                     </label>
 
                     <label className="form-field">
@@ -746,7 +747,7 @@ export default function LeadsPage({ viewPath }) {
               <form className="master-form" onSubmit={handleUpdateSubmit}>
                 <label className="form-field">
                   <FormLabel>Status</FormLabel>
-                  <select
+                  <SearchableSelect
                     value={updateForm.status}
                     onChange={(event) => handleUpdateFormChange("status", event.target.value)}
                   >
@@ -755,7 +756,7 @@ export default function LeadsPage({ viewPath }) {
                         {option}
                       </option>
                     ))}
-                  </select>
+                  </SearchableSelect>
                 </label>
 
                 <label className="form-field">
@@ -770,7 +771,7 @@ export default function LeadsPage({ viewPath }) {
 
                 <label className="form-field">
                   <FormLabel required>Update By</FormLabel>
-                  <select
+                  <SearchableSelect
                     required
                     value={updateForm.update_by_user_id}
                     onChange={(event) => handleUpdateFormChange("update_by_user_id", event.target.value)}
@@ -781,7 +782,7 @@ export default function LeadsPage({ viewPath }) {
                         {user.full_name}
                       </option>
                     ))}
-                  </select>
+                  </SearchableSelect>
                 </label>
 
                 <label className="form-field">

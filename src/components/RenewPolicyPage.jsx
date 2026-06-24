@@ -7,6 +7,7 @@ import FormLabel from "./FormLabel";
 import ResponsiveDataView from "./ResponsiveDataView";
 import { ButtonSpinner } from "./Spinner";
 import { buildFilterOptions } from "../utils/dataView";
+import SearchableSelect from "./SearchableSelect";
 
 const initialFormState = {
   customer_group_id: "",
@@ -540,19 +541,19 @@ export default function RenewPolicyPage() {
 
                 <label className="form-field">
                   <FormLabel>Payment made by</FormLabel>
-                  <select
+                  <SearchableSelect
                     value={formState.paid_by_type}
                     onChange={(event) => handleChange("paid_by_type", event.target.value)}
                   >
                     <option value="">Select Payment made by</option>
                     <option value="Client">Client</option>
                     <option value="Agent">Agent</option>
-                  </select>
+                  </SearchableSelect>
                 </label>
 
                 <label className="form-field">
                   <FormLabel>Payment Mode</FormLabel>
-                  <select
+                  <SearchableSelect
                     value={formState.payment_mode}
                     onChange={(event) => handleChange("payment_mode", event.target.value)}
                   >
@@ -560,7 +561,7 @@ export default function RenewPolicyPage() {
                     <option value="Cheque">Cheque</option>
                     <option value="Online">Online</option>
                     <option value="Cash">Cash</option>
-                  </select>
+                  </SearchableSelect>
                 </label>
 
                 <div className="form-actions issue-policy-form__actions">

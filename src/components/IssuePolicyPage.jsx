@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config/api";
 import FormLabel from "./FormLabel";
 import { ButtonSpinner, Spinner } from "./Spinner";
+import SearchableSelect from "./SearchableSelect";
 
 function getTodayDateValue() {
   return new Date().toISOString().slice(0, 10);
@@ -274,7 +275,7 @@ export default function IssuePolicyPage() {
           <form className="issue-policy-form" onSubmit={handleSubmit}>
             <label className="form-field">
               <FormLabel required>Customer Group</FormLabel>
-              <select
+              <SearchableSelect
                 required
                 value={formState.customer_group_id}
                 onChange={(event) => handleChange("customer_group_id", event.target.value)}
@@ -285,7 +286,7 @@ export default function IssuePolicyPage() {
                     {group.group_name}
                   </option>
                 ))}
-              </select>
+              </SearchableSelect>
             </label>
 
             <label className="form-field">
@@ -378,7 +379,7 @@ export default function IssuePolicyPage() {
 
             <label className="form-field">
               <FormLabel required>Business Type</FormLabel>
-              <select
+              <SearchableSelect
                 required
                 value={formState.business_type}
                 onChange={(event) => handleChange("business_type", event.target.value)}
@@ -386,7 +387,7 @@ export default function IssuePolicyPage() {
                 <option value="">Select Business Type</option>
                 <option value="New">New</option>
                 <option value="Existing">Existing</option>
-              </select>
+              </SearchableSelect>
             </label>
 
             <label className="form-field">
@@ -403,7 +404,7 @@ export default function IssuePolicyPage() {
 
             <label className="form-field">
               <FormLabel required>Policy Type</FormLabel>
-              <select
+              <SearchableSelect
                 required
                 value={formState.policy_type}
                 onChange={(event) => handleChange("policy_type", event.target.value)}
@@ -414,12 +415,12 @@ export default function IssuePolicyPage() {
                     {type.category_name}
                   </option>
                 ))}
-              </select>
+              </SearchableSelect>
             </label>
 
             <label className="form-field">
               <FormLabel required>Insurance Company</FormLabel>
-              <select
+              <SearchableSelect
                 required
                 value={formState.company_id}
                 onChange={(event) => handleChange("company_id", event.target.value)}
@@ -430,7 +431,7 @@ export default function IssuePolicyPage() {
                     {company.company_name}
                   </option>
                 ))}
-              </select>
+              </SearchableSelect>
             </label>
 
             <label className="form-field">
@@ -497,7 +498,7 @@ export default function IssuePolicyPage() {
 
             <label className="form-field">
               <FormLabel required>Payment By</FormLabel>
-              <select
+              <SearchableSelect
                 required
                 value={formState.paid_by_type}
                 onChange={(event) => handleChange("paid_by_type", event.target.value)}
@@ -505,14 +506,14 @@ export default function IssuePolicyPage() {
                 <option value="">Select Payment By</option>
                 <option value="Client">Client</option>
                 <option value="Agent">Agent</option>
-              </select>
+              </SearchableSelect>
             </label>
 
             {formState.paid_by_type === "Agent" ? (
               <>
                 <label className="form-field">
                   <FormLabel required>Agent Accounts</FormLabel>
-                  <select
+                  <SearchableSelect
                     required
                     value={formState.agent_payment_account_id}
                     onChange={(event) => handleChange("agent_payment_account_id", event.target.value)}
@@ -525,12 +526,12 @@ export default function IssuePolicyPage() {
                           .join(" - ")}
                       </option>
                     ))}
-                  </select>
+                  </SearchableSelect>
                 </label>
 
                 <label className="form-field">
                   <FormLabel>Payment Mode</FormLabel>
-                  <select
+                  <SearchableSelect
                     value={formState.payment_mode}
                     onChange={(event) => handleChange("payment_mode", event.target.value)}
                   >
@@ -538,7 +539,7 @@ export default function IssuePolicyPage() {
                     <option value="Cheque">Cheque</option>
                     <option value="Online">Online</option>
                     <option value="Cash">Cash</option>
-                  </select>
+                  </SearchableSelect>
                 </label>
               </>
             ) : null}

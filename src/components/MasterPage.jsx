@@ -11,6 +11,7 @@ import MultiSelectFilter from "./MultiSelectFilter";
 import RecordDetailModal from "./RecordDetailModal";
 import TablePagination from "./TablePagination";
 import { ButtonSpinner, Spinner } from "./Spinner";
+import SearchableSelect from "./SearchableSelect";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -1439,7 +1440,7 @@ export default function MasterPage({
                 return (
                   <label key={field.name} className="form-field">
                     <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
-                    <select
+                    <SearchableSelect
                       value={formState[field.name]}
                       onChange={(event) => handleChange(field, event.target.value)}
                     >
@@ -1460,7 +1461,7 @@ export default function MasterPage({
                                 : getOptionLabel(field.optionsFrom, option)}
                             </option>
                           ))}
-                    </select>
+                    </SearchableSelect>
                   </label>
                 );
               }
@@ -2113,7 +2114,7 @@ export default function MasterPage({
                         <div className="customer-document-card__grid">
                           <label className="form-field">
                             <FormLabel required>Document Type</FormLabel>
-                            <select
+                            <SearchableSelect
                               value={document.document_type_id}
                               required
                               onChange={(event) =>
@@ -2126,7 +2127,7 @@ export default function MasterPage({
                                   {documentType.name}
                                 </option>
                               ))}
-                            </select>
+                            </SearchableSelect>
                           </label>
 
                           <label className="form-field">

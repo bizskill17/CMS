@@ -3883,7 +3883,7 @@ try {
             }
 
             foreach ($config['required'] as $requiredField) {
-                if (!array_key_exists($requiredField, $payload) || $payload[$requiredField] === '') {
+                if (!array_key_exists($requiredField, $payload) || $payload[$requiredField] === null || trim((string) $payload[$requiredField]) === '') {
                     Response::json([
                         'status' => 'error',
                         'message' => sprintf('Field "%s" is required.', $requiredField)
