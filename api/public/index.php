@@ -3772,14 +3772,6 @@ try {
                 $organizationValues = array_intersect_key($normalized, array_flip($organizationColumns));
                 $settingsValues = array_intersect_key($normalized, array_flip(['organization_name', 'gst', 'address', 'logo', 'is_active']));
 
-                if ($method === 'PUT' && $requestOrganizationId !== null && $id !== $requestOrganizationId) {
-                    Response::json([
-                        'status' => 'error',
-                        'message' => 'Record not found.'
-                    ], 404);
-                    exit;
-                }
-
                 $pdo->beginTransaction();
                 try {
                     if ($method === 'POST') {
@@ -3896,13 +3888,6 @@ try {
         }
 
         if ($method === 'DELETE' && $id !== null) {
-            if ($resource === 'organizations' && $requestOrganizationId !== null && $id !== $requestOrganizationId) {
-                Response::json([
-                    'status' => 'error',
-                    'message' => 'Record not found.'
-                ], 404);
-                exit;
-            }
             $statement = $pdo->prepare(sprintf(
                 'DELETE FROM %s WHERE id = :id%s',
                 $config['table'],
