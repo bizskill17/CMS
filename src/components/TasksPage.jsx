@@ -678,80 +678,21 @@ export default function TasksPage({ viewPath }) {
                           +
                         </button>
                       </div>
-                      <div
-                        ref={customerDropdownRef}
-                        className={`customer-combobox ${isCustomerDropdownOpen ? "customer-combobox--open" : ""}`}
+                      <SearchableSelect
+                        required
+                        value={taskForm.client_name}
+                        onChange={(event) => {
+                          setCustomerQuery("");
+                          handleTaskFormChange("client_name", event.target.value);
+                        }}
                       >
-                        <button
-                          type="button"
-                          className={`customer-combobox__trigger ${taskForm.client_name ? "" : "customer-combobox__trigger--placeholder"}`}
-                          onClick={() => {
-                            setIsCustomerDropdownOpen((current) => {
-                              const nextOpen = !current;
-                              if (nextOpen) {
-                                setCustomerQuery("");
-                              }
-                              return nextOpen;
-                            });
-                          }}
-                          aria-haspopup="listbox"
-                          aria-expanded={isCustomerDropdownOpen}
-                        >
-                          <span>{taskForm.client_name || "Select"}</span>
-                          <span className="customer-combobox__chevron" aria-hidden="true" />
-                        </button>
-
-                        {isCustomerDropdownOpen ? (
-                          <div className="customer-combobox__panel">
-                            <input
-                              type="text"
-                              value={customerQuery}
-                              className="customer-combobox__search"
-                              placeholder="Search..."
-                              onChange={(event) => setCustomerQuery(event.target.value)}
-                            />
-                            <div className="customer-combobox__actions">
-                              <button
-                                type="button"
-                                className="customer-combobox__action customer-combobox__action--all"
-                                onClick={() => {
-                                  setCustomerQuery("");
-                                  handleTaskFormChange("client_name", "");
-                                }}
-                              >
-                                ALL
-                              </button>
-                              <button
-                                type="button"
-                                className="customer-combobox__action customer-combobox__action--clear"
-                                onClick={() => {
-                                  setCustomerQuery("");
-                                  handleTaskFormChange("client_name", "");
-                                }}
-                              >
-                                CLEAR
-                              </button>
-                            </div>
-                            <div className="customer-combobox__list" role="listbox">
-                              {filteredCustomers.length ? (
-                                filteredCustomers.map((customer) => (
-                                  <button
-                                    key={customer.id}
-                                    type="button"
-                                    className={`customer-combobox__option ${taskForm.client_name === customer.full_name ? "customer-combobox__option--selected" : ""}`}
-                                    onClick={() => handleCustomerSelect(customer)}
-                                  >
-                                    <span className="customer-combobox__check" aria-hidden="true" />
-                                    <span className="customer-combobox__option-name">{customer.full_name}</span>
-                                  </button>
-                                ))
-                              ) : (
-                                <div className="customer-combobox__empty">No clients found.</div>
-                              )}
-                            </div>
-                          </div>
-                        ) : null}
-                      </div>
+                        <option value="">Select</option>
+                        {customers.map((customer) => (
+                          <option key={customer.id} value={customer.full_name}>
+                            {customer.full_name}
+                          </option>
+                        ))}
+                      </SearchableSelect>
                     </label>
 
                     <label className="form-field">

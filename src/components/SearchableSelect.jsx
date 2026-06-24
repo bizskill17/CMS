@@ -44,6 +44,7 @@ export default function SearchableSelect({
   const searchRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [panelStyle, setPanelStyle] = useState({});
   const options = useMemo(() => buildOptions(children), [children]);
   const stringValue = String(value ?? "");
   const selectedOption = options.find((option) => option.value === stringValue);
@@ -66,6 +67,28 @@ export default function SearchableSelect({
       return undefined;
     }
 
+    const updatePanelPosition = () => {
+      const rect = rootRef.current?.getBoundingClientRect();
+      if (!rect) {
+        return;
+      }
+
+      const viewportPadding = 8;
+      const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
+      const spaceAbove = rect.top - viewportPadding;
+      const openAbove = spaceBelow < 190 && spaceAbove > spaceBelow;
+      const availableSpace = Math.max(130, openAbove ? spaceAbove : spaceBelow);
+      const listMaxHeight = Math.max(90, Math.min(260, availableSpace - 68));
+
+      setPanelStyle({
+        left: `${rect.left}px`,
+        width: `${Math.max(rect.width, 180)}px`,
+        top: openAbove ? "auto" : `${rect.bottom + 8}px`,
+        bottom: openAbove ? `${window.innerHeight - rect.top + 8}px` : "auto",
+        "--searchable-select-list-max": `${listMaxHeight}px`
+      });
+    };
+
     const handleClickOutside = (event) => {
       if (rootRef.current && !rootRef.current.contains(event.target)) {
         setIsOpen(false);
@@ -78,19 +101,28 @@ export default function SearchableSelect({
       }
     };
 
+    updatePanelPosition();
+    window.setTimeout(() => {
+      updatePanelPosition();
+      searchRef.current?.focus();
+    }, 0);
+
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", updatePanelPosition);
+    window.addEventListener("scroll", updatePanelPosition, true);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", updatePanelPosition);
+      window.removeEventListener("scroll", updatePanelPosition, true);
     };
   }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
       setQuery("");
-      window.setTimeout(() => searchRef.current?.focus(), 0);
     }
   }, [isOpen]);
 
@@ -108,20 +140,6 @@ export default function SearchableSelect({
 
     emitChange(option.value);
     setIsOpen(false);
-  };
-
-  const handleAll = () => {
-    setQuery("");
-    if (placeholderOption) {
-      emitChange("");
-    }
-  };
-
-  const handleClear = () => {
-    setQuery("");
-    if (placeholderOption) {
-      emitChange("");
-    }
   };
 
   return (
@@ -159,7 +177,7 @@ export default function SearchableSelect({
       </button>
 
       {isOpen ? (
-        <div className="searchable-select__panel">
+        <div className="searchable-select__panel" style={panelStyle}>
           <input
             ref={searchRef}
             type="search"
@@ -168,14 +186,6 @@ export default function SearchableSelect({
             placeholder="Search..."
             onChange={(event) => setQuery(event.target.value)}
           />
-          <div className="searchable-select__actions">
-            <button type="button" className="searchable-select__action searchable-select__action--all" onClick={handleAll}>
-              ALL
-            </button>
-            <button type="button" className="searchable-select__action searchable-select__action--clear" onClick={handleClear}>
-              CLEAR
-            </button>
-          </div>
           <div id={`${selectId}-listbox`} className="searchable-select__list" role="listbox">
             {filteredOptions.length ? (
               filteredOptions.map((option) => (
@@ -188,7 +198,6 @@ export default function SearchableSelect({
                   aria-selected={option.value === stringValue}
                   onClick={() => handleSelect(option)}
                 >
-                  <span className="searchable-select__check" aria-hidden="true" />
                   <span className="searchable-select__option-label">{option.label}</span>
                 </button>
               ))
