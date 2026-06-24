@@ -146,7 +146,7 @@ function parseCsv(text) {
 function buildTemplateColumns(config) {
   return config.fields.map((field) => ({
     key: field.name,
-    label: field.label
+    label: field.templateLabel || field.label
   }));
 }
 
@@ -825,10 +825,18 @@ export default function MasterPage({
       const fieldHeaderMap = new Map();
 
       for (const field of config.fields) {
-        const byName = headerIndexMap.get(normalizeLookupValue(field.name));
-        const byLabel = headerIndexMap.get(normalizeLookupValue(field.label));
-        if (byName !== undefined) fieldHeaderMap.set(field.name, byName);
-        else if (byLabel !== undefined) fieldHeaderMap.set(field.name, byLabel);
+        const headerCandidates = [
+          field.name,
+          field.label,
+          field.templateLabel,
+          ...(field.importAliases || [])
+        ].filter(Boolean);
+        const matchedHeader = headerCandidates
+          .map((header) => headerIndexMap.get(normalizeLookupValue(header)))
+          .find((index) => index !== undefined);
+        if (matchedHeader !== undefined) {
+          fieldHeaderMap.set(field.name, matchedHeader);
+        }
       }
 
       const uploadErrors = [];

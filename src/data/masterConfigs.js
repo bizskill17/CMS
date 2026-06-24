@@ -40,7 +40,7 @@ export const masterConfigs = {
     ],
     fields: [
       { name: "customer_code", label: "Customer Code", type: "text", required: true },
-      { name: "group_id", label: "Customer Group", type: "select", optionsFrom: "customer-groups" },
+      { name: "group_id", label: "Customer Group", templateLabel: "Group Name", importAliases: ["Group Name", "Customer Group Name"], type: "select", optionsFrom: "customer-groups" },
       { name: "full_name", label: "Customer Name", type: "text", required: true },
       { name: "mobile", label: "Mobile", type: "text", validation: mobileFieldValidation },
       {
