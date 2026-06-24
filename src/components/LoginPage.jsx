@@ -68,7 +68,7 @@ export default function LoginPage({ onLogin }) {
             </span>
             <input
               type="text"
-              placeholder="Admin or 1"
+              placeholder="Admin, ORG001, or 1"
               required
               value={formState.organization_id}
               onChange={(event) =>

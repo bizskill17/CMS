@@ -11,11 +11,11 @@ final class MasterRegistry
         $resources = [
             'organizations' => [
                 'table' => 'organizations',
-                'select' => 'o.id, o.organization_name, o.is_active, o.created_at',
+                'select' => 'o.id, o.organization_code, o.organization_name, o.is_active, o.created_at',
                 'from' => 'organizations o',
                 'order_by' => 'o.organization_name asc',
-                'write_columns' => ['organization_name', 'is_active'],
-                'required' => ['organization_name'],
+                'write_columns' => ['organization_code', 'organization_name', 'is_active'],
+                'required' => ['organization_code', 'organization_name'],
                 'nullable' => [],
                 'boolean' => ['is_active'],
                 'organization_owned' => false,

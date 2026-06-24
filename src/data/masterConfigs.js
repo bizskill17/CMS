@@ -10,7 +10,7 @@ export const masterConfigs = {
     title: "Organizations",
     resource: "organizations",
     tableColumns: [
-      { key: "id", label: "Organization Id" },
+      { key: "organization_code", label: "Organization Id" },
       { key: "organization_name", label: "Organization Name" },
       { key: "is_active", label: "Active", type: "boolean" }
     ],

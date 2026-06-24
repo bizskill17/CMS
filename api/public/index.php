@@ -498,15 +498,22 @@ try {
         }
 
         $organizationStatement = $pdo->prepare(
-            'SELECT id, organization_name, is_active
+            'SELECT id, organization_code, organization_name, is_active
              FROM organizations
              WHERE CAST(id AS CHAR) = :organization_input
+                OR LOWER(organization_code) = LOWER(:organization_code)
                 OR LOWER(organization_name) = LOWER(:organization_name)
-             ORDER BY CASE WHEN CAST(id AS CHAR) = :organization_exact THEN 0 ELSE 1 END
+             ORDER BY CASE
+                WHEN LOWER(organization_code) = LOWER(:organization_code_exact) THEN 0
+                WHEN CAST(id AS CHAR) = :organization_exact THEN 1
+                ELSE 2
+             END
              LIMIT 1'
         );
         $organizationStatement->bindValue(':organization_input', $organizationInput);
+        $organizationStatement->bindValue(':organization_code', $organizationInput);
         $organizationStatement->bindValue(':organization_name', $organizationInput);
+        $organizationStatement->bindValue(':organization_code_exact', $organizationInput);
         $organizationStatement->bindValue(':organization_exact', $organizationInput);
         $organizationStatement->execute();
         $organization = $organizationStatement->fetch();
