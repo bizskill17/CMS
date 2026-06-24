@@ -42,12 +42,133 @@ function singularizeMasterLabel(string $resource): string
     };
 }
 
-function linkedDeleteMessage(string $resource): string
+function linkedDeleteReferenceQueries(string $resource): array
+{
+    return match ($resource) {
+        'organizations' => [
+            ['label' => 'users', 'sql' => 'SELECT count(*) FROM users WHERE organization_id = :id'],
+            ['label' => 'agents', 'sql' => 'SELECT count(*) FROM agents WHERE organization_id = :id'],
+            ['label' => 'agent_payment_accounts', 'sql' => 'SELECT count(*) FROM agent_payment_accounts WHERE organization_id = :id'],
+            ['label' => 'customer_groups', 'sql' => 'SELECT count(*) FROM customer_groups WHERE organization_id = :id'],
+            ['label' => 'customers', 'sql' => 'SELECT count(*) FROM customers WHERE organization_id = :id'],
+            ['label' => 'insurance_companies', 'sql' => 'SELECT count(*) FROM insurance_companies WHERE organization_id = :id'],
+            ['label' => 'states', 'sql' => 'SELECT count(*) FROM states WHERE organization_id = :id'],
+            ['label' => 'cities', 'sql' => 'SELECT count(*) FROM cities WHERE organization_id = :id'],
+            ['label' => 'product_categories', 'sql' => 'SELECT count(*) FROM product_categories WHERE organization_id = :id'],
+            ['label' => 'insurance_products', 'sql' => 'SELECT count(*) FROM insurance_products WHERE organization_id = :id'],
+            ['label' => 'document_types', 'sql' => 'SELECT count(*) FROM document_types WHERE organization_id = :id'],
+            ['label' => 'policy_families', 'sql' => 'SELECT count(*) FROM policy_families WHERE organization_id = :id'],
+            ['label' => 'policies', 'sql' => 'SELECT count(*) FROM policies WHERE organization_id = :id'],
+            ['label' => 'follow_ups', 'sql' => 'SELECT count(*) FROM follow_ups WHERE organization_id = :id'],
+            ['label' => 'leads', 'sql' => 'SELECT count(*) FROM leads WHERE organization_id = :id'],
+            ['label' => 'lead_updates', 'sql' => 'SELECT count(*) FROM lead_updates WHERE organization_id = :id'],
+            ['label' => 'tasks', 'sql' => 'SELECT count(*) FROM tasks WHERE organization_id = :id'],
+            ['label' => 'task_updates', 'sql' => 'SELECT count(*) FROM task_updates WHERE organization_id = :id'],
+            ['label' => 'client_payments', 'sql' => 'SELECT count(*) FROM client_payments WHERE organization_id = :id'],
+            ['label' => 'documents', 'sql' => 'SELECT count(*) FROM documents WHERE organization_id = :id'],
+            ['label' => 'policy_status_history', 'sql' => 'SELECT count(*) FROM policy_status_history WHERE organization_id = :id'],
+            ['label' => 'settings', 'sql' => 'SELECT count(*) FROM settings WHERE organization_id = :id'],
+        ],
+        'customer-groups' => [
+            ['label' => 'customers', 'sql' => 'SELECT count(*) FROM customers WHERE group_id = :id'],
+        ],
+        'customers' => [
+            ['label' => 'policy_families', 'sql' => 'SELECT count(*) FROM policy_families WHERE customer_id = :id'],
+            ['label' => 'policies', 'sql' => 'SELECT count(*) FROM policies WHERE customer_id = :id'],
+            ['label' => 'documents', 'sql' => 'SELECT count(*) FROM documents WHERE customer_id = :id'],
+        ],
+        'insurance-companies' => [
+            ['label' => 'insurance_products', 'sql' => 'SELECT count(*) FROM insurance_products WHERE company_id = :id'],
+            ['label' => 'policies', 'sql' => 'SELECT count(*) FROM policies WHERE :id IN (company_id, previous_insurer_id, target_insurer_id)'],
+        ],
+        'states' => [
+            ['label' => 'cities', 'sql' => 'SELECT count(*) FROM cities WHERE state_id = :id'],
+        ],
+        'product-categories' => [
+            ['label' => 'product_categories', 'sql' => 'SELECT count(*) FROM product_categories WHERE parent_category_id = :id'],
+            ['label' => 'insurance_products', 'sql' => 'SELECT count(*) FROM insurance_products WHERE category_id = :id'],
+            ['label' => 'leads', 'sql' => 'SELECT count(*) FROM leads WHERE :id IN (category_id, sub_category_id)'],
+            ['label' => 'tasks', 'sql' => 'SELECT count(*) FROM tasks WHERE :id IN (category_id, sub_category_id)'],
+        ],
+        'insurance-products' => [
+            ['label' => 'policies', 'sql' => 'SELECT count(*) FROM policies WHERE product_id = :id'],
+        ],
+        'document-types' => [
+            ['label' => 'documents', 'sql' => 'SELECT count(*) FROM documents WHERE document_type_id = :id'],
+        ],
+        'users' => [
+            ['label' => 'leads', 'sql' => 'SELECT count(*) FROM leads WHERE assigned_to_user_id = :id'],
+            ['label' => 'lead_updates', 'sql' => 'SELECT count(*) FROM lead_updates WHERE update_by_user_id = :id'],
+            ['label' => 'tasks', 'sql' => 'SELECT count(*) FROM tasks WHERE assigned_to_user_id = :id'],
+            ['label' => 'task_updates', 'sql' => 'SELECT count(*) FROM task_updates WHERE update_by_user_id = :id'],
+        ],
+        'agents' => [
+            ['label' => 'users', 'sql' => 'SELECT count(*) FROM users WHERE linked_agent_id = :id'],
+            ['label' => 'agent_payment_accounts', 'sql' => 'SELECT count(*) FROM agent_payment_accounts WHERE agent_id = :id'],
+            ['label' => 'policies', 'sql' => 'SELECT count(*) FROM policies WHERE :id IN (issued_by_agent_id, assigned_agent_id)'],
+            ['label' => 'follow_ups', 'sql' => 'SELECT count(*) FROM follow_ups WHERE done_by_agent_id = :id'],
+            ['label' => 'client_payments', 'sql' => 'SELECT count(*) FROM client_payments WHERE received_by_agent_id = :id'],
+            ['label' => 'documents', 'sql' => 'SELECT count(*) FROM documents WHERE uploaded_by_agent_id = :id'],
+            ['label' => 'policy_status_history', 'sql' => 'SELECT count(*) FROM policy_status_history WHERE changed_by_agent_id = :id'],
+        ],
+        'agent-accounts' => [
+            ['label' => 'policies', 'sql' => 'SELECT count(*) FROM policies WHERE agent_payment_account_id = :id'],
+            ['label' => 'client_payments', 'sql' => 'SELECT count(*) FROM client_payments WHERE agent_payment_account_id = :id'],
+        ],
+        default => [],
+    };
+}
+
+function linkedDeleteReferences(PDO $pdo, string $resource, int $id): array
+{
+    $references = [];
+
+    foreach (linkedDeleteReferenceQueries($resource) as $reference) {
+        try {
+            $statement = $pdo->prepare($reference['sql']);
+            $statement->bindValue(':id', $id, PDO::PARAM_INT);
+            $statement->execute();
+
+            $count = (int) $statement->fetchColumn();
+            if ($count > 0) {
+                $references[] = [
+                    'label' => $reference['label'],
+                    'count' => $count,
+                ];
+            }
+        } catch (PDOException) {
+            continue;
+        }
+    }
+
+    return $references;
+}
+
+function linkedDeleteMessage(string $resource, array $references = []): string
 {
     $label = singularizeMasterLabel($resource);
 
+    if ($references !== []) {
+        $linkedTables = implode(', ', array_map(
+            static function (array $reference): string {
+                $count = (int) $reference['count'];
+                $recordLabel = $count === 1 ? 'record' : 'records';
+
+                return sprintf('%s (%d %s)', $reference['label'], $count, $recordLabel);
+            },
+            $references
+        ));
+
+        return sprintf(
+            'Cannot delete this %s. Linked table%s: %s. Remove or change those linked records first, then try again.',
+            $label,
+            count($references) === 1 ? '' : 's',
+            $linkedTables
+        );
+    }
+
     return sprintf(
-        'Cannot delete this %s. This record is already used in other entries, such as policies, documents, payments, leads, or tasks. Remove or change those linked entries first, then try again.',
+        'Cannot delete this %s. Linked records exist, but the related table could not be identified. Remove the linked records first, then try again.',
         $label
     );
 }
@@ -3797,7 +3918,7 @@ try {
                 if ($exception->getCode() === '23000') {
                     Response::json([
                         'status' => 'error',
-                        'message' => linkedDeleteMessage($resource)
+                        'message' => linkedDeleteMessage($resource, linkedDeleteReferences($pdo, $resource, $id))
                     ], 409);
                     exit;
                 }
