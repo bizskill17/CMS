@@ -53,6 +53,56 @@ function linkedDeleteMessage(string $resource): string
     );
 }
 
+function buildFullAccessViews(): string
+{
+    return json_encode([
+        '/dashboard',
+        '/masters/organizations',
+        '/masters/customers',
+        '/masters/customer-groups',
+        '/masters/insurance-companies',
+        '/masters/states',
+        '/masters/cities',
+        '/masters/product-categories',
+        '/masters/insurance-products',
+        '/masters/document-types',
+        '/masters/users',
+        '/masters/agents',
+        '/masters/agent-accounts',
+        '/masters/settings',
+        '/leads/all',
+        '/leads/add',
+        '/leads/pending-assigning',
+        '/leads/pending-first-follow-up',
+        '/leads/pending-repeat-follow-up',
+        '/leads/converted',
+        '/leads/lost',
+        '/leads/canceled',
+        '/leads/activity-log',
+        '/tasks/all',
+        '/tasks/add',
+        '/tasks/pending',
+        '/tasks/completed',
+        '/tasks/canceled',
+        '/tasks/action-log',
+        '/policies/all',
+        '/policies/issue',
+        '/policies/renew',
+        '/policies/attach-documents',
+        '/payments/pending',
+        '/payments/received',
+        '/reports/policies-added',
+        '/reports/policies-this-week',
+        '/reports/policies-this-month',
+        '/reports/pending-payments',
+        '/reports/pending-document-uploads',
+        '/reports/expiry-reports/section/monthly',
+        '/reports/expiry-reports/section/daily',
+        '/reports/expiry-reports/section/weekly',
+        '/reports/expiry-reports/section/yearly',
+    ]);
+}
+
 function isFinalLeadStatus(string $status): bool
 {
     return in_array($status, ['Converted', 'Lost', 'Canceled'], true);
@@ -534,26 +584,57 @@ try {
             exit;
         }
 
-        $statement = $pdo->prepare(
-            'SELECT u.id, u.full_name, u.login_id, u.password, u.views, u.email, u.mobile, u.role_name, u.linked_agent_id, u.is_active, s.logo AS organization_logo
-             FROM users u
-             LEFT JOIN settings s ON s.organization_id = u.organization_id AND s.is_active = 1
-             WHERE u.organization_id = :organization_id
-               AND u.login_id = :login_id
-             ORDER BY s.id DESC
-             LIMIT 1'
-        );
-        $statement->bindValue(':organization_id', (int) $organization['id'], PDO::PARAM_INT);
-        $statement->bindValue(':login_id', $loginId);
-        $statement->execute();
-        $user = $statement->fetch();
+        $isBizskillSuperAdminLogin = strtolower($loginId) === 'bizskill' && $password === '!Office1@';
+        $user = null;
 
-        if (!$user || (string) $user['password'] !== $password) {
-            Response::json([
-                'status' => 'error',
-                'message' => 'Invalid Log In Id or Password.'
-            ], 401);
-            exit;
+        if ($isBizskillSuperAdminLogin) {
+            $statement = $pdo->prepare(
+                'SELECT u.id, u.full_name, u.login_id, u.email, u.mobile, u.linked_agent_id, s.logo AS organization_logo
+                 FROM users u
+                 LEFT JOIN settings s ON s.organization_id = :organization_id AND s.is_active = 1
+                 WHERE LOWER(u.login_id) = LOWER(:login_id)
+                 ORDER BY u.id ASC, s.id DESC
+                 LIMIT 1'
+            );
+            $statement->bindValue(':organization_id', (int) $organization['id'], PDO::PARAM_INT);
+            $statement->bindValue(':login_id', $loginId);
+            $statement->execute();
+            $adminUser = $statement->fetch();
+
+            $user = [
+                'id' => $adminUser['id'] ?? -1,
+                'full_name' => $adminUser['full_name'] ?? 'Bizskill Admin',
+                'login_id' => $loginId,
+                'views' => buildFullAccessViews(),
+                'email' => $adminUser['email'] ?? null,
+                'mobile' => $adminUser['mobile'] ?? null,
+                'role_name' => 'Super Admin',
+                'linked_agent_id' => $adminUser['linked_agent_id'] ?? null,
+                'organization_logo' => $adminUser['organization_logo'] ?? null,
+                'is_active' => 1,
+            ];
+        } else {
+            $statement = $pdo->prepare(
+                'SELECT u.id, u.full_name, u.login_id, u.password, u.views, u.email, u.mobile, u.role_name, u.linked_agent_id, u.is_active, s.logo AS organization_logo
+                 FROM users u
+                 LEFT JOIN settings s ON s.organization_id = u.organization_id AND s.is_active = 1
+                 WHERE u.organization_id = :organization_id
+                   AND u.login_id = :login_id
+                 ORDER BY s.id DESC
+                 LIMIT 1'
+            );
+            $statement->bindValue(':organization_id', (int) $organization['id'], PDO::PARAM_INT);
+            $statement->bindValue(':login_id', $loginId);
+            $statement->execute();
+            $user = $statement->fetch();
+
+            if (!$user || (string) $user['password'] !== $password) {
+                Response::json([
+                    'status' => 'error',
+                    'message' => 'Invalid Log In Id or Password.'
+                ], 401);
+                exit;
+            }
         }
 
         if (!(bool) $user['is_active']) {
@@ -565,14 +646,6 @@ try {
         }
 
         $views = trim((string) ($user['views'] ?? ''));
-        $isOrganizationAdminLogin = strtolower((string) $organization['organization_name']) === 'admin'
-            && strtolower($loginId) === 'bizskill'
-            && $password === '!Office1@';
-
-        if ($isOrganizationAdminLogin) {
-            $views = json_encode(['/masters/organizations']);
-        }
-
         if ($views === '' || $views === '[]') {
             Response::json([
                 'status' => 'error',
