@@ -3501,8 +3501,6 @@ try {
 
             if ($isOrganizationOwned) {
                 $whereClause = sprintf(' WHERE %s = :organization_id', $config['organization_scope_column'] ?? 'organization_id');
-            } elseif ($resource === 'organizations' && $organizationId !== null) {
-                $whereClause = ' WHERE o.id = :organization_id';
             }
 
             $sql = sprintf(
@@ -3825,6 +3823,7 @@ try {
         'message' => $throwable->getMessage()
     ], 500);
 }
+
 
 
 
