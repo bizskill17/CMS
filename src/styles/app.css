@@ -90,18 +90,6 @@ button {
   min-width: 0;
 }
 
-.brand-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 8px;
-  background: #2d57d7;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  flex: 0 0 auto;
-}
-
-.brand-icon svg,
 .menu-icon svg {
   width: 22px;
   height: 22px;
