@@ -3690,16 +3690,19 @@ try {
             $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
             $search = trim((string) ($_GET['search'] ?? ''));
             $whereConditions = [];
+            $searchBindings = [];
 
             if ($isOrganizationOwned) {
                 $whereConditions[] = sprintf('%s = :organization_id', $config['organization_scope_column'] ?? 'organization_id');
             }
 
             if ($search !== '' && !empty($config['search_columns'])) {
-                $searchConditions = array_map(
-                    static fn (string $column): string => sprintf('%s LIKE :search', $column),
-                    $config['search_columns']
-                );
+                $searchConditions = [];
+                foreach (array_values($config['search_columns']) as $index => $column) {
+                    $parameter = ':search_' . $index;
+                    $searchConditions[] = sprintf('%s LIKE %s', $column, $parameter);
+                    $searchBindings[$parameter] = '%' . $search . '%';
+                }
                 $whereConditions[] = sprintf('(%s)', implode(' OR ', $searchConditions));
             }
 
@@ -3717,8 +3720,8 @@ try {
                 if ($isOrganizationOwned && $organizationId !== null) {
                     bindOrganizationId($statement, $organizationId);
                 }
-                if ($search !== '' && !empty($config['search_columns'])) {
-                    $statement->bindValue(':search', '%' . $search . '%');
+                foreach ($searchBindings as $parameter => $value) {
+                    $statement->bindValue($parameter, $value);
                 }
                 $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
                 $statement->execute();
