@@ -6,6 +6,19 @@ const mobileFieldValidation = {
 };
 
 export const masterConfigs = {
+  organizations: {
+    title: "Organizations",
+    resource: "organizations",
+    tableColumns: [
+      { key: "id", label: "Organization Id" },
+      { key: "organization_name", label: "Organization Name" },
+      { key: "is_active", label: "Active", type: "boolean" }
+    ],
+    fields: [
+      { name: "organization_name", label: "Organization Name", type: "text", required: true },
+      { name: "is_active", label: "Active", type: "checkbox" }
+    ]
+  },
   customers: {
     title: "Customers",
     resource: "customers",

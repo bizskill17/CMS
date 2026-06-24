@@ -485,23 +485,54 @@ try {
             exit;
         }
 
+        $organizationId = (int) ($payload['organization_id'] ?? 0);
         $loginId = trim((string) ($payload['login_id'] ?? ''));
         $password = trim((string) ($payload['password'] ?? ''));
 
-        if ($loginId === '' || $password === '') {
+        if ($organizationId <= 0 || $loginId === '' || $password === '') {
             Response::json([
                 'status' => 'error',
-                'message' => 'Log In Id and Password are required.'
+                'message' => 'Organization Id, Log In Id and Password are required.'
             ], 422);
             exit;
         }
 
-        $statement = $pdo->prepare(
-            'SELECT id, full_name, login_id, password, views, email, mobile, role_name, linked_agent_id, is_active
-             FROM users
-             WHERE login_id = :login_id
+        $organizationStatement = $pdo->prepare(
+            'SELECT id, organization_name, is_active
+             FROM organizations
+             WHERE id = :id
              LIMIT 1'
         );
+        $organizationStatement->bindValue(':id', $organizationId, PDO::PARAM_INT);
+        $organizationStatement->execute();
+        $organization = $organizationStatement->fetch();
+
+        if (!$organization) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Organization Id not found.'
+            ], 404);
+            exit;
+        }
+
+        if (!(bool) $organization['is_active']) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'This organization is inactive.'
+            ], 403);
+            exit;
+        }
+
+        $statement = $pdo->prepare(
+            'SELECT u.id, u.full_name, u.login_id, u.password, u.views, u.email, u.mobile, u.role_name, u.linked_agent_id, u.is_active, s.logo AS organization_logo
+             FROM users u
+             LEFT JOIN settings s ON s.organization_id = u.organization_id AND s.is_active = 1
+             WHERE u.organization_id = :organization_id
+               AND u.login_id = :login_id
+             ORDER BY s.id DESC
+             LIMIT 1'
+        );
+        $statement->bindValue(':organization_id', $organizationId, PDO::PARAM_INT);
         $statement->bindValue(':login_id', $loginId);
         $statement->execute();
         $user = $statement->fetch();
@@ -535,6 +566,9 @@ try {
             'status' => 'ok',
             'data' => [
                 'id' => (int) $user['id'],
+                'organization_id' => $organizationId,
+                'organization_name' => (string) $organization['organization_name'],
+                'organization_logo' => $user['organization_logo'],
                 'full_name' => (string) $user['full_name'],
                 'login_id' => (string) $user['login_id'],
                 'views' => $user['views'],

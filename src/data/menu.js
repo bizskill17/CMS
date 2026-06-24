@@ -11,6 +11,7 @@ export const menuSections = [
     path: "/masters",
     icon: "masters",
     items: [
+      { label: "Organizations", path: "/masters/organizations", countKey: "organizations" },
       { label: "Customers", path: "/masters/customers", countKey: "customers" },
       { label: "Customer Groups", path: "/masters/customer-groups", countKey: "customer-groups" },
       { label: "Insurance Companies", path: "/masters/insurance-companies", countKey: "insurance-companies" },

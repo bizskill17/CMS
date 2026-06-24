@@ -17,6 +17,7 @@ async function readApiJson(response) {
 
 export default function LoginPage({ onLogin }) {
   const [formState, setFormState] = useState({
+    organization_id: "",
     login_id: "",
     password: ""
   });
@@ -56,10 +57,29 @@ export default function LoginPage({ onLogin }) {
       <section className="login-card">
         <div className="login-card__header">
           <h1>Login</h1>
-          <p>Enter your Log In Id and Password to continue.</p>
+          <p>Enter your Organization Id, Log In Id and Password to continue.</p>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
+          <label className="form-field">
+            <span className="form-label">
+              Organization Id
+              <span className="form-label__required">*</span>
+            </span>
+            <input
+              type="number"
+              min="1"
+              required
+              value={formState.organization_id}
+              onChange={(event) =>
+                setFormState((current) => ({
+                  ...current,
+                  organization_id: event.target.value
+                }))
+              }
+            />
+          </label>
+
           <label className="form-field">
             <span className="form-label">
               Log In Id

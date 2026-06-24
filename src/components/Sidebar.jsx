@@ -54,7 +54,7 @@ export default function Sidebar({
   const location = useLocation();
   const visibleMenuSections = providedMenuSections || menuSections;
   const [counts, setCounts] = useState({});
-  const [appBrandName, setAppBrandName] = useState("Policy Management System");
+  const [appBrandName, setAppBrandName] = useState(currentUser?.organization_name || "Policy Management System");
 
   useEffect(() => {
     let isActive = true;
@@ -83,7 +83,7 @@ export default function Sidebar({
             return;
           }
 
-          setAppBrandName(record.organization_name || "Policy Management System");
+          setAppBrandName(currentUser?.organization_name || record.organization_name || "Policy Management System");
         })
         .catch((err) => console.error("Failed to fetch settings brand", err));
     };
@@ -116,7 +116,7 @@ export default function Sidebar({
       window.removeEventListener("refresh-counts", handleRefreshCounts);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [location.pathname]);
+  }, [currentUser?.organization_name, location.pathname]);
 
   const defaultOpenKey = useMemo(() => {
     const matched = visibleMenuSections.find((section) =>

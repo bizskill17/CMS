@@ -88,8 +88,8 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
   const [isMobile, setIsMobile] = useState(() => getIsMobileViewport());
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => !getIsMobileViewport());
   const [appBrand, setAppBrand] = useState({
-    name: "Policy Management System",
-    logo: ""
+    name: currentUser?.organization_name || "Policy Management System",
+    logo: currentUser?.organization_logo || ""
   });
   const currentViewName = getCurrentViewName(location.pathname);
   const fallbackPath = allowedRoutes[0]?.path || "/login";
@@ -116,37 +116,11 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
   }, []);
 
   useEffect(() => {
-    let isActive = true;
-
-    const loadBrand = () => {
-      fetch(`${API_BASE}/masters/settings?limit=1`)
-        .then((res) => res.json())
-        .then((json) => {
-          if (!isActive || json.status !== "ok") {
-            return;
-          }
-
-          const record = Array.isArray(json.data) ? json.data[0] : null;
-          if (!record) {
-            return;
-          }
-
-          setAppBrand({
-            name: record.organization_name || "Policy Management System",
-            logo: record.logo || ""
-          });
-        })
-        .catch((err) => console.error("Failed to fetch settings brand", err));
-    };
-
-    loadBrand();
-    window.addEventListener("focus", loadBrand);
-
-    return () => {
-      isActive = false;
-      window.removeEventListener("focus", loadBrand);
-    };
-  }, []);
+    setAppBrand({
+      name: currentUser?.organization_name || "Policy Management System",
+      logo: currentUser?.organization_logo || ""
+    });
+  }, [currentUser?.organization_logo, currentUser?.organization_name]);
 
   useEffect(() => {
     const scrollToTop = () => {
@@ -159,7 +133,7 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
 
     scrollToTop();
     const timer = setTimeout(scrollToTop, 100);
-    
+
     setIsSidebarOpen(false);
     return () => clearTimeout(timer);
   }, [location.pathname]);

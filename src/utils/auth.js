@@ -27,6 +27,8 @@ export function normalizeAuthUser(user) {
 
   return {
     ...user,
+    id: user.id ? Number(user.id) : null,
+    organization_id: user.organization_id ? Number(user.organization_id) : null,
     views: parseUserViews(user.views)
   };
 }
