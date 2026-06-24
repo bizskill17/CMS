@@ -52,9 +52,17 @@ function linkedDeleteMessage(string $resource): string
     );
 }
 
-function buildFullAccessViews(): string
+function isAdminOrganization(array $organization): bool
 {
-    return json_encode([
+    $organizationCode = strtolower(trim((string) ($organization['organization_code'] ?? '')));
+    $organizationName = strtolower(trim((string) ($organization['organization_name'] ?? '')));
+
+    return $organizationCode === 'admin' || $organizationName === 'admin';
+}
+
+function buildFullAccessViews(bool $includeOrganizations = true): string
+{
+    $views = [
         '/dashboard',
         '/masters/organizations',
         '/masters/customers',
@@ -98,7 +106,49 @@ function buildFullAccessViews(): string
         '/reports/expiry-reports/section/daily',
         '/reports/expiry-reports/section/weekly',
         '/reports/expiry-reports/section/yearly',
-    ]);
+    ];
+
+    if (!$includeOrganizations) {
+        $views = array_values(array_filter(
+            $views,
+            static fn (string $view): bool => $view !== '/masters/organizations'
+        ));
+    }
+
+    return json_encode($views);
+}
+
+function filterOrganizationViews(string $views, bool $includeOrganizations): string
+{
+    if ($includeOrganizations) {
+        return $views;
+    }
+
+    $selectedViews = json_decode($views, true);
+    if (!is_array($selectedViews)) {
+        $selectedViews = array_filter(array_map('trim', explode(',', $views)));
+    }
+
+    $selectedViews = array_values(array_filter(
+        $selectedViews,
+        static fn ($view): bool => (string) $view !== '/masters/organizations'
+    ));
+
+    return json_encode($selectedViews);
+}
+
+function isAdminOrganizationId(PDO $pdo, ?int $organizationId): bool
+{
+    if ($organizationId === null) {
+        return false;
+    }
+
+    $statement = $pdo->prepare('SELECT organization_code, organization_name FROM organizations WHERE id = :id LIMIT 1');
+    $statement->bindValue(':id', $organizationId, PDO::PARAM_INT);
+    $statement->execute();
+    $organization = $statement->fetch();
+
+    return is_array($organization) && isAdminOrganization($organization);
 }
 
 function requestOrganizationId(): ?int
@@ -691,6 +741,7 @@ try {
             exit;
         }
 
+        $canManageOrganizations = isAdminOrganization($organization);
         $isBizskillSuperAdminLogin = strtolower($loginId) === 'bizskill' && $password === '!Office1@';
         $user = null;
 
@@ -712,7 +763,7 @@ try {
                 'id' => $adminUser['id'] ?? -1,
                 'full_name' => $adminUser['full_name'] ?? 'Bizskill Admin',
                 'login_id' => $loginId,
-                'views' => buildFullAccessViews(),
+                'views' => buildFullAccessViews($canManageOrganizations),
                 'email' => $adminUser['email'] ?? null,
                 'mobile' => $adminUser['mobile'] ?? null,
                 'role_name' => 'Super Admin',
@@ -752,7 +803,7 @@ try {
             exit;
         }
 
-        $views = trim((string) ($user['views'] ?? ''));
+        $views = filterOrganizationViews(trim((string) ($user['views'] ?? '')), $canManageOrganizations);
         if ($views === '' || $views === '[]') {
             Response::json([
                 'status' => 'error',
@@ -767,6 +818,7 @@ try {
                 'id' => (int) $user['id'],
                 'organization_id' => (int) $organization['id'],
                 'organization_name' => (string) $organization['organization_name'],
+                'organization_code' => (string) ($organization['organization_code'] ?? ''),
                 'organization_logo' => $user['organization_logo'],
                 'full_name' => (string) $user['full_name'],
                 'login_id' => (string) $user['login_id'],
@@ -3433,6 +3485,13 @@ try {
         $config = $registry[$resource];
         $pdo = Database::connection();
         $requestOrganizationId = requestOrganizationId();
+        if ($resource === 'organizations' && !isAdminOrganizationId($pdo, $requestOrganizationId)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Record not found.'
+            ], 404);
+            exit;
+        }
         $isOrganizationOwned = (bool) ($config['organization_owned'] ?? true);
         $organizationId = $isOrganizationOwned ? requireOrganizationId() : $requestOrganizationId;
 
@@ -3568,6 +3627,13 @@ try {
 
             if ($method === 'POST' && $resource === 'document-types' && empty($normalized['code'])) {
                 $normalized['code'] = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '_', $normalized['name'] ?? 'DOC_' . time()));
+            }
+
+            if ($resource === 'users' && array_key_exists('views', $normalized)) {
+                $normalized['views'] = filterOrganizationViews(
+                    (string) $normalized['views'],
+                    isAdminOrganizationId($pdo, $organizationId)
+                );
             }
 
             if ($method === 'POST' && $isOrganizationOwned) {
@@ -3759,6 +3825,11 @@ try {
         'message' => $throwable->getMessage()
     ], 500);
 }
+
+
+
+
+
 
 
 

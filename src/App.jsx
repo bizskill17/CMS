@@ -15,7 +15,7 @@ import PagePlaceholder from "./components/PagePlaceholder";
 import ReportsTablePage from "./components/ReportsTablePage";
 import RenewPolicyPage from "./components/RenewPolicyPage";
 import TasksPage from "./components/TasksPage";
-import { filterMenuSectionsByViews, getMenuRouteEntries, menuSections } from "./data/menu";
+import { filterMenuSectionsByViews, getMenuRouteEntries } from "./data/menu";
 import { masterConfigs } from "./data/masterConfigs";
 import { clearStoredAuthUser, getStoredAuthUser, setStoredAuthUser } from "./utils/auth";
 
@@ -65,14 +65,29 @@ function buildRoutes(items) {
   ));
 }
 
-const allRoutes = getMenuRouteEntries(menuSections);
+
+function isAdminOrganization(user) {
+  const organizationCode = String(user?.organization_code || "").trim().toLowerCase();
+  const organizationName = String(user?.organization_name || "").trim().toLowerCase();
+
+  return organizationCode === "admin" || organizationName === "admin";
+}
 
 export default function App() {
   const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
   const nativeFetchRef = useRef(window.fetch.bind(window));
+  const effectiveViews = useMemo(() => {
+    const views = authUser?.views || [];
+
+    if (isAdminOrganization(authUser)) {
+      return views;
+    }
+
+    return views.filter((view) => view !== "/masters/organizations");
+  }, [authUser]);
   const allowedMenuSections = useMemo(
-    () => filterMenuSectionsByViews(authUser?.views || []),
-    [authUser]
+    () => filterMenuSectionsByViews(effectiveViews),
+    [effectiveViews]
   );
   const allowedRoutes = useMemo(() => getMenuRouteEntries(allowedMenuSections), [allowedMenuSections]);
   const defaultPath = allowedRoutes[0]?.path || "/dashboard";
@@ -140,9 +155,11 @@ export default function App() {
         <Route path="/reports/payments-received" element={<Navigate to="/payments/received" replace />} />
         <Route path="/reports/expiry-reports/section/:sectionId" element={<ExpiryReportsPage />} />
         <Route path="/reports/expiry-reports/:reportType/:reportValue" element={<ExpiryReportDetailPage />} />
-        {buildRoutes(allRoutes)}
+        {buildRoutes(allowedRoutes)}
       </Route>
       <Route path="*" element={<Navigate to={authUser ? defaultPath : "/login"} replace />} />
     </Routes>
   );
 }
+
+
