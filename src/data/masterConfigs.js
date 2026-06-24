@@ -15,6 +15,7 @@ export const masterConfigs = {
       { key: "is_active", label: "Active", type: "boolean" }
     ],
     fields: [
+      { name: "organization_code", label: "Organization Id", type: "text", required: true },
       { name: "organization_name", label: "Organization Name", type: "text", required: true },
       { name: "is_active", label: "Active", type: "checkbox" }
     ]
