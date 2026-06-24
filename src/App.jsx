@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import AllPoliciesPage from "./components/AllPoliciesPage";
 import AttachDocumentsPage from "./components/AttachDocumentsPage";
@@ -76,6 +76,7 @@ function isAdminOrganization(user) {
 export default function App() {
   const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
   const nativeFetchRef = useRef(window.fetch.bind(window));
+  const hasValidAuth = Boolean(authUser?.organization_id);
   const effectiveViews = useMemo(() => {
     const views = authUser?.views || [];
 
@@ -92,7 +93,7 @@ export default function App() {
   const allowedRoutes = useMemo(() => getMenuRouteEntries(allowedMenuSections), [allowedMenuSections]);
   const defaultPath = allowedRoutes[0]?.path || "/dashboard";
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const nativeFetch = nativeFetchRef.current;
 
     if (!authUser?.organization_id) {
@@ -135,11 +136,11 @@ export default function App() {
     <Routes>
       <Route
         path="/login"
-        element={authUser ? <Navigate to={defaultPath} replace /> : <LoginPage onLogin={handleLogin} />}
+        element={hasValidAuth ? <Navigate to={defaultPath} replace /> : <LoginPage onLogin={handleLogin} />}
       />
       <Route
         element={
-          authUser ? (
+          hasValidAuth ? (
             <AppLayout
               currentUser={authUser}
               allowedMenuSections={allowedMenuSections}
@@ -157,9 +158,10 @@ export default function App() {
         <Route path="/reports/expiry-reports/:reportType/:reportValue" element={<ExpiryReportDetailPage />} />
         {buildRoutes(allowedRoutes)}
       </Route>
-      <Route path="*" element={<Navigate to={authUser ? defaultPath : "/login"} replace />} />
+      <Route path="*" element={<Navigate to={hasValidAuth ? defaultPath : "/login"} replace />} />
     </Routes>
   );
 }
+
 
 
