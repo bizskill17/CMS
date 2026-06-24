@@ -350,6 +350,69 @@ function scopedRowsOrEmpty(PDO $pdo, string $sql, int $organizationId, array $bi
     }
 }
 
+function assertNoMasterDuplicate(PDO $pdo, array $config, array $normalized, ?int $organizationId, ?int $id = null): void
+{
+    foreach (($config['duplicate_keys'] ?? []) as $rule) {
+        $columns = $rule['columns'] ?? [];
+        if (is_string($columns)) {
+            $columns = [$columns];
+        }
+
+        if ($columns === []) {
+            continue;
+        }
+
+        $conditions = [];
+        $bindings = [];
+        foreach ($columns as $column) {
+            if (!array_key_exists($column, $normalized) || $normalized[$column] === null || trim((string) $normalized[$column]) === '') {
+                $conditions = [];
+                break;
+            }
+
+            $parameter = 'dup_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $column);
+            $conditions[] = sprintf('%s = :%s', $column, $parameter);
+            $bindings[$parameter] = $normalized[$column];
+        }
+
+        if ($conditions === []) {
+            continue;
+        }
+
+        if ((bool) ($config['organization_owned'] ?? true) && $organizationId !== null) {
+            $conditions[] = 'organization_id = :dup_organization_id';
+            $bindings['dup_organization_id'] = $organizationId;
+        }
+
+        if ($id !== null) {
+            $conditions[] = 'id <> :dup_id';
+            $bindings['dup_id'] = $id;
+        }
+
+        $statement = $pdo->prepare(sprintf(
+            'SELECT count(*) FROM %s WHERE %s',
+            $config['table'],
+            implode(' AND ', $conditions)
+        ));
+
+        foreach ($bindings as $parameter => $value) {
+            $statement->bindValue(':' . $parameter, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        $statement->execute();
+
+        if ((int) $statement->fetchColumn() > 0) {
+            $displayColumn = (string) ($rule['display_column'] ?? $columns[array_key_last($columns)]);
+            $displayValue = (string) ($normalized[$displayColumn] ?? $normalized[$columns[array_key_last($columns)]] ?? '');
+
+            Response::json([
+                'status' => 'error',
+                'message' => sprintf('Duplicate %s - %s', $rule['label'] ?? 'Value', $displayValue)
+            ], 409);
+            exit;
+        }
+    }
+}
+
 function upsertOrganizationSettings(PDO $pdo, int $organizationId, array $values): void
 {
     $settingsValues = [];
@@ -3766,6 +3829,8 @@ try {
             if ($method === 'POST' && $isOrganizationOwned) {
                 $normalized['organization_id'] = $organizationId;
             }
+
+            assertNoMasterDuplicate($pdo, $config, $normalized, $organizationId, $method === 'PUT' ? $id : null);
 
             if ($resource === 'organizations') {
                 $organizationColumns = ['organization_code', 'organization_name', 'is_active'];

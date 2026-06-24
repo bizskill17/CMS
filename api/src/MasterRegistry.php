@@ -19,6 +19,9 @@ final class MasterRegistry
                 'nullable' => ['gst', 'address', 'logo'],
                 'boolean' => ['is_active'],
                 'file_columns' => ['logo'],
+                'duplicate_keys' => [
+                    ['columns' => ['organization_code'], 'label' => 'Organization Id', 'display_column' => 'organization_code'],
+                ],
                 'organization_owned' => false,
             ],
             'customer-groups' => [
@@ -29,6 +32,9 @@ final class MasterRegistry
                 'write_columns' => ['group_name', 'notes'],
                 'required' => ['group_name'],
                 'nullable' => ['notes'],
+                'duplicate_keys' => [
+                    ['columns' => ['group_name'], 'label' => 'Group Name', 'display_column' => 'group_name'],
+                ],
                 'organization_scope_column' => 'cg.organization_id',
             ],
             'customers' => [
@@ -78,6 +84,9 @@ final class MasterRegistry
                     'notes'
                 ],
                 'boolean' => ['is_active'],
+                'duplicate_keys' => [
+                    ['columns' => ['customer_code'], 'label' => 'Customer Code', 'display_column' => 'customer_code'],
+                ],
                 'organization_scope_column' => 'c.organization_id',
             ],
             'insurance-companies' => [
@@ -89,6 +98,9 @@ final class MasterRegistry
                 'required' => ['company_name'],
                 'nullable' => ['company_short_name', 'company_type'],
                 'boolean' => ['is_active'],
+                'duplicate_keys' => [
+                    ['columns' => ['company_name'], 'label' => 'Company Name', 'display_column' => 'company_name'],
+                ],
                 'organization_scope_column' => 'ic.organization_id',
             ],
             'states' => [
@@ -100,6 +112,9 @@ final class MasterRegistry
                 'required' => ['state_name'],
                 'nullable' => ['state_code'],
                 'boolean' => ['is_active'],
+                'duplicate_keys' => [
+                    ['columns' => ['state_name'], 'label' => 'State Name', 'display_column' => 'state_name'],
+                ],
                 'organization_scope_column' => 's.organization_id',
             ],
             'cities' => [
@@ -111,6 +126,9 @@ final class MasterRegistry
                 'required' => ['state_id', 'city_name'],
                 'nullable' => ['city_code'],
                 'boolean' => ['is_active'],
+                'duplicate_keys' => [
+                    ['columns' => ['state_id', 'city_name'], 'label' => 'City Name', 'display_column' => 'city_name'],
+                ],
                 'organization_scope_column' => 'c.organization_id',
             ],
             'product-categories' => [
@@ -122,6 +140,9 @@ final class MasterRegistry
                 'required' => ['category_name'],
                 'nullable' => ['parent_category_id'],
                 'boolean' => ['is_active'],
+                'duplicate_keys' => [
+                    ['columns' => ['category_name'], 'label' => 'Category Name', 'display_column' => 'category_name'],
+                ],
                 'organization_scope_column' => 'pc.organization_id',
             ],
             'insurance-products' => [
@@ -133,6 +154,9 @@ final class MasterRegistry
                 'required' => ['company_id', 'product_name'],
                 'nullable' => ['category_id', 'sub_category_name'],
                 'boolean' => ['is_active'],
+                'duplicate_keys' => [
+                    ['columns' => ['company_id', 'product_name'], 'label' => 'Product Name', 'display_column' => 'product_name'],
+                ],
                 'organization_scope_column' => 'ip.organization_id',
             ],
             'document-types' => [
@@ -144,6 +168,9 @@ final class MasterRegistry
                 'required' => ['name', 'entity_level'],
                 'nullable' => ['description'],
                 'boolean' => ['is_active'],
+                'duplicate_keys' => [
+                    ['columns' => ['name'], 'label' => 'Name', 'display_column' => 'name'],
+                ],
                 'organization_scope_column' => 'dt.organization_id',
             ],
             'users' => [
@@ -155,6 +182,10 @@ final class MasterRegistry
                 'required' => ['full_name', 'login_id', 'password', 'views', 'email', 'role_name'],
                 'nullable' => ['mobile', 'linked_agent_id', 'notes'],
                 'boolean' => ['is_active'],
+                'duplicate_keys' => [
+                    ['columns' => ['login_id'], 'label' => 'Log In Id', 'display_column' => 'login_id'],
+                    ['columns' => ['email'], 'label' => 'Email', 'display_column' => 'email'],
+                ],
                 'organization_scope_column' => 'u.organization_id',
             ],
             'agents' => [
@@ -166,6 +197,9 @@ final class MasterRegistry
                 'required' => ['employee_code', 'full_name'],
                 'nullable' => ['mobile', 'email'],
                 'boolean' => ['is_active'],
+                'duplicate_keys' => [
+                    ['columns' => ['employee_code'], 'label' => 'Employee Code', 'display_column' => 'employee_code'],
+                ],
                 'organization_scope_column' => 'a.organization_id',
             ],
             'agent-accounts' => [
@@ -190,6 +224,9 @@ final class MasterRegistry
                 'required' => ['agent_id', 'account_label', 'account_type'],
                 'nullable' => ['bank_name', 'account_holder_name', 'masked_account_number', 'card_last4', 'upi_id', 'branch_name', 'notes'],
                 'boolean' => ['is_default', 'is_active'],
+                'duplicate_keys' => [
+                    ['columns' => ['agent_id', 'account_label'], 'label' => 'Account Label', 'display_column' => 'account_label'],
+                ],
                 'organization_scope_column' => 'apa.organization_id',
             ],
 ];
