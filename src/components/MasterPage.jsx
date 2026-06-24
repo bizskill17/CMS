@@ -494,8 +494,8 @@ export default function MasterPage({
         const searchQuery = deferredSearchTerm.trim();
         const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : "";
         const [recordResponse, ...optionResponses] = await Promise.all([
-          fetch(`${API_BASE}/masters/${config.resource}?limit=250${searchParam}`),
-          ...dependencies.map((dependency) => fetch(`${API_BASE}/masters/${dependency}?limit=250`))
+          fetch(`${API_BASE}/masters/${config.resource}?limit=5000${searchParam}`),
+          ...dependencies.map((dependency) => fetch(`${API_BASE}/masters/${dependency}?limit=5000`))
         ]);
 
         const recordJson = await readApiJson(recordResponse);
@@ -685,7 +685,7 @@ export default function MasterPage({
       setMessage(json.message || "Saved successfully.");
       closeForm({ notifyCancel: false });
 
-      const refresh = await fetch(`${API_BASE}/masters/${config.resource}?limit=250`);
+      const refresh = await fetch(`${API_BASE}/masters/${config.resource}?limit=5000`);
       const refreshJson = await readApiJson(refresh);
       if (!refresh.ok) {
         throw new Error(refreshJson.message || "Refresh failed.");
@@ -951,7 +951,7 @@ export default function MasterPage({
       });
 
       if (successCount > 0) {
-        const refresh = await fetch(`${API_BASE}/masters/${config.resource}?limit=250`);
+        const refresh = await fetch(`${API_BASE}/masters/${config.resource}?limit=5000`);
         const refreshJson = await readApiJson(refresh);
         if (!refresh.ok) {
           throw new Error(refreshJson.message || "Refresh failed after bulk upload.");
@@ -1012,7 +1012,7 @@ export default function MasterPage({
     });
 
     try {
-      const response = await fetch(`${API_BASE}/masters/document-types?limit=250`);
+      const response = await fetch(`${API_BASE}/masters/document-types?limit=5000`);
       const json = await readApiJson(response);
 
       if (!response.ok) {

@@ -3719,7 +3719,7 @@ try {
         }
 
         if ($method === 'GET' && $id === null) {
-            $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
+            $limit = isset($_GET['limit']) ? max(1, min(5000, (int) $_GET['limit'])) : 1000;
             $search = trim((string) ($_GET['search'] ?? ''));
             $whereConditions = [];
             $searchBindings = [];

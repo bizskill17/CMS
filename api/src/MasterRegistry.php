@@ -43,6 +43,7 @@ final class MasterRegistry
                 'select' => 'c.id, c.customer_code, c.full_name, c.mobile, c.alternate_mobile, c.email, c.city, c.state, c.gstin, c.is_active, c.created_at, cg.group_name',
                 'from' => 'customers c left join customer_groups cg on cg.id = c.group_id',
                 'order_by' => 'c.id desc',
+                'search_columns' => ['c.full_name', 'cg.group_name', 'c.mobile', 'c.email', 'c.city', 'c.state', 'c.gstin'],
                 'write_columns' => [
                     'group_id',
                     'full_name',
