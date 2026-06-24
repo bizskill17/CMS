@@ -6,13 +6,13 @@ import { API_BASE } from "../config/api";
 const dashboardItems = [
   {
     key: "renew-policy-today",
-    label: "Policy Renew Today",
+    label: "Policies Renewed Today",
     tone: "warning",
     path: "/policies/renew"
   },
   {
     key: "policies-added",
-    label: "Add Policy Today",
+    label: "Policies Added Today",
     tone: "info",
     path: "/reports/policies-added"
   },
@@ -36,7 +36,7 @@ const dashboardItems = [
   },
   {
     key: "pending_client_collections",
-    label: "Pending for Payment Collection from Client",
+    label: "Policies Pending for Payment Collection from Client",
     tone: "success",
     path: "/payments/pending"
   }
