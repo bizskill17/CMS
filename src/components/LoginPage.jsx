@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useState } from "react";
 import { API_BASE } from "../config/api";
 
 async function readApiJson(response) {
@@ -21,55 +21,8 @@ export default function LoginPage({ onLogin }) {
     login_id: "",
     password: ""
   });
-  const [organizations, setOrganizations] = useState([]);
-  const [loadingOrganizations, setLoadingOrganizations] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadOrganizations() {
-      try {
-        const response = await fetch(`${API_BASE}/masters/organizations?limit=250`);
-        const json = await readApiJson(response);
-
-        if (!response.ok) {
-          throw new Error(json.message || "Unable to load organizations.");
-        }
-
-        if (!isMounted) {
-          return;
-        }
-
-        const activeOrganizations = (Array.isArray(json.data) ? json.data : []).filter(
-          (organization) => Number(organization.is_active) === 1
-        );
-
-        setOrganizations(activeOrganizations);
-        setFormState((current) => ({
-          ...current,
-          organization_id: current.organization_id || String(activeOrganizations[0]?.id || "")
-        }));
-      } catch (loadError) {
-        if (!isMounted) {
-          return;
-        }
-
-        setError(loadError.message);
-      } finally {
-        if (isMounted) {
-          setLoadingOrganizations(false);
-        }
-      }
-    }
-
-    loadOrganizations();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -104,7 +57,6 @@ export default function LoginPage({ onLogin }) {
       <section className="login-card">
         <div className="login-card__header">
           <h1>Login</h1>
-          <p>Select your Organization Id, then enter Log In Id and Password to continue.</p>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
@@ -113,24 +65,17 @@ export default function LoginPage({ onLogin }) {
               Organization Id
               <span className="form-label__required">*</span>
             </span>
-            <select
+            <input
+              type="text"
               required
               value={formState.organization_id}
-              disabled={loadingOrganizations || organizations.length === 0}
               onChange={(event) =>
                 setFormState((current) => ({
                   ...current,
                   organization_id: event.target.value
                 }))
               }
-            >
-              <option value="">Select organization</option>
-              {organizations.map((organization) => (
-                <option key={organization.id} value={organization.id}>
-                  {organization.organization_name} ({organization.organization_code || organization.id})
-                </option>
-              ))}
-            </select>
+            />
           </label>
 
           <label className="form-field">
@@ -171,11 +116,7 @@ export default function LoginPage({ onLogin }) {
 
           {error ? <p className="feedback feedback--error">{error}</p> : null}
 
-          <button
-            type="submit"
-            className="primary-button login-form__submit"
-            disabled={saving || loadingOrganizations || organizations.length === 0}
-          >
+          <button type="submit" className="primary-button login-form__submit" disabled={saving}>
             {saving ? "Checking..." : "Login"}
           </button>
         </form>
