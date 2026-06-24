@@ -495,6 +495,13 @@ export default function MasterPage({
         setRecords(recordJson.data || []);
         setOptionsMap(Object.fromEntries(optionEntries));
       } catch (loadError) {
+        if (String(loadError.message || "").includes("organization_id")) {
+          setRecords([]);
+          setOptionsMap({});
+          setError("");
+          return;
+        }
+
         setError(loadError.message);
       } finally {
         setLoading(false);
@@ -2182,3 +2189,4 @@ export default function MasterPage({
     </div>
   );
 }
+

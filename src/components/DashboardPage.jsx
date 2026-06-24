@@ -182,6 +182,11 @@ export default function DashboardPage() {
           "policies-added": Number(countsJson.data["policies-added"] || 0)
         });
       } catch (loadError) {
+        if (String(loadError.message || "").includes("organization_id")) {
+          setError("");
+          return;
+        }
+
         setError(loadError.message);
       } finally {
         setLoading(false);
@@ -282,3 +287,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

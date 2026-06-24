@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { API_BASE } from "../config/api";
 
 async function readApiJson(response) {

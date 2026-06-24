@@ -138,6 +138,48 @@ function bindOrganizationId($statement, int $organizationId): void
     $statement->bindValue(':organization_id', $organizationId, PDO::PARAM_INT);
 }
 
+function isMissingOrganizationColumn(PDOException $exception): bool
+{
+    return $exception->getCode() === '42S22'
+        && str_contains($exception->getMessage(), 'organization_id');
+}
+
+function scopedCountOrZero(PDO $pdo, string $sql, int $organizationId): int
+{
+    try {
+        $statement = $pdo->prepare($sql);
+        bindOrganizationId($statement, $organizationId);
+        $statement->execute();
+
+        return (int) $statement->fetchColumn();
+    } catch (PDOException $exception) {
+        if (isMissingOrganizationColumn($exception)) {
+            return 0;
+        }
+
+        throw $exception;
+    }
+}
+
+function scopedRowsOrEmpty(PDO $pdo, string $sql, int $organizationId, array $bindings = []): array
+{
+    try {
+        $statement = $pdo->prepare($sql);
+        bindOrganizationId($statement, $organizationId);
+        foreach ($bindings as $name => [$value, $type]) {
+            $statement->bindValue($name, $value, $type);
+        }
+        $statement->execute();
+
+        return $statement->fetchAll();
+    } catch (PDOException $exception) {
+        if (isMissingOrganizationColumn($exception)) {
+            return [];
+        }
+
+        throw $exception;
+    }
+}
 function isFinalLeadStatus(string $status): bool
 {
     return in_array($status, ['Converted', 'Lost', 'Canceled'], true);
@@ -236,18 +278,14 @@ try {
         $counts = [];
 
         $scopedCount = static function (string $sql) use ($pdo, $organizationId): int {
-            $statement = $pdo->prepare($sql);
-            bindOrganizationId($statement, $organizationId);
-            $statement->execute();
-
-            return (int) $statement->fetchColumn();
+            return scopedCountOrZero($pdo, $sql, $organizationId);
         };
 
         $registry = MasterRegistry::all();
         foreach ($registry as $key => $config) {
             $table = $config['table'];
             if (($config['organization_owned'] ?? true) === true) {
-                $counts[$key] = $scopedCount("SELECT count(*) FROM $table WHERE organization_id = :organization_id");
+                $counts[$key] = $scopedCount(sprintf('SELECT count(*) FROM %s WHERE %s = :organization_id', $config['from'] ?? $table, $config['organization_scope_column'] ?? 'organization_id'));
             } elseif ($key === 'organizations') {
                 $counts[$key] = $scopedCount('SELECT count(*) FROM organizations WHERE id = :organization_id');
             } else {
@@ -1568,11 +1606,7 @@ try {
         }
 
         $scopedCount = static function (string $sql) use ($pdo, $organizationId): int {
-            $statement = $pdo->prepare($sql);
-            bindOrganizationId($statement, $organizationId);
-            $statement->execute();
-
-            return (int) $statement->fetchColumn();
+            return scopedCountOrZero($pdo, $sql, $organizationId);
         };
 
         $daily = [
@@ -1704,11 +1738,7 @@ try {
         $organizationId = requireOrganizationId();
 
         $scopedCount = static function (string $sql) use ($pdo, $organizationId): int {
-            $statement = $pdo->prepare($sql);
-            bindOrganizationId($statement, $organizationId);
-            $statement->execute();
-
-            return (int) $statement->fetchColumn();
+            return scopedCountOrZero($pdo, $sql, $organizationId);
         };
 
         $renewalsNext7Days = $scopedCount(
@@ -2833,11 +2863,7 @@ try {
         $organizationId = requireOrganizationId();
 
         $fetchScoped = static function (string $sql) use ($pdo, $organizationId): array {
-            $statement = $pdo->prepare($sql);
-            bindOrganizationId($statement, $organizationId);
-            $statement->execute();
-
-            return $statement->fetchAll();
+            return scopedRowsOrEmpty($pdo, $sql, $organizationId);
         };
 
         $customerGroups = $fetchScoped(
@@ -3363,16 +3389,25 @@ try {
                 $whereClause,
                 $config['order_by']
             );
-            $statement = $pdo->prepare($sql);
-            if ($whereClause !== '' && $organizationId !== null) {
-                bindOrganizationId($statement, $organizationId);
+            try {
+                $statement = $pdo->prepare($sql);
+                if ($whereClause !== '' && $organizationId !== null) {
+                    bindOrganizationId($statement, $organizationId);
+                }
+                $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+                $statement->execute();
+                $rows = $statement->fetchAll();
+            } catch (PDOException $exception) {
+                if (!isMissingOrganizationColumn($exception)) {
+                    throw $exception;
+                }
+
+                $rows = [];
             }
-            $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
-            $statement->execute();
 
             Response::json([
                 'status' => 'ok',
-                'data' => $statement->fetchAll(),
+                'data' => $rows,
                 'meta' => ['limit' => $limit]
             ]);
             exit;
@@ -3587,6 +3622,11 @@ try {
         'message' => $throwable->getMessage()
     ], 500);
 }
+
+
+
+
+
 
 
 
