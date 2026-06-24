@@ -33,7 +33,7 @@ final class MasterRegistry
             'customers' => [
                 'table' => 'customers',
                 'select' => 'c.id, c.customer_code, c.full_name, c.mobile, c.alternate_mobile, c.email, c.city, c.state, c.gstin, c.is_active, c.created_at, cg.group_name',
-                'from' => 'customers c left join customer_groups cg on cg.id = c.group_id and cg.organization_id = c.organization_id',
+                'from' => 'customers c left join customer_groups cg on cg.id = c.group_id',
                 'order_by' => 'c.id desc',
                 'write_columns' => [
                     'customer_code',
@@ -104,7 +104,7 @@ final class MasterRegistry
             'cities' => [
                 'table' => 'cities',
                 'select' => 'c.id, c.city_name, c.city_code, c.state_id, s.state_name, c.is_active, c.created_at',
-                'from' => 'cities c left join states s on s.id = c.state_id and s.organization_id = c.organization_id',
+                'from' => 'cities c left join states s on s.id = c.state_id',
                 'order_by' => 's.state_name asc, c.city_name asc',
                 'write_columns' => ['state_id', 'city_name', 'city_code', 'is_active'],
                 'required' => ['state_id', 'city_name'],
@@ -115,7 +115,7 @@ final class MasterRegistry
             'product-categories' => [
                 'table' => 'product_categories',
                 'select' => 'pc.id, pc.category_name, pc.parent_category_id, parent.category_name as parent_category_name, pc.is_active, pc.created_at',
-                'from' => 'product_categories pc left join product_categories parent on parent.id = pc.parent_category_id and parent.organization_id = pc.organization_id',
+                'from' => 'product_categories pc left join product_categories parent on parent.id = pc.parent_category_id',
                 'order_by' => 'pc.category_name asc',
                 'write_columns' => ['category_name', 'parent_category_id', 'is_active'],
                 'required' => ['category_name'],
@@ -126,7 +126,7 @@ final class MasterRegistry
             'insurance-products' => [
                 'table' => 'insurance_products',
                 'select' => 'ip.id, ip.product_name, ip.sub_category_name, ip.is_active, ip.created_at, ic.company_name, pc.category_name, ip.company_id, ip.category_id',
-                'from' => 'insurance_products ip left join insurance_companies ic on ic.id = ip.company_id and ic.organization_id = ip.organization_id left join product_categories pc on pc.id = ip.category_id and pc.organization_id = ip.organization_id',
+                'from' => 'insurance_products ip left join insurance_companies ic on ic.id = ip.company_id left join product_categories pc on pc.id = ip.category_id',
                 'order_by' => 'ip.id desc',
                 'write_columns' => ['company_id', 'product_name', 'category_id', 'sub_category_name', 'is_active'],
                 'required' => ['company_id', 'product_name'],
@@ -148,7 +148,7 @@ final class MasterRegistry
             'users' => [
                 'table' => 'users',
                 'select' => 'u.id, u.full_name, u.login_id, u.password, u.views, u.email, u.mobile, u.role_name, u.is_active, u.created_at, u.linked_agent_id, a.full_name as linked_agent_name',
-                'from' => 'users u left join agents a on a.id = u.linked_agent_id and a.organization_id = u.organization_id',
+                'from' => 'users u left join agents a on a.id = u.linked_agent_id',
                 'order_by' => 'u.id desc',
                 'write_columns' => ['full_name', 'login_id', 'password', 'views', 'email', 'mobile', 'role_name', 'linked_agent_id', 'notes', 'is_active'],
                 'required' => ['full_name', 'login_id', 'password', 'views', 'email', 'role_name'],
@@ -170,7 +170,7 @@ final class MasterRegistry
             'agent-accounts' => [
                 'table' => 'agent_payment_accounts',
                 'select' => 'apa.id, apa.agent_id, a.full_name as agent_name, apa.account_label, apa.account_type, apa.bank_name, apa.account_holder_name, apa.masked_account_number, apa.card_last4, apa.upi_id, apa.branch_name, apa.is_default, apa.is_active, apa.notes, apa.created_at',
-                'from' => 'agent_payment_accounts apa left join agents a on a.id = apa.agent_id and a.organization_id = apa.organization_id',
+                'from' => 'agent_payment_accounts apa left join agents a on a.id = apa.agent_id',
                 'order_by' => 'apa.id desc',
                 'write_columns' => [
                     'agent_id',

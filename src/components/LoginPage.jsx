@@ -67,8 +67,8 @@ export default function LoginPage({ onLogin }) {
               <span className="form-label__required">*</span>
             </span>
             <input
-              type="number"
-              min="1"
+              type="text"
+              placeholder="Admin or 1"
               required
               value={formState.organization_id}
               onChange={(event) =>

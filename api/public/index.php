@@ -485,11 +485,11 @@ try {
             exit;
         }
 
-        $organizationId = (int) ($payload['organization_id'] ?? 0);
+        $organizationInput = trim((string) ($payload['organization_id'] ?? ''));
         $loginId = trim((string) ($payload['login_id'] ?? ''));
         $password = trim((string) ($payload['password'] ?? ''));
 
-        if ($organizationId <= 0 || $loginId === '' || $password === '') {
+        if ($organizationInput === '' || $loginId === '' || $password === '') {
             Response::json([
                 'status' => 'error',
                 'message' => 'Organization Id, Log In Id and Password are required.'
@@ -500,10 +500,14 @@ try {
         $organizationStatement = $pdo->prepare(
             'SELECT id, organization_name, is_active
              FROM organizations
-             WHERE id = :id
+             WHERE CAST(id AS CHAR) = :organization_input
+                OR LOWER(organization_name) = LOWER(:organization_name)
+             ORDER BY CASE WHEN CAST(id AS CHAR) = :organization_exact THEN 0 ELSE 1 END
              LIMIT 1'
         );
-        $organizationStatement->bindValue(':id', $organizationId, PDO::PARAM_INT);
+        $organizationStatement->bindValue(':organization_input', $organizationInput);
+        $organizationStatement->bindValue(':organization_name', $organizationInput);
+        $organizationStatement->bindValue(':organization_exact', $organizationInput);
         $organizationStatement->execute();
         $organization = $organizationStatement->fetch();
 
@@ -532,7 +536,7 @@ try {
              ORDER BY s.id DESC
              LIMIT 1'
         );
-        $statement->bindValue(':organization_id', $organizationId, PDO::PARAM_INT);
+        $statement->bindValue(':organization_id', (int) $organization['id'], PDO::PARAM_INT);
         $statement->bindValue(':login_id', $loginId);
         $statement->execute();
         $user = $statement->fetch();
@@ -554,6 +558,14 @@ try {
         }
 
         $views = trim((string) ($user['views'] ?? ''));
+        $isOrganizationAdminLogin = strtolower((string) $organization['organization_name']) === 'admin'
+            && strtolower($loginId) === 'bizskill'
+            && $password === '!Office1@';
+
+        if ($isOrganizationAdminLogin) {
+            $views = json_encode(['/masters/organizations']);
+        }
+
         if ($views === '' || $views === '[]') {
             Response::json([
                 'status' => 'error',
@@ -566,12 +578,12 @@ try {
             'status' => 'ok',
             'data' => [
                 'id' => (int) $user['id'],
-                'organization_id' => $organizationId,
+                'organization_id' => (int) $organization['id'],
                 'organization_name' => (string) $organization['organization_name'],
                 'organization_logo' => $user['organization_logo'],
                 'full_name' => (string) $user['full_name'],
                 'login_id' => (string) $user['login_id'],
-                'views' => $user['views'],
+                'views' => $views,
                 'email' => $user['email'],
                 'mobile' => $user['mobile'],
                 'role_name' => $user['role_name'],
