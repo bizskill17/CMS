@@ -3688,11 +3688,22 @@ try {
 
         if ($method === 'GET' && $id === null) {
             $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
-            $whereClause = '';
+            $search = trim((string) ($_GET['search'] ?? ''));
+            $whereConditions = [];
 
             if ($isOrganizationOwned) {
-                $whereClause = sprintf(' WHERE %s = :organization_id', $config['organization_scope_column'] ?? 'organization_id');
+                $whereConditions[] = sprintf('%s = :organization_id', $config['organization_scope_column'] ?? 'organization_id');
             }
+
+            if ($search !== '' && !empty($config['search_columns'])) {
+                $searchConditions = array_map(
+                    static fn (string $column): string => sprintf('%s LIKE :search', $column),
+                    $config['search_columns']
+                );
+                $whereConditions[] = sprintf('(%s)', implode(' OR ', $searchConditions));
+            }
+
+            $whereClause = $whereConditions !== [] ? sprintf(' WHERE %s', implode(' AND ', $whereConditions)) : '';
 
             $sql = sprintf(
                 'SELECT %s FROM %s%s ORDER BY %s LIMIT :limit',
@@ -3703,8 +3714,11 @@ try {
             );
             try {
                 $statement = $pdo->prepare($sql);
-                if ($whereClause !== '' && $organizationId !== null) {
+                if ($isOrganizationOwned && $organizationId !== null) {
                     bindOrganizationId($statement, $organizationId);
+                }
+                if ($search !== '' && !empty($config['search_columns'])) {
+                    $statement->bindValue(':search', '%' . $search . '%');
                 }
                 $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
                 $statement->execute();

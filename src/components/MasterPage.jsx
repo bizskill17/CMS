@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { ActionIconDisplay } from "./ActionIcon";
 import { API_BASE } from "../config/api";
 import { masterConfigs } from "../data/masterConfigs";
@@ -326,6 +326,7 @@ export default function MasterPage({
   const [saving, setSaving] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [searchTerm, setSearchTerm] = useState("");
+  const deferredSearchTerm = useDeferredValue(searchTerm);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
@@ -490,8 +491,10 @@ export default function MasterPage({
       setError("");
 
       try {
+        const searchQuery = deferredSearchTerm.trim();
+        const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : "";
         const [recordResponse, ...optionResponses] = await Promise.all([
-          fetch(`${API_BASE}/masters/${config.resource}?limit=100`),
+          fetch(`${API_BASE}/masters/${config.resource}?limit=250${searchParam}`),
           ...dependencies.map((dependency) => fetch(`${API_BASE}/masters/${dependency}?limit=250`))
         ]);
 
@@ -527,7 +530,7 @@ export default function MasterPage({
     };
 
     load();
-  }, [config.resource, dependencies]);
+  }, [config.resource, dependencies, deferredSearchTerm]);
 
   const resetForm = () => {
     closeForm();
@@ -682,7 +685,7 @@ export default function MasterPage({
       setMessage(json.message || "Saved successfully.");
       closeForm({ notifyCancel: false });
 
-      const refresh = await fetch(`${API_BASE}/masters/${config.resource}?limit=100`);
+      const refresh = await fetch(`${API_BASE}/masters/${config.resource}?limit=250`);
       const refreshJson = await readApiJson(refresh);
       if (!refresh.ok) {
         throw new Error(refreshJson.message || "Refresh failed.");
@@ -940,7 +943,7 @@ export default function MasterPage({
       });
 
       if (successCount > 0) {
-        const refresh = await fetch(`${API_BASE}/masters/${config.resource}?limit=100`);
+        const refresh = await fetch(`${API_BASE}/masters/${config.resource}?limit=250`);
         const refreshJson = await readApiJson(refresh);
         if (!refresh.ok) {
           throw new Error(refreshJson.message || "Refresh failed after bulk upload.");

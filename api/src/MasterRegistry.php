@@ -29,6 +29,7 @@ final class MasterRegistry
                 'select' => 'cg.id, cg.group_name, cg.notes, cg.created_at',
                 'from' => 'customer_groups cg',
                 'order_by' => 'cg.group_name asc',
+                'search_columns' => ['cg.group_name', 'cg.notes'],
                 'write_columns' => ['group_name', 'notes'],
                 'required' => ['group_name'],
                 'nullable' => ['notes'],
