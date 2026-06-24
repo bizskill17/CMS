@@ -48,17 +48,18 @@ export default function SearchableSelect({
   const stringValue = String(value ?? "");
   const selectedOption = options.find((option) => option.value === stringValue);
   const placeholderOption = options.find((option) => option.value === "");
+  const visibleOptions = useMemo(() => options.filter((option) => option.value !== ""), [options]);
   const resolvedPlaceholder = placeholderOption?.label || placeholder;
   const selectedLabel = stringValue ? selectedOption?.label || stringValue : resolvedPlaceholder;
 
   const filteredOptions = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     if (!normalizedQuery) {
-      return options;
+      return visibleOptions;
     }
 
-    return options.filter((option) => option.label.toLowerCase().includes(normalizedQuery));
-  }, [options, query]);
+    return visibleOptions.filter((option) => option.label.toLowerCase().includes(normalizedQuery));
+  }, [query, visibleOptions]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -109,6 +110,20 @@ export default function SearchableSelect({
     setIsOpen(false);
   };
 
+  const handleAll = () => {
+    setQuery("");
+    if (placeholderOption) {
+      emitChange("");
+    }
+  };
+
+  const handleClear = () => {
+    setQuery("");
+    if (placeholderOption) {
+      emitChange("");
+    }
+  };
+
   return (
     <div
       ref={rootRef}
@@ -140,9 +155,7 @@ export default function SearchableSelect({
         onClick={() => setIsOpen((current) => !current)}
       >
         <span className="searchable-select__value">{selectedLabel}</span>
-        <span className="searchable-select__chevron" aria-hidden="true">
-          {isOpen ? "▴" : "▾"}
-        </span>
+        <span className="searchable-select__chevron" aria-hidden="true" />
       </button>
 
       {isOpen ? (
@@ -152,10 +165,17 @@ export default function SearchableSelect({
             type="search"
             className="searchable-select__search"
             value={query}
-            placeholder={`Search ${resolvedPlaceholder.toLowerCase()}...`}
+            placeholder="Search..."
             onChange={(event) => setQuery(event.target.value)}
           />
-          <div className="searchable-select__meta">{filteredOptions.length} options</div>
+          <div className="searchable-select__actions">
+            <button type="button" className="searchable-select__action searchable-select__action--all" onClick={handleAll}>
+              ALL
+            </button>
+            <button type="button" className="searchable-select__action searchable-select__action--clear" onClick={handleClear}>
+              CLEAR
+            </button>
+          </div>
           <div id={`${selectId}-listbox`} className="searchable-select__list" role="listbox">
             {filteredOptions.length ? (
               filteredOptions.map((option) => (
@@ -168,7 +188,8 @@ export default function SearchableSelect({
                   aria-selected={option.value === stringValue}
                   onClick={() => handleSelect(option)}
                 >
-                  {option.label}
+                  <span className="searchable-select__check" aria-hidden="true" />
+                  <span className="searchable-select__option-label">{option.label}</span>
                 </button>
               ))
             ) : (

@@ -1206,12 +1206,13 @@ button {
 
 .searchable-select__trigger {
   width: 100%;
-  min-height: 43px;
-  border: 1px solid #c5d2e4;
-  border-radius: 10px;
-  padding: 11px 12px;
-  background: #f8fbff;
-  color: var(--text-dark);
+  min-height: 46px;
+  border: 1px solid #b7c6ff;
+  border-radius: 14px;
+  padding: 0 14px;
+  background: #ffffff;
+  color: #18212f;
+  box-shadow: 0 1px 3px rgba(45, 87, 215, 0.13);
   font-size: 14px;
   display: flex;
   align-items: center;
@@ -1221,9 +1222,11 @@ button {
   cursor: pointer;
 }
 
+.searchable-select--open .searchable-select__trigger,
 .searchable-select__trigger:focus-visible {
-  outline: 2px solid #3157d7;
-  outline-offset: 2px;
+  border-color: #8da4ff;
+  outline: 2px solid rgba(49, 87, 215, 0.16);
+  outline-offset: 0;
 }
 
 .searchable-select__trigger:disabled {
@@ -1233,7 +1236,7 @@ button {
 }
 
 .searchable-select__trigger--placeholder {
-  color: #6f7b8c;
+  color: #1f2937;
 }
 
 .searchable-select__value {
@@ -1244,9 +1247,19 @@ button {
 }
 
 .searchable-select__chevron {
-  color: #536273;
+  width: 9px;
+  height: 9px;
+  border-right: 1.8px solid #6476ff;
+  border-bottom: 1.8px solid #6476ff;
+  transform: rotate(45deg);
+  transition: transform 0.16s ease;
   flex: 0 0 auto;
-  font-size: 13px;
+  margin-right: 3px;
+}
+
+.searchable-select--open .searchable-select__chevron {
+  transform: rotate(225deg);
+  margin-top: 5px;
 }
 
 .searchable-select__panel {
@@ -1254,46 +1267,84 @@ button {
   top: calc(100% + 8px);
   left: 0;
   right: 0;
-  z-index: 1100;
-  border: 1px solid #d7e1ef;
-  border-radius: 14px;
+  z-index: 1300;
+  border: 1px solid #c5d2ff;
+  border-radius: 16px;
   background: #ffffff;
-  box-shadow: 0 20px 40px rgba(26, 46, 79, 0.18);
+  box-shadow: 0 18px 38px rgba(26, 46, 79, 0.18);
   padding: 10px;
 }
 
 .searchable-select__search {
+  width: 100%;
+  min-height: 42px;
+  margin-bottom: 10px;
+  border: 1px solid #9fb0ff;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #18212f;
+  padding: 0 14px;
+  font-size: 14px;
+}
+
+.searchable-select__search:focus {
+  border-color: #6578ff;
+  outline: 2px solid rgba(101, 120, 255, 0.14);
+}
+
+.searchable-select__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
   margin-bottom: 10px;
 }
 
-.searchable-select__meta {
+.searchable-select__action {
+  min-height: 38px;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
   font-size: 12px;
-  font-weight: 600;
-  color: #536273;
-  padding: 0 4px 8px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.searchable-select__action--all {
+  border: 1px solid #aebcff;
+  color: #6476ff;
+}
+
+.searchable-select__action--clear {
+  border: 1px solid #ffb3b3;
+  color: #f04d4d;
 }
 
 .searchable-select__list {
-  max-height: 220px;
+  max-height: 230px;
   overflow-y: auto;
   display: grid;
+  border-top: 1px solid #edf1f8;
 }
 
 .searchable-select__option {
   width: 100%;
+  min-height: 48px;
   border: 0;
-  border-radius: 10px;
+  border-bottom: 1px solid #edf1f8;
   background: transparent;
-  color: var(--text-dark);
+  color: #1f2937;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   font-size: 14px;
-  padding: 10px 12px;
+  padding: 0 12px;
   text-align: left;
 }
 
 .searchable-select__option:hover,
 .searchable-select__option--selected {
-  background: #eef5ff;
+  background: #f6f8ff;
 }
 
 .searchable-select__option:disabled {
@@ -1301,12 +1352,43 @@ button {
   cursor: not-allowed;
 }
 
+.searchable-select__check {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #8b95a7;
+  border-radius: 3px;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.searchable-select__option--selected .searchable-select__check {
+  border-color: #2d57d7;
+  background: #2d57d7;
+}
+
+.searchable-select__option--selected .searchable-select__check::after {
+  content: "";
+  width: 5px;
+  height: 9px;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: rotate(45deg);
+  margin-top: -2px;
+}
+
+.searchable-select__option-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .searchable-select__empty {
   color: #6f7b8c;
   font-size: 12px;
-  padding: 10px 12px;
+  padding: 12px;
 }
-
 .inline-icon-button {
   width: 28px;
   height: 28px;
@@ -1332,11 +1414,13 @@ button {
 
 .customer-combobox__trigger {
   width: 100%;
-  border: 1px solid #c5d2e4;
-  border-radius: 10px;
-  padding: 11px 12px;
-  background: #f8fbff;
-  color: var(--text-dark);
+  min-height: 46px;
+  border: 1px solid #b7c6ff;
+  border-radius: 14px;
+  padding: 0 14px;
+  background: #ffffff;
+  color: #18212f;
+  box-shadow: 0 1px 3px rgba(45, 87, 215, 0.13);
   font-size: 14px;
   display: flex;
   align-items: center;
@@ -1346,13 +1430,29 @@ button {
   cursor: pointer;
 }
 
+.customer-combobox--open .customer-combobox__trigger {
+  border-color: #8da4ff;
+  outline: 2px solid rgba(49, 87, 215, 0.16);
+}
+
 .customer-combobox__trigger--placeholder {
-  color: #6f7b8c;
+  color: #1f2937;
 }
 
 .customer-combobox__chevron {
-  color: #9aa8bc;
-  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  border-right: 1.8px solid #6476ff;
+  border-bottom: 1.8px solid #6476ff;
+  transform: rotate(45deg);
+  transition: transform 0.16s ease;
+  flex: 0 0 auto;
+  margin-right: 3px;
+}
+
+.customer-combobox--open .customer-combobox__chevron {
+  transform: rotate(225deg);
+  margin-top: 5px;
 }
 
 .customer-combobox__panel {
@@ -1360,63 +1460,118 @@ button {
   top: calc(100% + 8px);
   left: 0;
   right: 0;
-  z-index: 20;
-  border: 1px solid #d7e1ef;
-  border-radius: 14px;
+  z-index: 1300;
+  border: 1px solid #c5d2ff;
+  border-radius: 16px;
   background: #ffffff;
-  box-shadow: 0 20px 40px rgba(26, 46, 79, 0.18);
+  box-shadow: 0 18px 38px rgba(26, 46, 79, 0.18);
   padding: 10px;
 }
 
 .customer-combobox__search {
+  width: 100%;
+  min-height: 42px;
+  margin-bottom: 10px;
+  border: 1px solid #9fb0ff;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #18212f;
+  padding: 0 14px;
+  font-size: 14px;
+}
+
+.customer-combobox__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
   margin-bottom: 10px;
 }
 
-.customer-combobox__meta {
+.customer-combobox__action {
+  min-height: 38px;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
   font-size: 12px;
-  font-weight: 600;
-  color: #536273;
-  padding: 0 4px 8px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.customer-combobox__action--all {
+  border: 1px solid #aebcff;
+  color: #6476ff;
+}
+
+.customer-combobox__action--clear {
+  border: 1px solid #ffb3b3;
+  color: #f04d4d;
 }
 
 .customer-combobox__list {
-  max-height: 220px;
+  max-height: 230px;
   overflow-y: auto;
   display: grid;
+  border-top: 1px solid #edf1f8;
 }
 
 .customer-combobox__option {
   width: 100%;
+  min-height: 48px;
   border: 0;
+  border-bottom: 1px solid #edf1f8;
   background: transparent;
-  text-align: left;
-  padding: 10px 12px;
-  border-radius: 10px;
-  display: grid;
-  gap: 3px;
+  color: #1f2937;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  padding: 0 12px;
+  text-align: left;
 }
 
 .customer-combobox__option:hover,
 .customer-combobox__option--selected {
-  background: #eef5ff;
+  background: #f6f8ff;
+}
+
+.customer-combobox__check {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #8b95a7;
+  border-radius: 3px;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.customer-combobox__option--selected .customer-combobox__check {
+  border-color: #2d57d7;
+  background: #2d57d7;
+}
+
+.customer-combobox__option--selected .customer-combobox__check::after {
+  content: "";
+  width: 5px;
+  height: 9px;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: rotate(45deg);
+  margin-top: -2px;
 }
 
 .customer-combobox__option-name {
-  font-size: 14px;
-  color: var(--text-dark);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-.customer-combobox__option-meta,
 .customer-combobox__empty {
-  font-size: 12px;
   color: #6f7b8c;
+  font-size: 12px;
+  padding: 12px;
 }
-
-.customer-combobox__empty {
-  padding: 10px 12px;
-}
-
 .checkbox-field {
   display: flex;
   align-items: center;

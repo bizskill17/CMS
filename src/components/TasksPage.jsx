@@ -698,9 +698,7 @@ export default function TasksPage({ viewPath }) {
                           aria-expanded={isCustomerDropdownOpen}
                         >
                           <span>{taskForm.client_name || "Select"}</span>
-                          <span className="customer-combobox__chevron" aria-hidden="true">
-                            {isCustomerDropdownOpen ? "▴" : "▾"}
-                          </span>
+                          <span className="customer-combobox__chevron" aria-hidden="true" />
                         </button>
 
                         {isCustomerDropdownOpen ? (
@@ -712,7 +710,28 @@ export default function TasksPage({ viewPath }) {
                               placeholder="Search..."
                               onChange={(event) => setCustomerQuery(event.target.value)}
                             />
-                            <div className="customer-combobox__meta">{filteredCustomers.length} Elements</div>
+                            <div className="customer-combobox__actions">
+                              <button
+                                type="button"
+                                className="customer-combobox__action customer-combobox__action--all"
+                                onClick={() => {
+                                  setCustomerQuery("");
+                                  handleTaskFormChange("client_name", "");
+                                }}
+                              >
+                                ALL
+                              </button>
+                              <button
+                                type="button"
+                                className="customer-combobox__action customer-combobox__action--clear"
+                                onClick={() => {
+                                  setCustomerQuery("");
+                                  handleTaskFormChange("client_name", "");
+                                }}
+                              >
+                                CLEAR
+                              </button>
+                            </div>
                             <div className="customer-combobox__list" role="listbox">
                               {filteredCustomers.length ? (
                                 filteredCustomers.map((customer) => (
@@ -722,6 +741,7 @@ export default function TasksPage({ viewPath }) {
                                     className={`customer-combobox__option ${taskForm.client_name === customer.full_name ? "customer-combobox__option--selected" : ""}`}
                                     onClick={() => handleCustomerSelect(customer)}
                                   >
+                                    <span className="customer-combobox__check" aria-hidden="true" />
                                     <span className="customer-combobox__option-name">{customer.full_name}</span>
                                   </button>
                                 ))
