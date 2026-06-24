@@ -783,6 +783,10 @@ export default function MasterPage({
     });
 
     if (!option) {
+      if (resourceKey === "customers" && (field.name === "state" || field.name === "city")) {
+        return { value: normalized, error: "" };
+      }
+
       return { value: "", error: `Invalid ${field.label}.` };
     }
 

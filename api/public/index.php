@@ -382,6 +382,94 @@ function generateCustomerCode(PDO $pdo, int $organizationId): string
     return 'CUS - ' . date('YmdHis') . random_int(100, 999);
 }
 
+
+function findOrCreateState(PDO $pdo, int $organizationId, string $stateName): ?int
+{
+    $stateName = trim($stateName);
+    if ($stateName === '') {
+        return null;
+    }
+
+    $statement = $pdo->prepare(
+        'SELECT id FROM states
+         WHERE organization_id = :organization_id
+           AND lower(state_name) = lower(:state_name)
+         LIMIT 1'
+    );
+    bindOrganizationId($statement, $organizationId);
+    $statement->bindValue(':state_name', $stateName);
+    $statement->execute();
+    $existingId = $statement->fetchColumn();
+
+    if ($existingId !== false) {
+        return (int) $existingId;
+    }
+
+    $insert = $pdo->prepare(
+        'INSERT INTO states (organization_id, state_name, is_active)
+         VALUES (:organization_id, :state_name, 1)'
+    );
+    bindOrganizationId($insert, $organizationId);
+    $insert->bindValue(':state_name', $stateName);
+    $insert->execute();
+
+    return (int) $pdo->lastInsertId();
+}
+
+function findOrCreateCity(PDO $pdo, int $organizationId, int $stateId, string $cityName): ?int
+{
+    $cityName = trim($cityName);
+    if ($cityName === '') {
+        return null;
+    }
+
+    $statement = $pdo->prepare(
+        'SELECT id FROM cities
+         WHERE organization_id = :organization_id
+           AND state_id = :state_id
+           AND lower(city_name) = lower(:city_name)
+         LIMIT 1'
+    );
+    bindOrganizationId($statement, $organizationId);
+    $statement->bindValue(':state_id', $stateId, PDO::PARAM_INT);
+    $statement->bindValue(':city_name', $cityName);
+    $statement->execute();
+    $existingId = $statement->fetchColumn();
+
+    if ($existingId !== false) {
+        return (int) $existingId;
+    }
+
+    $insert = $pdo->prepare(
+        'INSERT INTO cities (organization_id, state_id, city_name, is_active)
+         VALUES (:organization_id, :state_id, :city_name, 1)'
+    );
+    bindOrganizationId($insert, $organizationId);
+    $insert->bindValue(':state_id', $stateId, PDO::PARAM_INT);
+    $insert->bindValue(':city_name', $cityName);
+    $insert->execute();
+
+    return (int) $pdo->lastInsertId();
+}
+
+function ensureCustomerLocationMasters(PDO $pdo, int $organizationId, array &$normalized): void
+{
+    $stateName = trim((string) ($normalized['state'] ?? ''));
+    $cityName = trim((string) ($normalized['city'] ?? ''));
+
+    if ($stateName !== '') {
+        $normalized['state'] = $stateName;
+    }
+
+    if ($cityName !== '') {
+        $normalized['city'] = $cityName;
+    }
+
+    $stateId = $stateName !== '' ? findOrCreateState($pdo, $organizationId, $stateName) : null;
+    if ($stateId !== null && $cityName !== '') {
+        findOrCreateCity($pdo, $organizationId, $stateId, $cityName);
+    }
+}
 function assertNoMasterDuplicate(PDO $pdo, array $config, array $normalized, ?int $organizationId, ?int $id = null): void
 {
     foreach (($config['duplicate_keys'] ?? []) as $rule) {
@@ -3881,6 +3969,10 @@ try {
 
             if ($method === 'POST' && $resource === 'customers' && empty($normalized['customer_code'])) {
                 $normalized['customer_code'] = generateCustomerCode($pdo, $organizationId);
+            }
+
+            if ($resource === 'customers' && $organizationId !== null) {
+                ensureCustomerLocationMasters($pdo, $organizationId, $normalized);
             }
 
             assertNoMasterDuplicate($pdo, $config, $normalized, $organizationId, $method === 'PUT' ? $id : null);
