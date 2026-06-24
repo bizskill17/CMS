@@ -47,7 +47,7 @@ function linkedDeleteMessage(string $resource): string
     $label = singularizeMasterLabel($resource);
 
     return sprintf(
-        'Cannot delete this %s because linked records exist. Remove the related records first and try again.',
+        'Cannot delete this %s. This record is already used in other entries, such as policies, documents, payments, leads, or tasks. Remove or change those linked entries first, then try again.',
         $label
     );
 }
@@ -3831,6 +3831,7 @@ try {
         'message' => $throwable->getMessage()
     ], 500);
 }
+
 
 
 

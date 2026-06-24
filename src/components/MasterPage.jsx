@@ -221,6 +221,24 @@ function formatBulkServerError(config, payload, message) {
   };
 }
 
+function formatLinkedDeleteError(message) {
+  const normalizedMessage = String(message || "");
+
+  if (!normalizedMessage.toLowerCase().startsWith("cannot delete")) {
+    return normalizedMessage;
+  }
+
+  const [summary, ...details] = normalizedMessage.split(/\.\s+/);
+  const detailText = details.join(". ").trim();
+
+  return (
+    <>
+      <strong>{summary}.</strong>
+      {detailText ? <span>{detailText}</span> : null}
+    </>
+  );
+}
+
 function formatMasterServerError(config, payload, message) {
   const formatted = formatBulkServerError(config, payload, message);
   if (formatted.message !== (message || "Failed to import this row.")) {
@@ -711,7 +729,7 @@ export default function MasterPage({
         resetForm();
       }
     } catch (deleteError) {
-      setError(deleteError.message);
+      setError(formatLinkedDeleteError(deleteError.message));
     }
   };
 
@@ -2194,5 +2212,6 @@ export default function MasterPage({
     </div>
   );
 }
+
 
 
