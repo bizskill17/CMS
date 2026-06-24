@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import AllPoliciesPage from "./components/AllPoliciesPage";
 import AttachDocumentsPage from "./components/AttachDocumentsPage";
@@ -69,12 +69,42 @@ const allRoutes = getMenuRouteEntries(menuSections);
 
 export default function App() {
   const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
+  const nativeFetchRef = useRef(window.fetch.bind(window));
   const allowedMenuSections = useMemo(
     () => filterMenuSectionsByViews(authUser?.views || []),
     [authUser]
   );
   const allowedRoutes = useMemo(() => getMenuRouteEntries(allowedMenuSections), [allowedMenuSections]);
   const defaultPath = allowedRoutes[0]?.path || "/dashboard";
+
+  useEffect(() => {
+    const nativeFetch = nativeFetchRef.current;
+
+    if (!authUser?.organization_id) {
+      window.fetch = nativeFetch;
+      return () => {
+        window.fetch = nativeFetch;
+      };
+    }
+
+    window.fetch = (input, init) => {
+      const request = input instanceof Request ? input : null;
+      const headers = new Headers(init?.headers ?? request?.headers ?? undefined);
+
+      if (!headers.has("X-Organization-Id")) {
+        headers.set("X-Organization-Id", String(authUser.organization_id));
+      }
+
+      return nativeFetch(input, {
+        ...init,
+        headers
+      });
+    };
+
+    return () => {
+      window.fetch = nativeFetch;
+    };
+  }, [authUser?.organization_id]);
 
   const handleLogin = (user) => {
     setStoredAuthUser(user);

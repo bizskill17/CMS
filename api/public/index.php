@@ -12,7 +12,7 @@ use PDOException;
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Organization-Id');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
@@ -101,6 +101,41 @@ function buildFullAccessViews(): string
         '/reports/expiry-reports/section/weekly',
         '/reports/expiry-reports/section/yearly',
     ]);
+}
+
+function requestOrganizationId(): ?int
+{
+    $rawOrganizationId = $_SERVER['HTTP_X_ORGANIZATION_ID']
+        ?? $_SERVER['REDIRECT_HTTP_X_ORGANIZATION_ID']
+        ?? ($_GET['organization_id'] ?? null);
+
+    if ($rawOrganizationId === null || trim((string) $rawOrganizationId) === '') {
+        return null;
+    }
+
+    $organizationId = (int) $rawOrganizationId;
+
+    return $organizationId > 0 ? $organizationId : null;
+}
+
+function requireOrganizationId(): int
+{
+    $organizationId = requestOrganizationId();
+
+    if ($organizationId === null) {
+        Response::json([
+            'status' => 'error',
+            'message' => 'Login organization is required.'
+        ], 400);
+        exit;
+    }
+
+    return $organizationId;
+}
+
+function bindOrganizationId($statement, int $organizationId): void
+{
+    $statement->bindValue(':organization_id', $organizationId, PDO::PARAM_INT);
 }
 
 function isFinalLeadStatus(string $status): bool
@@ -197,105 +232,58 @@ try {
 
     if ($path === '/api/menu/counts' && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $counts = [];
 
-        // Masters counts
+        $scopedCount = static function (string $sql) use ($pdo, $organizationId): int {
+            $statement = $pdo->prepare($sql);
+            bindOrganizationId($statement, $organizationId);
+            $statement->execute();
+
+            return (int) $statement->fetchColumn();
+        };
+
         $registry = MasterRegistry::all();
         foreach ($registry as $key => $config) {
             $table = $config['table'];
-            $counts[$key] = (int) $pdo->query("SELECT count(*) FROM $table")->fetchColumn();
+            if (($config['organization_owned'] ?? true) === true) {
+                $counts[$key] = $scopedCount("SELECT count(*) FROM $table WHERE organization_id = :organization_id");
+            } elseif ($key === 'organizations') {
+                $counts[$key] = $scopedCount('SELECT count(*) FROM organizations WHERE id = :organization_id');
+            } else {
+                $counts[$key] = (int) $pdo->query("SELECT count(*) FROM $table")->fetchColumn();
+            }
         }
 
-        // Leads counts
-        $counts['leads-all'] = (int) $pdo->query('SELECT count(*) FROM leads')->fetchColumn();
-        $counts['leads-pending-assigning'] = (int) $pdo->query(
-            'SELECT count(*) FROM leads WHERE lead_status = "Pending Assigning"'
-        )->fetchColumn();
-        $counts['leads-pending-first-follow-up'] = (int) $pdo->query(
-            'SELECT count(*) FROM leads WHERE lead_status = "Pending First Follow Up"'
-        )->fetchColumn();
-        $counts['leads-pending-repeat-follow-up'] = (int) $pdo->query(
-            'SELECT count(*) FROM leads WHERE lead_status = "Pending Repeat Follow Up"'
-        )->fetchColumn();
-        $counts['leads-converted'] = (int) $pdo->query(
-            'SELECT count(*) FROM leads WHERE lead_status = "Converted"'
-        )->fetchColumn();
-        $counts['leads-converted-today'] = (int) $pdo->query(
-            'SELECT count(*) FROM leads WHERE lead_status = "Converted" AND latest_update_date = curdate()'
-        )->fetchColumn();
-        $counts['leads-lost'] = (int) $pdo->query(
-            'SELECT count(*) FROM leads WHERE lead_status = "Lost"'
-        )->fetchColumn();
-        $counts['leads-lost-today'] = (int) $pdo->query(
-            'SELECT count(*) FROM leads WHERE lead_status = "Lost" AND latest_update_date = curdate()'
-        )->fetchColumn();
-        $counts['leads-canceled'] = (int) $pdo->query(
-            'SELECT count(*) FROM leads WHERE lead_status = "Canceled"'
-        )->fetchColumn();
-        $counts['leads-canceled-today'] = (int) $pdo->query(
-            'SELECT count(*) FROM leads WHERE lead_status = "Canceled" AND latest_update_date = curdate()'
-        )->fetchColumn();
-        $counts['leads-activity-log'] = (int) $pdo->query('SELECT count(*) FROM lead_updates')->fetchColumn();
+        $counts['leads-all'] = $scopedCount('SELECT count(*) FROM leads WHERE organization_id = :organization_id');
+        $counts['leads-pending-assigning'] = $scopedCount('SELECT count(*) FROM leads WHERE organization_id = :organization_id AND lead_status = "Pending Assigning"');
+        $counts['leads-pending-first-follow-up'] = $scopedCount('SELECT count(*) FROM leads WHERE organization_id = :organization_id AND lead_status = "Pending First Follow Up"');
+        $counts['leads-pending-repeat-follow-up'] = $scopedCount('SELECT count(*) FROM leads WHERE organization_id = :organization_id AND lead_status = "Pending Repeat Follow Up"');
+        $counts['leads-converted'] = $scopedCount('SELECT count(*) FROM leads WHERE organization_id = :organization_id AND lead_status = "Converted"');
+        $counts['leads-converted-today'] = $scopedCount('SELECT count(*) FROM leads WHERE organization_id = :organization_id AND lead_status = "Converted" AND latest_update_date = curdate()');
+        $counts['leads-lost'] = $scopedCount('SELECT count(*) FROM leads WHERE organization_id = :organization_id AND lead_status = "Lost"');
+        $counts['leads-lost-today'] = $scopedCount('SELECT count(*) FROM leads WHERE organization_id = :organization_id AND lead_status = "Lost" AND latest_update_date = curdate()');
+        $counts['leads-canceled'] = $scopedCount('SELECT count(*) FROM leads WHERE organization_id = :organization_id AND lead_status = "Canceled"');
+        $counts['leads-canceled-today'] = $scopedCount('SELECT count(*) FROM leads WHERE organization_id = :organization_id AND lead_status = "Canceled" AND latest_update_date = curdate()');
+        $counts['leads-activity-log'] = $scopedCount('SELECT count(*) FROM lead_updates WHERE organization_id = :organization_id');
 
-        // Tasks counts
-        $counts['tasks-all'] = (int) $pdo->query('SELECT count(*) FROM tasks')->fetchColumn();
-        $counts['tasks-pending'] = (int) $pdo->query(
-            'SELECT count(*) FROM tasks WHERE task_status = "Pending"'
-        )->fetchColumn();
-        $counts['tasks-completed'] = (int) $pdo->query(
-            'SELECT count(*) FROM tasks WHERE task_status = "Completed"'
-        )->fetchColumn();
-        $counts['tasks-completed-today'] = (int) $pdo->query(
-            'SELECT count(*) FROM tasks WHERE task_status = "Completed" AND latest_update_date = curdate()'
-        )->fetchColumn();
-        $counts['tasks-canceled'] = (int) $pdo->query(
-            'SELECT count(*) FROM tasks WHERE task_status = "Canceled"'
-        )->fetchColumn();
-        $counts['tasks-canceled-today'] = (int) $pdo->query(
-            'SELECT count(*) FROM tasks WHERE task_status = "Canceled" AND latest_update_date = curdate()'
-        )->fetchColumn();
-        $counts['tasks-activity-log'] = (int) $pdo->query('SELECT count(*) FROM task_updates')->fetchColumn();
+        $counts['tasks-all'] = $scopedCount('SELECT count(*) FROM tasks WHERE organization_id = :organization_id');
+        $counts['tasks-pending'] = $scopedCount('SELECT count(*) FROM tasks WHERE organization_id = :organization_id AND task_status = "Pending"');
+        $counts['tasks-completed'] = $scopedCount('SELECT count(*) FROM tasks WHERE organization_id = :organization_id AND task_status = "Completed"');
+        $counts['tasks-completed-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE organization_id = :organization_id AND task_status = "Completed" AND latest_update_date = curdate()');
+        $counts['tasks-canceled'] = $scopedCount('SELECT count(*) FROM tasks WHERE organization_id = :organization_id AND task_status = "Canceled"');
+        $counts['tasks-canceled-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE organization_id = :organization_id AND task_status = "Canceled" AND latest_update_date = curdate()');
+        $counts['tasks-activity-log'] = $scopedCount('SELECT count(*) FROM task_updates WHERE organization_id = :organization_id');
 
-        // Policies counts
-        $counts['all-policies'] = (int) $pdo->query('SELECT count(*) FROM policies')->fetchColumn();
-        $counts['renew-policy'] = (int) $pdo->query(
-            'SELECT count(*) FROM policies 
-             WHERE risk_end_date IS NOT NULL 
-               AND risk_end_date >= curdate() 
-               AND coalesce(renewal_status, "") <> "Renewed"'
-        )->fetchColumn();
-        $counts['renew-policy-today'] = (int) $pdo->query(
-            'SELECT count(*) FROM policies 
-             WHERE risk_end_date = curdate()
-               AND coalesce(renewal_status, "") <> "Renewed"'
-        )->fetchColumn();
-        
-        $counts['attach-documents'] = (int) $pdo->query(
-            'SELECT count(*) FROM (
-                SELECT p.id FROM policies p
-                LEFT JOIN documents d ON d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1
-                GROUP BY p.id HAVING count(d.id) = 0
-             ) pending_docs'
-        )->fetchColumn();
-
-        // Payments counts
-        $counts['pending-payments'] = (int) $pdo->query(
-            'SELECT count(*) FROM policies WHERE paid_by_type = "Agent" AND coalesce(payment_pending_amount, 0) > 0'
-        )->fetchColumn();
-
-        // Reports counts
-        $counts['policies-added'] = (int) $pdo->query(
-            'SELECT count(*) FROM policies p WHERE date(p.created_at) = curdate()'
-        )->fetchColumn();
-        $counts['policies-this-week'] = (int) $pdo->query(
-            'SELECT count(*) FROM policies p WHERE yearweek(p.created_at, 1) = yearweek(curdate(), 1)'
-        )->fetchColumn();
-        $counts['policies-this-month'] = (int) $pdo->query(
-            'SELECT count(*) FROM policies p WHERE year(p.created_at) = year(curdate()) AND month(p.created_at) = month(curdate())'
-        )->fetchColumn();
-        $counts['expiry-reports'] = (int) $pdo->query(
-            'SELECT count(*) FROM policies p WHERE p.risk_end_date IS NOT NULL'
-        )->fetchColumn();
+        $counts['all-policies'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id');
+        $counts['renew-policy'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND risk_end_date >= curdate() AND coalesce(renewal_status, "") <> "Renewed"');
+        $counts['renew-policy-today'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date = curdate() AND coalesce(renewal_status, "") <> "Renewed"');
+        $counts['attach-documents'] = $scopedCount('SELECT count(*) FROM (SELECT p.id FROM policies p LEFT JOIN documents d ON d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1 WHERE p.organization_id = :organization_id GROUP BY p.id HAVING count(d.id) = 0) pending_docs');
+        $counts['pending-payments'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND paid_by_type = "Agent" AND coalesce(payment_pending_amount, 0) > 0');
+        $counts['policies-added'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND date(p.created_at) = curdate()');
+        $counts['policies-this-week'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND yearweek(p.created_at, 1) = yearweek(curdate(), 1)');
+        $counts['policies-this-month'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND year(p.created_at) = year(curdate()) AND month(p.created_at) = month(curdate())');
+        $counts['expiry-reports'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND p.risk_end_date IS NOT NULL');
 
         Response::json([
             'status' => 'ok',
@@ -306,14 +294,17 @@ try {
 
     if ($path === '/api/customers' && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $limit = isset($_GET['limit']) ? max(1, min(100, (int) $_GET['limit'])) : 25;
 
         $statement = $pdo->prepare(
             'SELECT id, customer_code, full_name, mobile, email, city, state, is_active, created_at
              FROM customers
+             WHERE organization_id = :organization_id
              ORDER BY id DESC
              LIMIT :limit'
         );
+        bindOrganizationId($statement, $organizationId);
         $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
         $statement->execute();
 
@@ -329,15 +320,18 @@ try {
 
     if (preg_match('#^/api/customers/(\d+)/policies$#', $path, $matches) === 1 && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $customerId = (int) $matches[1];
 
         $customerStatement = $pdo->prepare(
             'SELECT id, customer_code, full_name
              FROM customers
              WHERE id = :id
+               AND organization_id = :organization_id
              LIMIT 1'
         );
         $customerStatement->bindValue(':id', $customerId, PDO::PARAM_INT);
+        bindOrganizationId($customerStatement, $organizationId);
         $customerStatement->execute();
         $customer = $customerStatement->fetch();
 
@@ -367,9 +361,11 @@ try {
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
              LEFT JOIN insurance_products ip ON ip.id = p.product_id
              WHERE p.customer_id = :customer_id
+               AND p.organization_id = :organization_id
              ORDER BY p.risk_end_date DESC, p.issue_date DESC, p.id DESC'
         );
         $policyStatement->bindValue(':customer_id', $customerId, PDO::PARAM_INT);
+        bindOrganizationId($policyStatement, $organizationId);
         $policyStatement->execute();
 
         $documentStatement = $pdo->prepare(
@@ -386,11 +382,13 @@ try {
              FROM documents d
              LEFT JOIN document_types dt ON dt.id = d.document_type_id
              WHERE d.customer_id = :customer_id
+               AND d.organization_id = :organization_id
                AND d.deleted_at IS NULL
                AND d.is_active = 1
              ORDER BY d.uploaded_at DESC, d.id DESC'
         );
         $documentStatement->bindValue(':customer_id', $customerId, PDO::PARAM_INT);
+        bindOrganizationId($documentStatement, $organizationId);
         $documentStatement->execute();
 
         Response::json([
@@ -403,7 +401,6 @@ try {
         ]);
         exit;
     }
-
     if ($path === '/api/masters' && $method === 'GET') {
         Response::json([
             'status' => 'ok',
@@ -414,7 +411,8 @@ try {
 
     if ($path === '/api/leads/activity' && $method === 'GET') {
         $pdo = Database::connection();
-        $statement = $pdo->query(
+        $organizationId = requireOrganizationId();
+        $statement = $pdo->prepare(
             'SELECT *
              FROM (
                 SELECT
@@ -431,6 +429,7 @@ try {
                     l.created_at AS sort_at
                 FROM leads l
                 LEFT JOIN users u ON u.id = l.assigned_to_user_id
+                WHERE l.organization_id = :organization_id
 
                 UNION ALL
 
@@ -450,9 +449,13 @@ try {
                 INNER JOIN leads l ON l.id = lu.lead_id
                 LEFT JOIN users u ON u.id = l.assigned_to_user_id
                 LEFT JOIN users uu ON uu.id = lu.update_by_user_id
+                WHERE lu.organization_id = :lead_update_organization_id
              ) activity
              ORDER BY sort_at DESC'
         );
+        bindOrganizationId($statement, $organizationId);
+        $statement->bindValue(':lead_update_organization_id', $organizationId, PDO::PARAM_INT);
+        $statement->execute();
 
         Response::json([
             'status' => 'ok',
@@ -460,27 +463,28 @@ try {
         ]);
         exit;
     }
-
     if ($path === '/api/leads' && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $view = trim((string) ($_GET['view'] ?? 'all'));
-        $whereClause = '';
+        $whereConditions = ['l.organization_id = :organization_id'];
 
         if ($view === 'pending-assigning') {
-            $whereClause = 'WHERE l.lead_status = "Pending Assigning"';
+            $whereConditions[] = 'l.lead_status = "Pending Assigning"';
         } elseif ($view === 'pending-first-follow-up') {
-            $whereClause = 'WHERE l.lead_status = "Pending First Follow Up"';
+            $whereConditions[] = 'l.lead_status = "Pending First Follow Up"';
         } elseif ($view === 'pending-repeat-follow-up') {
-            $whereClause = 'WHERE l.lead_status = "Pending Repeat Follow Up"';
+            $whereConditions[] = 'l.lead_status = "Pending Repeat Follow Up"';
         } elseif ($view === 'converted') {
-            $whereClause = 'WHERE l.lead_status = "Converted"';
+            $whereConditions[] = 'l.lead_status = "Converted"';
         } elseif ($view === 'lost') {
-            $whereClause = 'WHERE l.lead_status = "Lost"';
+            $whereConditions[] = 'l.lead_status = "Lost"';
         } elseif ($view === 'canceled') {
-            $whereClause = 'WHERE l.lead_status = "Canceled"';
+            $whereConditions[] = 'l.lead_status = "Canceled"';
         }
 
-        $statement = $pdo->query(
+        $whereClause = 'WHERE ' . implode(' AND ', $whereConditions);
+        $statement = $pdo->prepare(
             "SELECT
                 l.id,
                 l.lead_date,
@@ -514,6 +518,8 @@ try {
              $whereClause
              ORDER BY l.id DESC"
         );
+        bindOrganizationId($statement, $organizationId);
+        $statement->execute();
 
         Response::json([
             'status' => 'ok',
@@ -521,7 +527,6 @@ try {
         ]);
         exit;
     }
-
     if ($path === '/api/auth/login' && $method === 'POST') {
         $pdo = Database::connection();
         $rawBody = file_get_contents('php://input');
@@ -675,7 +680,8 @@ try {
 
     if ($path === '/api/tasks/activity' && $method === 'GET') {
         $pdo = Database::connection();
-        $statement = $pdo->query(
+        $organizationId = requireOrganizationId();
+        $statement = $pdo->prepare(
             'SELECT *
              FROM (
                 SELECT
@@ -692,6 +698,7 @@ try {
                     t.created_at AS sort_at
                 FROM tasks t
                 LEFT JOIN users u ON u.id = t.assigned_to_user_id
+                WHERE t.organization_id = :organization_id
 
                 UNION ALL
 
@@ -711,9 +718,13 @@ try {
                 INNER JOIN tasks t ON t.id = tu.task_id
                 LEFT JOIN users u ON u.id = t.assigned_to_user_id
                 LEFT JOIN users uu ON uu.id = tu.update_by_user_id
+                WHERE tu.organization_id = :task_update_organization_id
              ) activity
              ORDER BY sort_at DESC'
         );
+        bindOrganizationId($statement, $organizationId);
+        $statement->bindValue(':task_update_organization_id', $organizationId, PDO::PARAM_INT);
+        $statement->execute();
 
         Response::json([
             'status' => 'ok',
@@ -721,21 +732,22 @@ try {
         ]);
         exit;
     }
-
     if ($path === '/api/tasks' && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $view = trim((string) ($_GET['view'] ?? 'all'));
-        $whereClause = '';
+        $whereConditions = ['t.organization_id = :organization_id'];
 
         if ($view === 'pending') {
-            $whereClause = 'WHERE t.task_status = "Pending"';
+            $whereConditions[] = 't.task_status = "Pending"';
         } elseif ($view === 'completed') {
-            $whereClause = 'WHERE t.task_status = "Completed"';
+            $whereConditions[] = 't.task_status = "Completed"';
         } elseif ($view === 'canceled') {
-            $whereClause = 'WHERE t.task_status = "Canceled"';
+            $whereConditions[] = 't.task_status = "Canceled"';
         }
 
-        $statement = $pdo->query(
+        $whereClause = 'WHERE ' . implode(' AND ', $whereConditions);
+        $statement = $pdo->prepare(
             "SELECT
                 t.id,
                 t.task_date,
@@ -769,6 +781,8 @@ try {
              $whereClause
              ORDER BY t.id DESC"
         );
+        bindOrganizationId($statement, $organizationId);
+        $statement->execute();
 
         Response::json([
             'status' => 'ok',
@@ -776,9 +790,9 @@ try {
         ]);
         exit;
     }
-
     if ($path === '/api/leads' && $method === 'POST') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $rawBody = file_get_contents('php://input');
         $payload = json_decode($rawBody ?: '[]', true);
 
@@ -813,6 +827,7 @@ try {
 
         $statement = $pdo->prepare(
             'INSERT INTO leads (
+                organization_id,
                 lead_date,
                 description,
                 due_date,
@@ -824,6 +839,7 @@ try {
                 notes,
                 lead_status
              ) VALUES (
+                :organization_id,
                 :lead_date,
                 :description,
                 :due_date,
@@ -836,6 +852,7 @@ try {
                 :lead_status
              )'
         );
+        bindOrganizationId($statement, $organizationId);
         $statement->bindValue(':lead_date', $payload['lead_date']);
         $statement->bindValue(':description', trim((string) ($payload['description'] ?? '')) !== '' ? $payload['description'] : null);
         $statement->bindValue(':due_date', trim((string) ($payload['due_date'] ?? '')) !== '' ? $payload['due_date'] : null);
@@ -858,6 +875,7 @@ try {
 
     if ($path === '/api/tasks' && $method === 'POST') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $rawBody = file_get_contents('php://input');
         $payload = json_decode($rawBody ?: '[]', true);
 
@@ -892,6 +910,7 @@ try {
 
         $statement = $pdo->prepare(
             'INSERT INTO tasks (
+                organization_id,
                 task_date,
                 description,
                 due_date,
@@ -903,6 +922,7 @@ try {
                 notes,
                 task_status
              ) VALUES (
+                :organization_id,
                 :task_date,
                 :description,
                 :due_date,
@@ -915,6 +935,7 @@ try {
                 :task_status
              )'
         );
+        bindOrganizationId($statement, $organizationId);
         $statement->bindValue(':task_date', $payload['task_date']);
         $statement->bindValue(':description', trim((string) ($payload['description'] ?? '')) !== '' ? $payload['description'] : null);
         $statement->bindValue(':due_date', trim((string) ($payload['due_date'] ?? '')) !== '' ? $payload['due_date'] : null);
@@ -937,6 +958,7 @@ try {
 
     if (preg_match('#^/api/leads/(\d+)$#', $path, $matches) === 1 && $method === 'PUT') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $leadId = (int) $matches[1];
         $rawBody = file_get_contents('php://input');
         $payload = json_decode($rawBody ?: '[]', true);
@@ -953,9 +975,11 @@ try {
             'SELECT id, lead_status
              FROM leads
              WHERE id = :id
+               AND organization_id = :organization_id
              LIMIT 1'
         );
         $existingLeadStatement->bindValue(':id', $leadId, PDO::PARAM_INT);
+        bindOrganizationId($existingLeadStatement, $organizationId);
         $existingLeadStatement->execute();
         $existingLead = $existingLeadStatement->fetch();
 
@@ -978,9 +1002,10 @@ try {
         }
 
         $updatesCountStatement = $pdo->prepare(
-            'SELECT count(*) FROM lead_updates WHERE lead_id = :lead_id'
+            'SELECT count(*) FROM lead_updates WHERE lead_id = :lead_id AND organization_id = :organization_id'
         );
         $updatesCountStatement->bindValue(':lead_id', $leadId, PDO::PARAM_INT);
+        bindOrganizationId($updatesCountStatement, $organizationId);
         $updatesCountStatement->execute();
         $hasUpdates = (int) $updatesCountStatement->fetchColumn() > 0;
 
@@ -1007,8 +1032,10 @@ try {
                  sub_category_id = :sub_category_id,
                  notes = :notes,
                  lead_status = :lead_status
-             WHERE id = :id'
+             WHERE id = :id
+               AND organization_id = :organization_id'
         );
+        bindOrganizationId($statement, $organizationId);
         $statement->bindValue(':lead_date', $payload['lead_date']);
         $statement->bindValue(':description', trim((string) ($payload['description'] ?? '')) !== '' ? $payload['description'] : null);
         $statement->bindValue(':due_date', trim((string) ($payload['due_date'] ?? '')) !== '' ? $payload['due_date'] : null);
@@ -1020,6 +1047,7 @@ try {
         $statement->bindValue(':notes', trim((string) ($payload['notes'] ?? '')) !== '' ? $payload['notes'] : null);
         $statement->bindValue(':lead_status', $leadStatus);
         $statement->bindValue(':id', $leadId, PDO::PARAM_INT);
+        bindOrganizationId($statement, $organizationId);
         $statement->execute();
 
         Response::json([
@@ -1031,6 +1059,7 @@ try {
 
     if (preg_match('#^/api/tasks/(\d+)$#', $path, $matches) === 1 && $method === 'PUT') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $taskId = (int) $matches[1];
         $rawBody = file_get_contents('php://input');
         $payload = json_decode($rawBody ?: '[]', true);
@@ -1047,9 +1076,11 @@ try {
             'SELECT id, task_status
              FROM tasks
              WHERE id = :id
+               AND organization_id = :organization_id
              LIMIT 1'
         );
         $existingTaskStatement->bindValue(':id', $taskId, PDO::PARAM_INT);
+        bindOrganizationId($existingTaskStatement, $organizationId);
         $existingTaskStatement->execute();
         $existingTask = $existingTaskStatement->fetch();
 
@@ -1072,9 +1103,10 @@ try {
         }
 
         $updatesCountStatement = $pdo->prepare(
-            'SELECT count(*) FROM task_updates WHERE task_id = :task_id'
+            'SELECT count(*) FROM task_updates WHERE task_id = :task_id AND organization_id = :organization_id'
         );
         $updatesCountStatement->bindValue(':task_id', $taskId, PDO::PARAM_INT);
+        bindOrganizationId($updatesCountStatement, $organizationId);
         $updatesCountStatement->execute();
         $hasUpdates = (int) $updatesCountStatement->fetchColumn() > 0;
 
@@ -1101,8 +1133,10 @@ try {
                  sub_category_id = :sub_category_id,
                  notes = :notes,
                  task_status = :task_status
-             WHERE id = :id'
+             WHERE id = :id
+               AND organization_id = :organization_id'
         );
+        bindOrganizationId($statement, $organizationId);
         $statement->bindValue(':task_date', $payload['task_date']);
         $statement->bindValue(':description', trim((string) ($payload['description'] ?? '')) !== '' ? $payload['description'] : null);
         $statement->bindValue(':due_date', trim((string) ($payload['due_date'] ?? '')) !== '' ? $payload['due_date'] : null);
@@ -1114,6 +1148,7 @@ try {
         $statement->bindValue(':notes', trim((string) ($payload['notes'] ?? '')) !== '' ? $payload['notes'] : null);
         $statement->bindValue(':task_status', $taskStatus);
         $statement->bindValue(':id', $taskId, PDO::PARAM_INT);
+        bindOrganizationId($statement, $organizationId);
         $statement->execute();
 
         Response::json([
@@ -1125,18 +1160,21 @@ try {
 
     if (preg_match('#^/api/leads/(\d+)$#', $path, $matches) === 1 && $method === 'DELETE') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $leadId = (int) $matches[1];
 
         $pdo->beginTransaction();
         try {
             // Delete related updates first
-            $deleteUpdates = $pdo->prepare('DELETE FROM lead_updates WHERE lead_id = :id');
+            $deleteUpdates = $pdo->prepare('DELETE FROM lead_updates WHERE lead_id = :id AND organization_id = :organization_id');
             $deleteUpdates->bindValue(':id', $leadId, PDO::PARAM_INT);
+            bindOrganizationId($deleteUpdates, $organizationId);
             $deleteUpdates->execute();
 
             // Delete the lead
-            $deleteLead = $pdo->prepare('DELETE FROM leads WHERE id = :id');
+            $deleteLead = $pdo->prepare('DELETE FROM leads WHERE id = :id AND organization_id = :organization_id');
             $deleteLead->bindValue(':id', $leadId, PDO::PARAM_INT);
+            bindOrganizationId($deleteLead, $organizationId);
             $deleteLead->execute();
 
             if ($deleteLead->rowCount() === 0) {
@@ -1162,16 +1200,19 @@ try {
 
     if (preg_match('#^/api/tasks/(\d+)$#', $path, $matches) === 1 && $method === 'DELETE') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $taskId = (int) $matches[1];
 
         $pdo->beginTransaction();
         try {
-            $deleteUpdates = $pdo->prepare('DELETE FROM task_updates WHERE task_id = :id');
+            $deleteUpdates = $pdo->prepare('DELETE FROM task_updates WHERE task_id = :id AND organization_id = :organization_id');
             $deleteUpdates->bindValue(':id', $taskId, PDO::PARAM_INT);
+            bindOrganizationId($deleteUpdates, $organizationId);
             $deleteUpdates->execute();
 
-            $deleteTask = $pdo->prepare('DELETE FROM tasks WHERE id = :id');
+            $deleteTask = $pdo->prepare('DELETE FROM tasks WHERE id = :id AND organization_id = :organization_id');
             $deleteTask->bindValue(':id', $taskId, PDO::PARAM_INT);
+            bindOrganizationId($deleteTask, $organizationId);
             $deleteTask->execute();
 
             if ($deleteTask->rowCount() === 0) {
@@ -1197,15 +1238,18 @@ try {
 
     if (preg_match('#^/api/leads/(\d+)/updates$#', $path, $matches) === 1 && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $leadId = (int) $matches[1];
         $statement = $pdo->prepare(
             'SELECT lu.id, lu.status, lu.update_date, lu.next_follow_up_date, lu.remarks, lu.created_at, uu.full_name AS update_by_name
              FROM lead_updates lu
              LEFT JOIN users uu ON uu.id = lu.update_by_user_id
              WHERE lu.lead_id = :lead_id
+               AND lu.organization_id = :organization_id
              ORDER BY lu.update_date DESC, lu.id DESC'
         );
         $statement->bindValue(':lead_id', $leadId, PDO::PARAM_INT);
+        bindOrganizationId($statement, $organizationId);
         $statement->execute();
 
         Response::json([
@@ -1217,15 +1261,18 @@ try {
 
     if (preg_match('#^/api/tasks/(\d+)/updates$#', $path, $matches) === 1 && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $taskId = (int) $matches[1];
         $statement = $pdo->prepare(
             'SELECT tu.id, tu.status, tu.update_date, tu.next_follow_up_date, tu.remarks, tu.created_at, uu.full_name AS update_by_name
              FROM task_updates tu
              LEFT JOIN users uu ON uu.id = tu.update_by_user_id
              WHERE tu.task_id = :task_id
+               AND tu.organization_id = :organization_id
              ORDER BY tu.update_date DESC, tu.id DESC'
         );
         $statement->bindValue(':task_id', $taskId, PDO::PARAM_INT);
+        bindOrganizationId($statement, $organizationId);
         $statement->execute();
 
         Response::json([
@@ -1237,6 +1284,7 @@ try {
 
     if (preg_match('#^/api/leads/(\d+)/updates$#', $path, $matches) === 1 && $method === 'POST') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $leadId = (int) $matches[1];
         $rawBody = file_get_contents('php://input');
         $payload = json_decode($rawBody ?: '[]', true);
@@ -1253,9 +1301,11 @@ try {
             'SELECT id, lead_status, assigned_to_user_id
              FROM leads
              WHERE id = :id
+               AND organization_id = :organization_id
              LIMIT 1'
         );
         $leadStatement->bindValue(':id', $leadId, PDO::PARAM_INT);
+        bindOrganizationId($leadStatement, $organizationId);
         $leadStatement->execute();
         $lead = $leadStatement->fetch();
 
@@ -1313,6 +1363,7 @@ try {
         try {
             $insertUpdate = $pdo->prepare(
                 'INSERT INTO lead_updates (
+                    organization_id,
                     lead_id,
                     status,
                     update_date,
@@ -1320,6 +1371,7 @@ try {
                     next_follow_up_date,
                     remarks
                  ) VALUES (
+                    :organization_id,
                     :lead_id,
                     :status,
                     :update_date,
@@ -1328,6 +1380,7 @@ try {
                     :remarks
                  )'
             );
+            bindOrganizationId($insertUpdate, $organizationId);
             $insertUpdate->bindValue(':lead_id', $leadId, PDO::PARAM_INT);
             $insertUpdate->bindValue(':status', $updateStatus);
             $insertUpdate->bindValue(':update_date', $updateDate);
@@ -1341,7 +1394,8 @@ try {
                  SET lead_status = :lead_status,
                      latest_update_date = :latest_update_date,
                      next_follow_up_date = :next_follow_up_date
-                 WHERE id = :id'
+                 WHERE id = :id
+                   AND organization_id = :organization_id'
             );
             $updateLead->bindValue(':lead_status', $leadStatus);
             $updateLead->bindValue(':latest_update_date', $updateDate);
@@ -1350,6 +1404,7 @@ try {
                 $leadStatus === 'Pending Repeat Follow Up' ? $nextFollowUpDate : null
             );
             $updateLead->bindValue(':id', $leadId, PDO::PARAM_INT);
+            bindOrganizationId($updateLead, $organizationId);
             $updateLead->execute();
 
             $pdo->commit();
@@ -1367,6 +1422,7 @@ try {
 
     if ($path === '/api/policies' && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
 
         $statement = $pdo->prepare(
@@ -1392,9 +1448,11 @@ try {
              LEFT JOIN customer_groups cg ON cg.id = c.group_id
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
              LEFT JOIN insurance_products ip ON ip.id = p.product_id
+             WHERE p.organization_id = :organization_id
              ORDER BY p.id DESC
              LIMIT :limit'
         );
+        bindOrganizationId($statement, $organizationId);
         $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
         $statement->execute();
 
@@ -1405,13 +1463,13 @@ try {
         ]);
         exit;
     }
-
     if (in_array($path, [
         '/api/reports/policies-added',
         '/api/reports/policies-this-week',
         '/api/reports/policies-this-month',
     ], true) && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
 
         $dateCondition = match ($path) {
@@ -1438,10 +1496,12 @@ try {
              LEFT JOIN customer_groups cg ON cg.id = c.group_id
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
              LEFT JOIN insurance_products ip ON ip.id = p.product_id
-             WHERE $dateCondition
+             WHERE p.organization_id = :organization_id
+               AND $dateCondition
              ORDER BY p.created_at DESC, p.id DESC
              LIMIT :limit"
         );
+        bindOrganizationId($statement, $organizationId);
         $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
         $statement->execute();
 
@@ -1452,9 +1512,9 @@ try {
         ]);
         exit;
     }
-
     if ($path === '/api/reports/payments-received' && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
 
         $statement = $pdo->prepare(
@@ -1473,9 +1533,11 @@ try {
              INNER JOIN policies p ON p.id = cp.policy_id
              LEFT JOIN customers c ON c.id = p.customer_id
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
+             WHERE cp.organization_id = :organization_id
              ORDER BY cp.payment_date DESC, cp.id DESC
              LIMIT :limit'
         );
+        bindOrganizationId($statement, $organizationId);
         $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
         $statement->execute();
 
@@ -1486,53 +1548,46 @@ try {
         ]);
         exit;
     }
-
     if ($path === '/api/reports/expiry-counts' && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
 
-        $monthlyRaw = $pdo->query(
+        $monthlyStatement = $pdo->prepare(
             'SELECT month(risk_end_date) AS bucket, count(*) AS total
              FROM policies
-             WHERE risk_end_date IS NOT NULL
+             WHERE organization_id = :organization_id
+               AND risk_end_date IS NOT NULL
              GROUP BY month(risk_end_date)'
-        )->fetchAll();
+        );
+        bindOrganizationId($monthlyStatement, $organizationId);
+        $monthlyStatement->execute();
+        $monthlyRaw = $monthlyStatement->fetchAll();
         $monthly = [];
         foreach ($monthlyRaw as $row) {
             $monthly[(string) $row['bucket']] = (int) $row['total'];
         }
 
+        $scopedCount = static function (string $sql) use ($pdo, $organizationId): int {
+            $statement = $pdo->prepare($sql);
+            bindOrganizationId($statement, $organizationId);
+            $statement->execute();
+
+            return (int) $statement->fetchColumn();
+        };
+
         $daily = [
-            'today' => (int) $pdo->query(
-                'SELECT count(*) FROM policies WHERE risk_end_date IS NOT NULL AND date(risk_end_date) = curdate()'
-            )->fetchColumn(),
-            'tomorrow' => (int) $pdo->query(
-                'SELECT count(*) FROM policies WHERE risk_end_date IS NOT NULL AND date(risk_end_date) = date_add(curdate(), interval 1 day)'
-            )->fetchColumn(),
-            'day-after-tomorrow' => (int) $pdo->query(
-                'SELECT count(*) FROM policies WHERE risk_end_date IS NOT NULL AND date(risk_end_date) = date_add(curdate(), interval 2 day)'
-            )->fetchColumn(),
+            'today' => $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND date(risk_end_date) = curdate()'),
+            'tomorrow' => $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND date(risk_end_date) = date_add(curdate(), interval 1 day)'),
+            'day-after-tomorrow' => $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND date(risk_end_date) = date_add(curdate(), interval 2 day)'),
         ];
 
         $weekly = [
-            '7-days' => (int) $pdo->query(
-                'SELECT count(*) FROM policies
-                 WHERE risk_end_date IS NOT NULL
-                   AND risk_end_date >= curdate()
-                   AND risk_end_date <= date_add(curdate(), interval 7 day)'
-            )->fetchColumn(),
+            '7-days' => $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND risk_end_date >= curdate() AND risk_end_date <= date_add(curdate(), interval 7 day)'),
         ];
 
         $yearly = [
-            'current' => (int) $pdo->query(
-                'SELECT count(*) FROM policies
-                 WHERE risk_end_date IS NOT NULL
-                   AND coalesce(fiscal_year_ending, year(curdate())) = year(curdate())'
-            )->fetchColumn(),
-            'future' => (int) $pdo->query(
-                'SELECT count(*) FROM policies
-                 WHERE risk_end_date IS NOT NULL
-                   AND coalesce(fiscal_year_ending, year(curdate())) > year(curdate())'
-            )->fetchColumn(),
+            'current' => $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND coalesce(fiscal_year_ending, year(curdate())) = year(curdate())'),
+            'future' => $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND coalesce(fiscal_year_ending, year(curdate())) > year(curdate())'),
         ];
 
         Response::json([
@@ -1546,14 +1601,14 @@ try {
         ]);
         exit;
     }
-
     if ($path === '/api/reports/expiring-policies' && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
         $mode = trim((string) ($_GET['mode'] ?? ''));
         $value = trim((string) ($_GET['value'] ?? ''));
 
-        $whereClause = 'p.risk_end_date IS NOT NULL';
+        $whereClause = 'p.organization_id = :organization_id AND p.risk_end_date IS NOT NULL';
         $bindings = [];
 
         if ($mode === 'month') {
@@ -1630,6 +1685,7 @@ try {
              LIMIT :limit"
         );
 
+        bindOrganizationId($statement, $organizationId);
         foreach ($bindings as $bindingName => [$bindingValue, $bindingType]) {
             $statement->bindValue($bindingName, $bindingValue, $bindingType);
         }
@@ -1643,20 +1699,29 @@ try {
         ]);
         exit;
     }
-
     if ($path === '/api/dashboard/policy-summary' && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
 
-        $renewalsNext7Days = (int) $pdo->query(
+        $scopedCount = static function (string $sql) use ($pdo, $organizationId): int {
+            $statement = $pdo->prepare($sql);
+            bindOrganizationId($statement, $organizationId);
+            $statement->execute();
+
+            return (int) $statement->fetchColumn();
+        };
+
+        $renewalsNext7Days = $scopedCount(
             'SELECT count(*)
              FROM policies p
-             WHERE p.risk_end_date IS NOT NULL
+             WHERE p.organization_id = :organization_id
+               AND p.risk_end_date IS NOT NULL
                AND p.risk_end_date >= curdate()
                AND p.risk_end_date <= date_add(curdate(), interval 7 day)
                AND coalesce(p.renewal_status, "") <> "Renewed"'
-        )->fetchColumn();
+        );
 
-        $pendingDocumentUploads = (int) $pdo->query(
+        $pendingDocumentUploads = $scopedCount(
             'SELECT count(*)
              FROM (
                 SELECT p.id
@@ -1665,25 +1730,28 @@ try {
                   ON d.policy_id = p.id
                  AND d.deleted_at IS NULL
                  AND d.is_active = 1
+                WHERE p.organization_id = :organization_id
                 GROUP BY p.id
                 HAVING count(d.id) = 0
              ) pending_documents'
-        )->fetchColumn();
+        );
 
-        $renewalsOverdue = (int) $pdo->query(
+        $renewalsOverdue = $scopedCount(
             'SELECT count(*)
              FROM policies p
-             WHERE p.risk_end_date IS NOT NULL
+             WHERE p.organization_id = :organization_id
+               AND p.risk_end_date IS NOT NULL
                AND p.risk_end_date < curdate()
                AND coalesce(p.renewal_status, "") <> "Renewed"'
-        )->fetchColumn();
+        );
 
-        $pendingClientCollections = (int) $pdo->query(
+        $pendingClientCollections = $scopedCount(
             'SELECT count(*)
              FROM policies p
-             WHERE p.paid_by_type = "Agent"
+             WHERE p.organization_id = :organization_id
+               AND p.paid_by_type = "Agent"
                AND coalesce(p.payment_pending_amount, 0) > 0'
-        )->fetchColumn();
+        );
 
         Response::json([
             'status' => 'ok',
@@ -1696,9 +1764,9 @@ try {
         ]);
         exit;
     }
-
     if ($path === '/api/policies/pending-documents' && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
 
         $statement = $pdo->prepare(
@@ -1721,6 +1789,7 @@ try {
                ON d.policy_id = p.id
               AND d.deleted_at IS NULL
               AND d.is_active = 1
+             WHERE p.organization_id = :organization_id
              GROUP BY
                 p.id,
                 p.policy_number,
@@ -1735,6 +1804,7 @@ try {
              ORDER BY p.updated_at DESC, p.id DESC
              LIMIT :limit'
         );
+        bindOrganizationId($statement, $organizationId);
         $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
         $statement->execute();
 
@@ -1745,9 +1815,9 @@ try {
         ]);
         exit;
     }
-
     if (($path === '/api/policies/upload-document' || $path === '/api/policies/upload-documents') && $method === 'POST') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
 
         $policyId = isset($_POST['policy_id']) ? (int) $_POST['policy_id'] : 0;
 
@@ -1759,8 +1829,9 @@ try {
             exit;
         }
 
-        $policyStatement = $pdo->prepare('SELECT id, customer_id FROM policies WHERE id = :id');
+        $policyStatement = $pdo->prepare('SELECT id, customer_id FROM policies WHERE id = :id AND organization_id = :organization_id');
         $policyStatement->bindValue(':id', $policyId, PDO::PARAM_INT);
+        bindOrganizationId($policyStatement, $organizationId);
         $policyStatement->execute();
         $policy = $policyStatement->fetch();
 
@@ -1830,7 +1901,9 @@ try {
             exit;
         }
 
-        $documentTypesStatement = $pdo->query("SELECT id, entity_level FROM document_types WHERE is_active = 1");
+        $documentTypesStatement = $pdo->prepare("SELECT id, entity_level FROM document_types WHERE organization_id = :organization_id AND is_active = 1");
+        bindOrganizationId($documentTypesStatement, $organizationId);
+        $documentTypesStatement->execute();
         $documentTypes = [];
         foreach ($documentTypesStatement->fetchAll() as $documentType) {
             $documentTypes[(int) $documentType['id']] = $documentType;
@@ -1847,6 +1920,7 @@ try {
 
         $statement = $pdo->prepare(
             'INSERT INTO documents (
+                organization_id,
                 document_type_id,
                 customer_id,
                 policy_id,
@@ -1863,6 +1937,7 @@ try {
                 uploaded_at,
                 is_active
              ) VALUES (
+                :organization_id,
                 :document_type_id,
                 :customer_id,
                 :policy_id,
@@ -1923,8 +1998,10 @@ try {
                 $expiryDate = trim((string) ($documentPayload['expiry_date'] ?? ''));
                 $remarks = trim((string) ($documentPayload['remarks'] ?? ''));
 
+                bindOrganizationId($statement, $organizationId);
                 $statement->bindValue(':document_type_id', $documentTypeId, PDO::PARAM_INT);
                 $statement->bindValue(':customer_id', (int) $policy['customer_id'], PDO::PARAM_INT);
+                bindOrganizationId($statement, $organizationId);
                 $statement->bindValue(':policy_id', $policyId, PDO::PARAM_INT);
                 $statement->bindValue(':file_name', $originalName);
                 $statement->bindValue(':stored_file_name', $storedName);
@@ -1969,6 +2046,7 @@ try {
 
     if (($path === '/api/customers/upload-document' || $path === '/api/customers/upload-documents') && $method === 'POST') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
 
         $customerId = isset($_POST['customer_id']) ? (int) $_POST['customer_id'] : 0;
 
@@ -1980,8 +2058,9 @@ try {
             exit;
         }
 
-        $customerStatement = $pdo->prepare('SELECT id FROM customers WHERE id = :id');
+        $customerStatement = $pdo->prepare('SELECT id FROM customers WHERE id = :id AND organization_id = :organization_id');
         $customerStatement->bindValue(':id', $customerId, PDO::PARAM_INT);
+        bindOrganizationId($customerStatement, $organizationId);
         $customerStatement->execute();
 
         if (!$customerStatement->fetchColumn()) {
@@ -2050,7 +2129,9 @@ try {
             exit;
         }
 
-        $documentTypesStatement = $pdo->query("SELECT id, entity_level FROM document_types WHERE is_active = 1");
+        $documentTypesStatement = $pdo->prepare("SELECT id, entity_level FROM document_types WHERE organization_id = :organization_id AND is_active = 1");
+        bindOrganizationId($documentTypesStatement, $organizationId);
+        $documentTypesStatement->execute();
         $documentTypes = [];
         foreach ($documentTypesStatement->fetchAll() as $documentType) {
             $documentTypes[(int) $documentType['id']] = $documentType;
@@ -2067,6 +2148,7 @@ try {
 
         $statement = $pdo->prepare(
             'INSERT INTO documents (
+                organization_id,
                 document_type_id,
                 customer_id,
                 policy_id,
@@ -2083,6 +2165,7 @@ try {
                 uploaded_at,
                 is_active
              ) VALUES (
+                :organization_id,
                 :document_type_id,
                 :customer_id,
                 NULL,
@@ -2143,6 +2226,7 @@ try {
                 $expiryDate = trim((string) ($documentPayload['expiry_date'] ?? ''));
                 $remarks = trim((string) ($documentPayload['remarks'] ?? ''));
 
+                bindOrganizationId($statement, $organizationId);
                 $statement->bindValue(':document_type_id', $documentTypeId, PDO::PARAM_INT);
                 $statement->bindValue(':customer_id', $customerId, PDO::PARAM_INT);
                 $statement->bindValue(':file_name', $originalName);
@@ -2188,6 +2272,7 @@ try {
 
     if ($path === '/api/payments/pending-client' && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
 
         $statement = $pdo->prepare(
@@ -2216,17 +2301,21 @@ try {
                 INNER JOIN (
                     SELECT policy_id, MAX(id) AS latest_id
                     FROM follow_ups
+                    WHERE organization_id = :follow_up_organization_id
                     GROUP BY policy_id
                 ) latest_follow_up ON latest_follow_up.latest_id = fu1.id
              ) fu ON fu.policy_id = p.id
              LEFT JOIN users u ON u.linked_agent_id = fu.done_by_agent_id
              LEFT JOIN customers c ON c.id = p.customer_id
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
-             WHERE p.paid_by_type = "Agent"
+             WHERE p.organization_id = :organization_id
+               AND p.paid_by_type = "Agent"
                AND coalesce(p.payment_pending_amount, 0) > 0
              ORDER BY p.updated_at DESC, p.id DESC
              LIMIT :limit'
         );
+        bindOrganizationId($statement, $organizationId);
+        $statement->bindValue(':follow_up_organization_id', $organizationId, PDO::PARAM_INT);
         $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
         $statement->execute();
 
@@ -2237,9 +2326,9 @@ try {
         ]);
         exit;
     }
-
     if ($path === '/api/payments/client-payment' && $method === 'POST') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $payload = json_decode(file_get_contents('php://input') ?: '[]', true);
 
         if (!is_array($payload)) {
@@ -2274,9 +2363,11 @@ try {
         $policyStatement = $pdo->prepare(
             'SELECT id, net_premium, payment_received_amount, payment_pending_amount
              FROM policies
-             WHERE id = :id'
+             WHERE id = :id
+               AND organization_id = :organization_id'
         );
         $policyStatement->bindValue(':id', $policyId, PDO::PARAM_INT);
+        bindOrganizationId($policyStatement, $organizationId);
         $policyStatement->execute();
         $policy = $policyStatement->fetch();
 
@@ -2299,6 +2390,7 @@ try {
         try {
             $insertStatement = $pdo->prepare(
                 'INSERT INTO client_payments (
+                    organization_id,
                     policy_id,
                     payment_date,
                     amount,
@@ -2310,6 +2402,7 @@ try {
                     reference_number,
                     remarks
                  ) VALUES (
+                    :organization_id,
                     :policy_id,
                     :payment_date,
                     :amount,
@@ -2322,6 +2415,7 @@ try {
                     :remarks
                  )'
             );
+            bindOrganizationId($insertStatement, $organizationId);
             $insertStatement->bindValue(':policy_id', $policyId, PDO::PARAM_INT);
             $insertStatement->bindValue(':payment_date', $payload['payment_date']);
             $insertStatement->bindValue(':amount', $amount);
@@ -2339,12 +2433,14 @@ try {
                  SET payment_received_amount = :payment_received_amount,
                      payment_pending_amount = :payment_pending_amount,
                      client_payment_status = :client_payment_status
-                 WHERE id = :id'
+                 WHERE id = :id
+                   AND organization_id = :organization_id'
             );
             $updateStatement->bindValue(':payment_received_amount', $newReceived);
             $updateStatement->bindValue(':payment_pending_amount', $newPending);
             $updateStatement->bindValue(':client_payment_status', $clientPaymentStatus);
             $updateStatement->bindValue(':id', $policyId, PDO::PARAM_INT);
+            bindOrganizationId($updateStatement, $organizationId);
             $updateStatement->execute();
 
             $pdo->commit();
@@ -2367,6 +2463,7 @@ try {
 
     if (preg_match('#^/api/tasks/(\d+)/updates$#', $path, $matches) === 1 && $method === 'POST') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $taskId = (int) $matches[1];
         $rawBody = file_get_contents('php://input');
         $payload = json_decode($rawBody ?: '[]', true);
@@ -2383,9 +2480,11 @@ try {
             'SELECT id, task_status, assigned_to_user_id
              FROM tasks
              WHERE id = :id
+               AND organization_id = :organization_id
              LIMIT 1'
         );
         $taskStatement->bindValue(':id', $taskId, PDO::PARAM_INT);
+        bindOrganizationId($taskStatement, $organizationId);
         $taskStatement->execute();
         $task = $taskStatement->fetch();
 
@@ -2443,6 +2542,7 @@ try {
         try {
             $insertUpdate = $pdo->prepare(
                 'INSERT INTO task_updates (
+                    organization_id,
                     task_id,
                     status,
                     update_date,
@@ -2450,6 +2550,7 @@ try {
                     next_follow_up_date,
                     remarks
                  ) VALUES (
+                    :organization_id,
                     :task_id,
                     :status,
                     :update_date,
@@ -2458,6 +2559,7 @@ try {
                     :remarks
                  )'
             );
+            bindOrganizationId($insertUpdate, $organizationId);
             $insertUpdate->bindValue(':task_id', $taskId, PDO::PARAM_INT);
             $insertUpdate->bindValue(':status', $updateStatus);
             $insertUpdate->bindValue(':update_date', $updateDate);
@@ -2471,7 +2573,8 @@ try {
                  SET task_status = :task_status,
                      latest_update_date = :latest_update_date,
                      next_follow_up_date = :next_follow_up_date
-                 WHERE id = :id'
+                 WHERE id = :id
+                   AND organization_id = :organization_id'
             );
             $updateTask->bindValue(':task_status', $taskStatus);
             $updateTask->bindValue(':latest_update_date', $updateDate);
@@ -2480,6 +2583,7 @@ try {
                 $taskStatus === 'Pending' ? ($nextFollowUpDate !== '' ? $nextFollowUpDate : null) : null
             );
             $updateTask->bindValue(':id', $taskId, PDO::PARAM_INT);
+            bindOrganizationId($updateTask, $organizationId);
             $updateTask->execute();
 
             $pdo->commit();
@@ -2496,6 +2600,7 @@ try {
 
     if ($path === '/api/follow-ups' && $method === 'POST') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $payload = json_decode(file_get_contents('php://input') ?: '[]', true);
 
         if (!is_array($payload)) {
@@ -2531,8 +2636,9 @@ try {
         $policyId = (int) $payload['policy_id'];
         $followUpByUserId = (int) $payload['follow_up_by'];
 
-        $policyStatement = $pdo->prepare('SELECT id FROM policies WHERE id = :id LIMIT 1');
+        $policyStatement = $pdo->prepare('SELECT id FROM policies WHERE id = :id AND organization_id = :organization_id LIMIT 1');
         $policyStatement->bindValue(':id', $policyId, PDO::PARAM_INT);
+        bindOrganizationId($policyStatement, $organizationId);
         $policyStatement->execute();
 
         if (!$policyStatement->fetch()) {
@@ -2547,9 +2653,11 @@ try {
             'SELECT id, full_name, linked_agent_id
              FROM users
              WHERE id = :id
+               AND organization_id = :organization_id
              LIMIT 1'
         );
         $userStatement->bindValue(':id', $followUpByUserId, PDO::PARAM_INT);
+        bindOrganizationId($userStatement, $organizationId);
         $userStatement->execute();
         $user = $userStatement->fetch();
 
@@ -2582,6 +2690,7 @@ try {
         try {
             $statement = $pdo->prepare(
                 'INSERT INTO follow_ups (
+                    organization_id,
                     policy_id,
                     follow_up_type,
                     follow_up_mode,
@@ -2591,6 +2700,7 @@ try {
                     done_by_agent_id,
                     outcome_status
                  ) VALUES (
+                    :organization_id,
                     :policy_id,
                     :follow_up_type,
                     :follow_up_mode,
@@ -2601,6 +2711,7 @@ try {
                     :outcome_status
                  )'
             );
+            bindOrganizationId($statement, $organizationId);
             $statement->bindValue(':policy_id', $policyId, PDO::PARAM_INT);
             $statement->bindValue(':follow_up_type', trim((string) $payload['follow_up_type']));
             $statement->bindValue(':follow_up_mode', trim((string) $payload['follow_up_mode']));
@@ -2617,13 +2728,15 @@ try {
                      next_follow_up_at = :next_follow_up_at,
                      last_client_response = :last_client_response,
                      last_status = :last_status
-                 WHERE id = :id'
+                 WHERE id = :id
+                   AND organization_id = :organization_id'
             );
             $updatePolicy->bindValue(':last_follow_up_at', $followUpAt);
             $updatePolicy->bindValue(':next_follow_up_at', $nextFollowUpAt, $nextFollowUpAt === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
             $updatePolicy->bindValue(':last_client_response', $remarks !== '' ? $remarks : null);
             $updatePolicy->bindValue(':last_status', $status);
             $updatePolicy->bindValue(':id', $policyId, PDO::PARAM_INT);
+            bindOrganizationId($updatePolicy, $organizationId);
             $updatePolicy->execute();
 
             $followUpId = (int) $pdo->lastInsertId();
@@ -2652,8 +2765,9 @@ try {
 
     if ($path === '/api/policies/renew-form' && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
 
-        $policies = $pdo->query(
+        $statement = $pdo->prepare(
             'SELECT
                 p.id,
                 p.policy_family_id,
@@ -2696,11 +2810,15 @@ try {
              LEFT JOIN customer_groups cg ON cg.id = c.group_id
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
              LEFT JOIN insurance_products ip ON ip.id = p.product_id
-             WHERE p.risk_end_date IS NOT NULL
+             WHERE p.organization_id = :organization_id
+               AND p.risk_end_date IS NOT NULL
                AND p.risk_end_date >= curdate()
                AND coalesce(p.renewal_status, "") <> "Renewed"
              ORDER BY p.risk_end_date ASC, p.policy_number ASC'
-        )->fetchAll();
+        );
+        bindOrganizationId($statement, $organizationId);
+        $statement->execute();
+        $policies = $statement->fetchAll();
 
         Response::json([
             'status' => 'ok',
@@ -2710,48 +2828,61 @@ try {
         ]);
         exit;
     }
-
     if ($path === '/api/policies/issue-form' && $method === 'GET') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
 
-        $customerGroups = $pdo->query(
+        $fetchScoped = static function (string $sql) use ($pdo, $organizationId): array {
+            $statement = $pdo->prepare($sql);
+            bindOrganizationId($statement, $organizationId);
+            $statement->execute();
+
+            return $statement->fetchAll();
+        };
+
+        $customerGroups = $fetchScoped(
             'SELECT id, group_name
              FROM customer_groups
-             WHERE isnull(id) = 0
+             WHERE organization_id = :organization_id
              ORDER BY group_name ASC'
-        )->fetchAll();
+        );
 
-        $customers = $pdo->query(
+        $customers = $fetchScoped(
             'SELECT c.id, c.group_id, c.customer_code, c.full_name, c.mobile, cg.group_name
              FROM customers c
              LEFT JOIN customer_groups cg ON cg.id = c.group_id
-             WHERE c.is_active = 1
+             WHERE c.organization_id = :organization_id
+               AND c.is_active = 1
              ORDER BY c.full_name ASC'
-        )->fetchAll();
+        );
 
-        $policyTypes = $pdo->query(
+        $policyTypes = $fetchScoped(
             'SELECT id, category_name, parent_category_id
              FROM product_categories
-             WHERE is_active = 1 AND parent_category_id IS NOT NULL
+             WHERE organization_id = :organization_id
+               AND is_active = 1
+               AND parent_category_id IS NOT NULL
              ORDER BY category_name ASC'
-        )->fetchAll();
+        );
 
-        $insuranceCompanies = $pdo->query(
+        $insuranceCompanies = $fetchScoped(
             'SELECT id, company_name
              FROM insurance_companies
-             WHERE is_active = 1
+             WHERE organization_id = :organization_id
+               AND is_active = 1
              ORDER BY company_name ASC'
-        )->fetchAll();
+        );
 
-        $products = $pdo->query(
+        $products = $fetchScoped(
             'SELECT ip.id, ip.company_id, ip.category_id, ip.product_name, ic.company_name
              FROM insurance_products ip
              LEFT JOIN insurance_companies ic ON ic.id = ip.company_id
-             WHERE ip.is_active = 1
+             WHERE ip.organization_id = :organization_id
+               AND ip.is_active = 1
              ORDER BY ip.product_name ASC'
-        )->fetchAll();
+        );
 
-        $agentAccounts = $pdo->query(
+        $agentAccounts = $fetchScoped(
             'SELECT
                 apa.id,
                 apa.agent_id,
@@ -2762,9 +2893,10 @@ try {
                 apa.is_default
              FROM agent_payment_accounts apa
              LEFT JOIN agents a ON a.id = apa.agent_id
-             WHERE apa.is_active = 1
+             WHERE apa.organization_id = :organization_id
+               AND apa.is_active = 1
              ORDER BY a.full_name ASC, apa.is_default DESC, apa.account_label ASC'
-        )->fetchAll();
+        );
 
         Response::json([
             'status' => 'ok',
@@ -2779,9 +2911,9 @@ try {
         ]);
         exit;
     }
-
     if ($path === '/api/policies/issue' && $method === 'POST') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $rawBody = file_get_contents('php://input');
         $payload = json_decode($rawBody ?: '[]', true);
 
@@ -2839,8 +2971,9 @@ try {
         $policyTypeName = null;
 
         if ($productId !== null && $policyTypeId !== null) {
-            $categoryCheck = $pdo->prepare('SELECT category_id FROM insurance_products WHERE id = :id');
+            $categoryCheck = $pdo->prepare('SELECT category_id FROM insurance_products WHERE id = :id AND organization_id = :organization_id');
             $categoryCheck->bindValue(':id', $productId, PDO::PARAM_INT);
+            bindOrganizationId($categoryCheck, $organizationId);
             $categoryCheck->execute();
             $productCategoryId = $categoryCheck->fetchColumn();
 
@@ -2854,8 +2987,9 @@ try {
         }
 
         if ($policyTypeId !== null) {
-            $policyTypeStatement = $pdo->prepare('SELECT category_name FROM product_categories WHERE id = :id');
+            $policyTypeStatement = $pdo->prepare('SELECT category_name FROM product_categories WHERE id = :id AND organization_id = :organization_id');
             $policyTypeStatement->bindValue(':id', $policyTypeId, PDO::PARAM_INT);
+            bindOrganizationId($policyTypeStatement, $organizationId);
             $policyTypeStatement->execute();
             $policyTypeName = $policyTypeStatement->fetchColumn() ?: null;
         }
@@ -2867,9 +3001,10 @@ try {
             $policyCode = 'PL' . date('YmdHis') . random_int(100, 999);
 
             $familyStatement = $pdo->prepare(
-                'INSERT INTO policy_families (policy_family_code, customer_id, family_label)
-                 VALUES (:policy_family_code, :customer_id, :family_label)'
+                'INSERT INTO policy_families (organization_id, policy_family_code, customer_id, family_label)
+                 VALUES (:organization_id, :policy_family_code, :customer_id, :family_label)'
             );
+            bindOrganizationId($familyStatement, $organizationId);
             $familyStatement->bindValue(':policy_family_code', $familyCode);
             $familyStatement->bindValue(':customer_id', $customerId, PDO::PARAM_INT);
             $familyStatement->bindValue(':family_label', $payload['policy_number']);
@@ -2879,6 +3014,7 @@ try {
 
             $statement = $pdo->prepare(
                 'INSERT INTO policies (
+                    organization_id,
                     policy_code,
                     policy_family_id,
                     customer_id,
@@ -2911,6 +3047,7 @@ try {
                     last_status,
                     fiscal_year_ending
                  ) VALUES (
+                    :organization_id,
                     :policy_code,
                     :policy_family_id,
                     :customer_id,
@@ -2948,6 +3085,7 @@ try {
             $grossPremium = $payload['gross_premium'] !== '' ? (float) $payload['gross_premium'] : null;
             $netPremium = $payload['net_premium'] !== '' ? (float) $payload['net_premium'] : null;
 
+            bindOrganizationId($statement, $organizationId);
             $statement->bindValue(':policy_code', $policyCode);
             $statement->bindValue(':policy_family_id', $policyFamilyId, PDO::PARAM_INT);
             $statement->bindValue(':customer_id', $customerId, PDO::PARAM_INT);
@@ -3005,6 +3143,7 @@ try {
 
     if ($path === '/api/policies/renew' && $method === 'POST') {
         $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
         $rawBody = file_get_contents('php://input');
         $payload = json_decode($rawBody ?: '[]', true);
 
@@ -3030,9 +3169,11 @@ try {
         $previousPolicyStatement = $pdo->prepare(
             'SELECT *
              FROM policies
-             WHERE id = :id'
+             WHERE id = :id
+               AND organization_id = :organization_id'
         );
         $previousPolicyStatement->bindValue(':id', $previousPolicyId, PDO::PARAM_INT);
+        bindOrganizationId($previousPolicyStatement, $organizationId);
         $previousPolicyStatement->execute();
         $previousPolicy = $previousPolicyStatement->fetch();
 
@@ -3053,6 +3194,7 @@ try {
 
             $statement = $pdo->prepare(
                 'INSERT INTO policies (
+                    organization_id,
                     policy_code,
                     policy_family_id,
                     previous_policy_id,
@@ -3085,6 +3227,7 @@ try {
                     last_status,
                     fiscal_year_ending
                  ) VALUES (
+                    :organization_id,
                     :policy_code,
                     :policy_family_id,
                     :previous_policy_id,
@@ -3119,6 +3262,7 @@ try {
                  )'
             );
 
+            bindOrganizationId($statement, $organizationId);
             $statement->bindValue(':policy_code', $policyCode);
             $statement->bindValue(':policy_family_id', (int) $previousPolicy['policy_family_id'], PDO::PARAM_INT);
             $statement->bindValue(':previous_policy_id', $previousPolicyId, PDO::PARAM_INT);
@@ -3155,11 +3299,13 @@ try {
             $updatePrevious = $pdo->prepare(
                 'UPDATE policies
                  SET is_latest_in_family = 0, renewal_status = :renewal_status, last_status = :last_status
-                 WHERE id = :id'
+                 WHERE id = :id
+                   AND organization_id = :organization_id'
             );
             $updatePrevious->bindValue(':renewal_status', 'Renewed');
             $updatePrevious->bindValue(':last_status', 'Superseded');
             $updatePrevious->bindValue(':id', $previousPolicyId, PDO::PARAM_INT);
+            bindOrganizationId($updatePrevious, $organizationId);
             $updatePrevious->execute();
 
             $policyId = (int) $pdo->lastInsertId();
@@ -3196,16 +3342,31 @@ try {
 
         $config = $registry[$resource];
         $pdo = Database::connection();
+        $requestOrganizationId = requestOrganizationId();
+        $isOrganizationOwned = (bool) ($config['organization_owned'] ?? true);
+        $organizationId = $isOrganizationOwned ? requireOrganizationId() : $requestOrganizationId;
 
         if ($method === 'GET' && $id === null) {
             $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
+            $whereClause = '';
+
+            if ($isOrganizationOwned) {
+                $whereClause = sprintf(' WHERE %s = :organization_id', $config['organization_scope_column'] ?? 'organization_id');
+            } elseif ($resource === 'organizations' && $organizationId !== null) {
+                $whereClause = ' WHERE o.id = :organization_id';
+            }
+
             $sql = sprintf(
-                'SELECT %s FROM %s ORDER BY %s LIMIT :limit',
+                'SELECT %s FROM %s%s ORDER BY %s LIMIT :limit',
                 $config['select'],
                 $config['from'],
+                $whereClause,
                 $config['order_by']
             );
             $statement = $pdo->prepare($sql);
+            if ($whereClause !== '' && $organizationId !== null) {
+                bindOrganizationId($statement, $organizationId);
+            }
             $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
             $statement->execute();
 
@@ -3310,6 +3471,10 @@ try {
                 $normalized['code'] = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '_', $normalized['name'] ?? 'DOC_' . time()));
             }
 
+            if ($method === 'POST' && $isOrganizationOwned) {
+                $normalized['organization_id'] = $organizationId;
+            }
+
             if ($method === 'POST') {
                 $columns = array_keys($normalized);
                 $placeholders = array_map(static fn (string $column): string => ':' . $column, $columns);
@@ -3349,9 +3514,10 @@ try {
             }
 
             $sql = sprintf(
-                'UPDATE %s SET %s WHERE id = :id',
+                'UPDATE %s SET %s WHERE id = :id%s',
                 $config['table'],
-                implode(', ', $assignments)
+                implode(', ', $assignments),
+                $isOrganizationOwned ? ' AND organization_id = :organization_id' : ''
             );
 
             $statement = $pdo->prepare($sql);
@@ -3359,6 +3525,9 @@ try {
                 $statement->bindValue(':' . $column, $value);
             }
             $statement->bindValue(':id', $id, PDO::PARAM_INT);
+            if ($isOrganizationOwned) {
+                bindOrganizationId($statement, $organizationId);
+            }
             $statement->execute();
 
             Response::json([
@@ -3369,8 +3538,15 @@ try {
         }
 
         if ($method === 'DELETE' && $id !== null) {
-            $statement = $pdo->prepare(sprintf('DELETE FROM %s WHERE id = :id', $config['table']));
+            $statement = $pdo->prepare(sprintf(
+                'DELETE FROM %s WHERE id = :id%s',
+                $config['table'],
+                $isOrganizationOwned ? ' AND organization_id = :organization_id' : ''
+            ));
             $statement->bindValue(':id', $id, PDO::PARAM_INT);
+            if ($isOrganizationOwned) {
+                bindOrganizationId($statement, $organizationId);
+            }
             try {
                 $statement->execute();
             } catch (PDOException $exception) {
@@ -3411,3 +3587,11 @@ try {
         'message' => $throwable->getMessage()
     ], 500);
 }
+
+
+
+
+
+
+
+
