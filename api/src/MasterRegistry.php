@@ -11,13 +11,14 @@ final class MasterRegistry
         $resources = [
             'organizations' => [
                 'table' => 'organizations',
-                'select' => 'o.id, o.organization_code, o.organization_name, o.is_active, o.created_at',
-                'from' => 'organizations o',
+                'select' => 'o.id, o.organization_code, o.organization_name, s.gst, s.address, s.logo, o.is_active, o.created_at',
+                'from' => 'organizations o left join settings s on s.id = (select s2.id from settings s2 where s2.organization_id = o.id order by s2.is_active desc, s2.id desc limit 1)',
                 'order_by' => 'o.organization_name asc',
-                'write_columns' => ['organization_code', 'organization_name', 'is_active'],
+                'write_columns' => ['organization_code', 'organization_name', 'gst', 'address', 'logo', 'is_active'],
                 'required' => ['organization_code', 'organization_name'],
-                'nullable' => [],
+                'nullable' => ['gst', 'address', 'logo'],
                 'boolean' => ['is_active'],
+                'file_columns' => ['logo'],
                 'organization_owned' => false,
             ],
             'customer-groups' => [
@@ -191,19 +192,7 @@ final class MasterRegistry
                 'boolean' => ['is_default', 'is_active'],
                 'organization_scope_column' => 'apa.organization_id',
             ],
-            'settings' => [
-                'table' => 'settings',
-                'select' => 's.id, s.organization_name, s.gst, s.address, s.logo, s.is_active, s.created_at',
-                'from' => 'settings s',
-                'order_by' => 's.id desc',
-                'write_columns' => ['organization_name', 'gst', 'address', 'logo', 'is_active'],
-                'required' => ['organization_name'],
-                'nullable' => ['gst', 'address', 'logo'],
-                'boolean' => ['is_active'],
-                'file_columns' => ['logo'],
-                'organization_scope_column' => 's.organization_id',
-            ],
-        ];
+];
 
         foreach ($resources as $key => $config) {
             if (!array_key_exists('organization_owned', $config)) {

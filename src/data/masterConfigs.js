@@ -12,11 +12,17 @@ export const masterConfigs = {
     tableColumns: [
       { key: "organization_code", label: "Organization Id" },
       { key: "organization_name", label: "Organization Name" },
+      { key: "gst", label: "GST" },
+      { key: "address", label: "Address" },
+      { key: "logo", label: "Logo", type: "image" },
       { key: "is_active", label: "Active", type: "boolean" }
     ],
     fields: [
       { name: "organization_code", label: "Organization Id", type: "text", required: true },
       { name: "organization_name", label: "Organization Name", type: "text", required: true },
+      { name: "gst", label: "GST", type: "text" },
+      { name: "address", label: "Address", type: "textarea" },
+      { name: "logo", label: "Logo", type: "file" },
       { name: "is_active", label: "Active", type: "checkbox" }
     ]
   },
@@ -308,23 +314,6 @@ export const masterConfigs = {
       { name: "is_default", label: "Default Account", type: "checkbox" },
       { name: "is_active", label: "Active", type: "checkbox" }
     ]
-  },
-  settings: {
-    title: "Settings",
-    resource: "settings",
-    tableColumns: [
-      { key: "organization_name", label: "Organization Name" },
-      { key: "gst", label: "GST" },
-      { key: "address", label: "Address" },
-      { key: "logo", label: "Logo", type: "image" },
-      { key: "is_active", label: "Active", type: "boolean" }
-    ],
-    fields: [
-      { name: "organization_name", label: "Organization Name", type: "text", required: true },
-      { name: "gst", label: "GST", type: "text" },
-      { name: "address", label: "Address", type: "textarea" },
-      { name: "logo", label: "Logo", type: "file" },
-      { name: "is_active", label: "Active", type: "checkbox" }
-    ]
   }
 };
+

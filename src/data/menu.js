@@ -22,8 +22,7 @@ export const menuSections = [
       { label: "Document Types", path: "/masters/document-types", countKey: "document-types" },
       { label: "Users", path: "/masters/users", countKey: "users" },
       { label: "Agents", path: "/masters/agents", countKey: "agents" },
-      { label: "Agent Accounts", path: "/masters/agent-accounts", countKey: "agent-accounts" },
-      { label: "Settings", path: "/masters/settings", countKey: "settings" }
+      { label: "Agent Accounts", path: "/masters/agent-accounts", countKey: "agent-accounts" }
     ]
   },
   {
@@ -196,3 +195,4 @@ export function formatMenuViews(value) {
     .map((item) => labelMap.get(item) || item)
     .join(", ");
 }
+

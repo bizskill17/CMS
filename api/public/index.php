@@ -38,7 +38,6 @@ function singularizeMasterLabel(string $resource): string
         'users' => 'user',
         'agents' => 'agent',
         'agent-accounts' => 'agent account',
-        'settings' => 'settings record',
         default => rtrim($label, 's'),
     };
 }
@@ -69,7 +68,6 @@ function buildFullAccessViews(): string
         '/masters/users',
         '/masters/agents',
         '/masters/agent-accounts',
-        '/masters/settings',
         '/leads/all',
         '/leads/add',
         '/leads/pending-assigning',
@@ -179,6 +177,72 @@ function scopedRowsOrEmpty(PDO $pdo, string $sql, int $organizationId, array $bi
 
         throw $exception;
     }
+}
+
+function upsertOrganizationSettings(PDO $pdo, int $organizationId, array $values): void
+{
+    $settingsValues = [];
+    foreach (['organization_name', 'gst', 'address', 'logo', 'is_active'] as $column) {
+        if (array_key_exists($column, $values)) {
+            $settingsValues[$column] = $values[$column];
+        }
+    }
+
+    if ($settingsValues === []) {
+        return;
+    }
+
+    if (!array_key_exists('organization_name', $settingsValues)) {
+        $nameStatement = $pdo->prepare('SELECT organization_name FROM organizations WHERE id = :id LIMIT 1');
+        $nameStatement->bindValue(':id', $organizationId, PDO::PARAM_INT);
+        $nameStatement->execute();
+        $settingsValues['organization_name'] = (string) $nameStatement->fetchColumn();
+    }
+
+    if (!array_key_exists('is_active', $settingsValues)) {
+        $settingsValues['is_active'] = 1;
+    }
+
+    try {
+        $lookupStatement = $pdo->prepare(
+            'SELECT id FROM settings WHERE organization_id = :organization_id ORDER BY is_active DESC, id DESC LIMIT 1'
+        );
+        bindOrganizationId($lookupStatement, $organizationId);
+        $lookupStatement->execute();
+        $settingsId = (int) $lookupStatement->fetchColumn();
+    } catch (PDOException $exception) {
+        if (isMissingOrganizationColumn($exception)) {
+            return;
+        }
+
+        throw $exception;
+    }
+
+    if ($settingsId > 0) {
+        $assignments = array_map(static fn (string $column): string => sprintf('%s = :%s', $column, $column), array_keys($settingsValues));
+        $statement = $pdo->prepare(
+            sprintf('UPDATE settings SET %s WHERE id = :id AND organization_id = :organization_id', implode(', ', $assignments))
+        );
+        foreach ($settingsValues as $column => $value) {
+            $statement->bindValue(':' . $column, $value);
+        }
+        $statement->bindValue(':id', $settingsId, PDO::PARAM_INT);
+        bindOrganizationId($statement, $organizationId);
+        $statement->execute();
+
+        return;
+    }
+
+    $insertValues = array_merge(['organization_id' => $organizationId], $settingsValues);
+    $columns = array_keys($insertValues);
+    $placeholders = array_map(static fn (string $column): string => ':' . $column, $columns);
+    $statement = $pdo->prepare(
+        sprintf('INSERT INTO settings (%s) VALUES (%s)', implode(', ', $columns), implode(', ', $placeholders))
+    );
+    foreach ($insertValues as $column => $value) {
+        $statement->bindValue(':' . $column, $value);
+    }
+    $statement->execute();
 }
 function isFinalLeadStatus(string $status): bool
 {
@@ -3510,6 +3574,72 @@ try {
                 $normalized['organization_id'] = $organizationId;
             }
 
+            if ($resource === 'organizations') {
+                $organizationColumns = ['organization_code', 'organization_name', 'is_active'];
+                $organizationValues = array_intersect_key($normalized, array_flip($organizationColumns));
+                $settingsValues = array_intersect_key($normalized, array_flip(['organization_name', 'gst', 'address', 'logo', 'is_active']));
+
+                if ($method === 'PUT' && $requestOrganizationId !== null && $id !== $requestOrganizationId) {
+                    Response::json([
+                        'status' => 'error',
+                        'message' => 'Record not found.'
+                    ], 404);
+                    exit;
+                }
+
+                $pdo->beginTransaction();
+                try {
+                    if ($method === 'POST') {
+                        $columns = array_keys($organizationValues);
+                        $placeholders = array_map(static fn (string $column): string => ':' . $column, $columns);
+                        $statement = $pdo->prepare(
+                            sprintf('INSERT INTO organizations (%s) VALUES (%s)', implode(', ', $columns), implode(', ', $placeholders))
+                        );
+                        foreach ($organizationValues as $column => $value) {
+                            $statement->bindValue(':' . $column, $value);
+                        }
+                        $statement->execute();
+                        $savedOrganizationId = (int) $pdo->lastInsertId();
+                        upsertOrganizationSettings($pdo, $savedOrganizationId, $settingsValues);
+                        $pdo->commit();
+
+                        Response::json([
+                            'status' => 'ok',
+                            'message' => 'Record created successfully.',
+                            'id' => $savedOrganizationId
+                        ], 201);
+                        exit;
+                    }
+
+                    if ($organizationValues !== []) {
+                        $assignments = array_map(static fn (string $column): string => sprintf('%s = :%s', $column, $column), array_keys($organizationValues));
+                        $statement = $pdo->prepare(
+                            sprintf('UPDATE organizations SET %s WHERE id = :id', implode(', ', $assignments))
+                        );
+                        foreach ($organizationValues as $column => $value) {
+                            $statement->bindValue(':' . $column, $value);
+                        }
+                        $statement->bindValue(':id', $id, PDO::PARAM_INT);
+                        $statement->execute();
+                    }
+
+                    upsertOrganizationSettings($pdo, (int) $id, $settingsValues);
+                    $pdo->commit();
+
+                    Response::json([
+                        'status' => 'ok',
+                        'message' => 'Record updated successfully.'
+                    ]);
+                    exit;
+                } catch (Throwable $exception) {
+                    if ($pdo->inTransaction()) {
+                        $pdo->rollBack();
+                    }
+
+                    throw $exception;
+                }
+            }
+
             if ($method === 'POST') {
                 $columns = array_keys($normalized);
                 $placeholders = array_map(static fn (string $column): string => ':' . $column, $columns);
@@ -3573,6 +3703,13 @@ try {
         }
 
         if ($method === 'DELETE' && $id !== null) {
+            if ($resource === 'organizations' && $requestOrganizationId !== null && $id !== $requestOrganizationId) {
+                Response::json([
+                    'status' => 'error',
+                    'message' => 'Record not found.'
+                ], 404);
+                exit;
+            }
             $statement = $pdo->prepare(sprintf(
                 'DELETE FROM %s WHERE id = :id%s',
                 $config['table'],
@@ -3622,6 +3759,11 @@ try {
         'message' => $throwable->getMessage()
     ], 500);
 }
+
+
+
+
+
 
 
 
