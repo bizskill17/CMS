@@ -610,6 +610,11 @@ export default function MasterPage({
 
       if (hasFileField) {
         const payload = new FormData();
+        const requestMethod = editingId ? "POST" : method;
+
+        if (editingId) {
+          payload.append("_method", "PUT");
+        }
 
         config.fields.forEach((field) => {
           const value = formState[field.name];
@@ -630,7 +635,7 @@ export default function MasterPage({
         });
 
         response = await fetch(url, {
-          method,
+          method: requestMethod,
           body: payload
         });
       } else {
@@ -2189,4 +2194,5 @@ export default function MasterPage({
     </div>
   );
 }
+
 

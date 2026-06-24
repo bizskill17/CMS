@@ -3495,6 +3495,13 @@ try {
         $isOrganizationOwned = (bool) ($config['organization_owned'] ?? true);
         $organizationId = $isOrganizationOwned ? requireOrganizationId() : $requestOrganizationId;
 
+        if ($method === 'POST' && $id !== null) {
+            $methodOverride = strtoupper((string) ($_POST['_method'] ?? ($_GET['_method'] ?? '')));
+            if ($methodOverride === 'PUT') {
+                $method = 'PUT';
+            }
+        }
+
         if ($method === 'GET' && $id === null) {
             $limit = isset($_GET['limit']) ? max(1, min(250, (int) $_GET['limit'])) : 100;
             $whereClause = '';
@@ -3536,9 +3543,10 @@ try {
 
         if (($method === 'POST' && $id === null) || ($method === 'PUT' && $id !== null)) {
             $payload = [];
-            $hasFiles = !empty($_FILES);
+            $contentType = strtolower((string) ($_SERVER['CONTENT_TYPE'] ?? ($_SERVER['HTTP_CONTENT_TYPE'] ?? '')));
+            $isFormPayload = !empty($_POST) || str_contains($contentType, 'multipart/form-data');
 
-            if ($hasFiles) {
+            if ($isFormPayload) {
                 $payload = $_POST;
             } else {
                 $rawBody = file_get_contents('php://input');
@@ -3823,6 +3831,8 @@ try {
         'message' => $throwable->getMessage()
     ], 500);
 }
+
+
 
 
 

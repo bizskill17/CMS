@@ -71,21 +71,9 @@ export default function Sidebar({
     };
 
     const loadBrand = () => {
-      fetch(`${API_BASE}/masters/settings?limit=1`)
-        .then((res) => res.json())
-        .then((json) => {
-          if (!isActive || json.status !== "ok") {
-            return;
-          }
-
-          const record = Array.isArray(json.data) ? json.data[0] : null;
-          if (!record) {
-            return;
-          }
-
-          setAppBrandName(currentUser?.organization_name || record.organization_name || "Policy Management System");
-        })
-        .catch((err) => console.error("Failed to fetch settings brand", err));
+      if (isActive) {
+        setAppBrandName(currentUser?.organization_name || "Policy Management System");
+      }
     };
 
     const handleFocus = () => {
@@ -250,3 +238,4 @@ export default function Sidebar({
     </>
   );
 }
+
