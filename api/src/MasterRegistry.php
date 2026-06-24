@@ -44,7 +44,6 @@ final class MasterRegistry
                 'from' => 'customers c left join customer_groups cg on cg.id = c.group_id',
                 'order_by' => 'c.id desc',
                 'write_columns' => [
-                    'customer_code',
                     'group_id',
                     'full_name',
                     'mobile',
@@ -65,7 +64,7 @@ final class MasterRegistry
                     'is_active',
                     'notes'
                 ],
-                'required' => ['customer_code', 'full_name'],
+                'required' => ['full_name'],
                 'nullable' => [
                     'group_id',
                     'alternate_mobile',
@@ -85,9 +84,6 @@ final class MasterRegistry
                     'notes'
                 ],
                 'boolean' => ['is_active'],
-                'duplicate_keys' => [
-                    ['columns' => ['customer_code'], 'label' => 'Customer Code', 'display_column' => 'customer_code'],
-                ],
                 'organization_scope_column' => 'c.organization_id',
             ],
             'insurance-companies' => [

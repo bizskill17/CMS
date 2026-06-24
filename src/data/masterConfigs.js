@@ -30,7 +30,6 @@ export const masterConfigs = {
     title: "Customers",
     resource: "customers",
     tableColumns: [
-      { key: "customer_code", label: "Code" },
       { key: "full_name", label: "Customer Name" },
       { key: "group_name", label: "Group" },
       { key: "mobile", label: "Mobile" },
@@ -39,7 +38,6 @@ export const masterConfigs = {
       { key: "is_active", label: "Active", type: "boolean" }
     ],
     fields: [
-      { name: "customer_code", label: "Customer Code", type: "text", required: true },
       { name: "group_id", label: "Customer Group", templateLabel: "Group Name", importAliases: ["Group Name", "Customer Group Name"], type: "select", optionsFrom: "customer-groups" },
       { name: "full_name", label: "Customer Name", type: "text", required: true },
       { name: "mobile", label: "Mobile", type: "text", validation: mobileFieldValidation },

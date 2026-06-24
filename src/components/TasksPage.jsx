@@ -317,7 +317,6 @@ export default function TasksPage({ viewPath }) {
 
       return (
         String(customer.full_name || "").toLowerCase().includes(query) ||
-        String(customer.customer_code || "").toLowerCase().includes(query) ||
         String(customer.mobile || "").toLowerCase().includes(query)
       );
     });

@@ -128,7 +128,6 @@ export default function IssuePolicyPage() {
       const matchesQuery =
         !query ||
         customer.full_name.toLowerCase().includes(query) ||
-        String(customer.customer_code || "").toLowerCase().includes(query) ||
         String(customer.mobile || "").toLowerCase().includes(query);
 
       return matchesGroup && matchesQuery;
@@ -308,7 +307,7 @@ export default function IssuePolicyPage() {
                   <option
                     key={customer.id}
                     value={customer.full_name}
-                  >{`${customer.customer_code || ""} ${customer.mobile || ""}`.trim()}</option>
+                  >{customer.mobile || ""}</option>
                 ))}
               </datalist>
             </label>

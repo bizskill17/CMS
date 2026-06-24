@@ -2089,10 +2089,6 @@ export default function MasterPage({
                     <input type="text" readOnly value={customerUploadModal.customer?.full_name || ""} />
                   </label>
 
-                  <label className="form-field">
-                    <FormLabel>Customer Code</FormLabel>
-                    <input type="text" readOnly value={customerUploadModal.customer?.customer_code || ""} />
-                  </label>
 
                   <div className="customer-document-list">
                     {customerUploadModal.documents.map((document, index) => (

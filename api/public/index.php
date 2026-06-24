@@ -350,6 +350,38 @@ function scopedRowsOrEmpty(PDO $pdo, string $sql, int $organizationId, array $bi
     }
 }
 
+function generateCustomerCode(PDO $pdo, int $organizationId): string
+{
+    $statement = $pdo->prepare(
+        'SELECT customer_code FROM customers WHERE organization_id = :organization_id ORDER BY id DESC LIMIT 500'
+    );
+    bindOrganizationId($statement, $organizationId);
+    $statement->execute();
+
+    $maxNumber = 0;
+    foreach ($statement->fetchAll(PDO::FETCH_COLUMN) as $customerCode) {
+        if (preg_match('/(\d+)\s*$/', (string) $customerCode, $matches) === 1) {
+            $maxNumber = max($maxNumber, (int) $matches[1]);
+        }
+    }
+
+    for ($attempt = 1; $attempt <= 1000; $attempt++) {
+        $candidate = sprintf('CUS - %05d', $maxNumber + $attempt);
+        $checkStatement = $pdo->prepare(
+            'SELECT count(*) FROM customers WHERE organization_id = :organization_id AND customer_code = :customer_code'
+        );
+        bindOrganizationId($checkStatement, $organizationId);
+        $checkStatement->bindValue(':customer_code', $candidate);
+        $checkStatement->execute();
+
+        if ((int) $checkStatement->fetchColumn() === 0) {
+            return $candidate;
+        }
+    }
+
+    return 'CUS - ' . date('YmdHis') . random_int(100, 999);
+}
+
 function assertNoMasterDuplicate(PDO $pdo, array $config, array $normalized, ?int $organizationId, ?int $id = null): void
 {
     foreach (($config['duplicate_keys'] ?? []) as $rule) {
@@ -3845,6 +3877,10 @@ try {
 
             if ($method === 'POST' && $isOrganizationOwned) {
                 $normalized['organization_id'] = $organizationId;
+            }
+
+            if ($method === 'POST' && $resource === 'customers' && empty($normalized['customer_code'])) {
+                $normalized['customer_code'] = generateCustomerCode($pdo, $organizationId);
             }
 
             assertNoMasterDuplicate($pdo, $config, $normalized, $organizationId, $method === 'PUT' ? $id : null);
