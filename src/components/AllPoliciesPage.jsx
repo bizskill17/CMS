@@ -385,8 +385,14 @@ export default function AllPoliciesPage() {
                     <td>{document.document_type_name || "-"}</td>
                     <td>
                       {document.file_url ? (
-                        <a href={`${API_BASE}/${String(document.file_url).replace(/^\/+/, "")}`} target="_blank" rel="noreferrer">
-                          {document.file_name || "View File"}
+                        <a
+                          href={`${API_BASE}/${String(document.file_url).replace(/^\/+/, "")}`}
+                          download={document.file_name || true}
+                          className="text-blue"
+                          style={{ textDecoration: "underline", fontWeight: 600 }}
+                          title={document.file_name || "Download File"}
+                        >
+                          {document.file_name || "Download File"}
                         </a>
                       ) : (
                         document.file_name || "-"
