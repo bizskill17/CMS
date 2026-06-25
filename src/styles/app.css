@@ -508,8 +508,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   margin-bottom: 12px;
 }
 
@@ -535,7 +534,9 @@ button {
 }
 
 .master-card__actions--header {
-  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: nowrap;
 }
 
 .dashboard-card {
@@ -2095,9 +2096,9 @@ button {
 }
 
 .master-card__actions .master-list-toolbar__search {
-  flex: 1 1 420px;
-  min-width: 320px;
-  max-width: min(560px, 100%);
+  flex: 1 1 320px;
+  min-width: 220px;
+  max-width: none;
 }
 
 .master-card__actions--header .master-list-toolbar__search input {
