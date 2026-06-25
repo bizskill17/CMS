@@ -256,24 +256,22 @@ export default function IssuePolicyPage() {
               <SearchableSelect
                 required
                 value={formState.customer_id}
-                placeholder="Search customer by name, code, or mobile"
+                placeholder="Search customer by name or mobile"
                 onChange={(event) => handleChange("customer_id", event.target.value)}
               >
-                <option value="">Search customer by name, code, or mobile</option>
+                <option value="">Search customer by name or mobile</option>
                 {filteredCustomers.map((customer) => {
-                  const customerCode = String(customer.customer_code || "").trim();
                   const customerMobile = String(customer.mobile || "").trim();
-                  const description = [customerCode, customerMobile].filter(Boolean).join(" | ");
-                  const searchText = [customer.full_name, customerCode, customerMobile].filter(Boolean).join(" ");
+                  const label = [customer.full_name, customerMobile].filter(Boolean).join(" - ");
+                  const searchText = [customer.full_name, customerMobile].filter(Boolean).join(" ");
 
                   return (
                     <option
                       key={customer.id}
                       value={customer.id}
-                      data-description={description}
                       data-search-text={searchText}
                     >
-                      {customer.full_name}
+                      {label}
                     </option>
                   );
                 })}

@@ -762,7 +762,7 @@ try {
         $limit = isset($_GET['limit']) ? max(1, min(100, (int) $_GET['limit'])) : 25;
 
         $statement = $pdo->prepare(
-            'SELECT id, customer_code, full_name, mobile, email, city, state, is_active, created_at
+            'SELECT id, full_name, mobile, email, city, state, is_active, created_at
              FROM customers
              WHERE organization_id = :organization_id
              ORDER BY id DESC
@@ -788,7 +788,7 @@ try {
         $customerId = (int) $matches[1];
 
         $customerStatement = $pdo->prepare(
-            'SELECT id, customer_code, full_name
+            'SELECT id, full_name
              FROM customers
              WHERE id = :id
                AND organization_id = :organization_id
@@ -3302,7 +3302,7 @@ try {
         );
 
         $customers = $fetchScoped(
-            'SELECT c.id, c.group_id, c.customer_code, c.full_name, c.mobile, cg.group_name
+            'SELECT c.id, c.group_id, c.full_name, c.mobile, cg.group_name
              FROM customers c
              LEFT JOIN customer_groups cg ON cg.id = c.group_id
              WHERE c.organization_id = :organization_id
@@ -4250,6 +4250,7 @@ try {
         'message' => $throwable->getMessage()
     ], 500);
 }
+
 
 
 
