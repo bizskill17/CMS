@@ -183,7 +183,6 @@ export default function IssuePolicyPage() {
 
   const resetForm = () => {
     setFormState(createInitialFormState());
-    setProductQuery("");
   };
 
   const handleSubmit = async (event) => {
@@ -566,4 +565,5 @@ export default function IssuePolicyPage() {
     </div>
   );
 }
+
 
