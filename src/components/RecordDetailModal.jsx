@@ -30,6 +30,7 @@ export default function RecordDetailModal({ isOpen, title, rows, actions = null,
             ))}
           </div>
 
+          {children}
         </div>
       </section>
     </div>
