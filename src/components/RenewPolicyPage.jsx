@@ -526,7 +526,7 @@ export default function RenewPolicyPage() {
             <>
               <ActionIconButton icon="followup" label="Followup" onClick={() => openFollowUpModal(policy)} />
               <ActionIconButton icon="renew" label="Renew" tone="primary" onClick={() => openRenewForm(policy)} />
-              <ActionIconButton icon="delete" label="Make Inactive" tone="danger" onClick={() => openInactiveModal(policy)} />
+              <ActionIconButton icon="inactive" label="Make Inactive" tone="danger" onClick={() => openInactiveModal(policy)} />
             </>
           )}
         />
@@ -803,3 +803,4 @@ export default function RenewPolicyPage() {
     </div>
   );
 }
+

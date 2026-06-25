@@ -67,6 +67,12 @@ function IconSvg({ name }) {
         <path d="M10 11v5M14 11v5" />
       </>
     ),
+    inactive: (
+      <>
+        <circle cx="12" cy="12" r="8" />
+        <path d="M8.5 15.5 15.5 8.5" />
+      </>
+    ),
     filter: (
       <>
         <path d="M4 6h16" />
@@ -141,3 +147,4 @@ export function ActionIconDisplay({
     </button>
   );
 }
+
