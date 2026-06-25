@@ -153,7 +153,7 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
         onLogout={onLogout}
       />
       <main className="content-area">
-        <div ref={topbarRef} className="content-topbar">
+        <div className="content-topbar">
           <button
             className="sidebar-toggle"
             type="button"
@@ -188,4 +188,5 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
     </div>
   );
 }
+
 
