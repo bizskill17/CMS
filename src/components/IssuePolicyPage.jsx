@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config/api";
 import FormLabel from "./FormLabel";
 import { ButtonSpinner, Spinner } from "./Spinner";
@@ -72,7 +71,6 @@ function sortByLabel(items, key) {
 }
 
 export default function IssuePolicyPage() {
-  const navigate = useNavigate();
   const [formState, setFormState] = useState(createInitialFormState);
   const [lookupData, setLookupData] = useState({
     customerGroups: [],
@@ -84,6 +82,7 @@ export default function IssuePolicyPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -183,10 +182,17 @@ export default function IssuePolicyPage() {
 
   const resetForm = () => {
     setFormState(createInitialFormState());
+    setIsLocked(false);
+    setMessage("");
+    setError("");
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (isLocked) {
+      return;
+    }
     setSaving(true);
     setMessage("");
     setError("");
@@ -209,11 +215,7 @@ export default function IssuePolicyPage() {
       }
 
       setMessage(json.message || "Policy issued successfully.");
-      resetForm();
-
-      setTimeout(() => {
-        navigate("/policies/all");
-      }, 1500);
+      setIsLocked(true);
     } catch (saveError) {
       setError(saveError.message);
     } finally {
@@ -239,6 +241,7 @@ export default function IssuePolicyPage() {
               <SearchableSelect
                 required
                 value={formState.customer_group_id}
+                disabled={isLocked}
                 onChange={(event) => handleChange("customer_group_id", event.target.value)}
               >
                 <option value="">Select Customer Group</option>
@@ -256,6 +259,7 @@ export default function IssuePolicyPage() {
                 required
                 value={formState.customer_id}
                 placeholder="Search customer by name or mobile"
+                disabled={isLocked}
                 onChange={(event) => handleChange("customer_id", event.target.value)}
               >
                 <option value="">Search customer by name or mobile</option>
@@ -281,6 +285,7 @@ export default function IssuePolicyPage() {
               <FormLabel required>Policy No.</FormLabel>
               <input
                 type="text"
+                disabled={isLocked}
                 value={formState.policy_number}
                 required
                 onChange={(event) => handleChange("policy_number", event.target.value)}
@@ -294,6 +299,7 @@ export default function IssuePolicyPage() {
                 min="0"
                 step="0.01"
                 required
+                disabled={isLocked}
                 value={formState.gross_premium}
                 onChange={(event) => handleChange("gross_premium", event.target.value)}
               />
@@ -306,6 +312,7 @@ export default function IssuePolicyPage() {
                 min="0"
                 step="0.01"
                 required
+                disabled={isLocked}
                 value={formState.net_premium}
                 onChange={(event) => handleChange("net_premium", event.target.value)}
               />
@@ -316,6 +323,7 @@ export default function IssuePolicyPage() {
               <input
                 type="date"
                 required
+                disabled={isLocked}
                 value={formState.issue_date}
                 onChange={(event) => handleChange("issue_date", event.target.value)}
               />
@@ -326,6 +334,7 @@ export default function IssuePolicyPage() {
               <input
                 type="date"
                 required
+                disabled={isLocked}
                 value={formState.risk_start_date}
                 onChange={(event) => handleChange("risk_start_date", event.target.value)}
               />
@@ -336,6 +345,7 @@ export default function IssuePolicyPage() {
               <input
                 type="date"
                 required
+                disabled={isLocked}
                 value={formState.risk_end_date}
                 onChange={(event) => handleChange("risk_end_date", event.target.value)}
               />
@@ -346,6 +356,7 @@ export default function IssuePolicyPage() {
               <SearchableSelect
                 required
                 value={formState.business_type}
+                disabled={isLocked}
                 onChange={(event) => handleChange("business_type", event.target.value)}
               >
                 <option value="">Select Business Type</option>
@@ -361,6 +372,7 @@ export default function IssuePolicyPage() {
                 min="0"
                 step="0.01"
                 required
+                disabled={isLocked}
                 value={formState.sum_insured}
                 onChange={(event) => handleChange("sum_insured", event.target.value)}
               />
@@ -371,6 +383,7 @@ export default function IssuePolicyPage() {
               <SearchableSelect
                 required
                 value={formState.policy_type}
+                disabled={isLocked}
                 onChange={(event) => handleChange("policy_type", event.target.value)}
               >
                 <option value="">Select Policy Type</option>
@@ -387,6 +400,7 @@ export default function IssuePolicyPage() {
               <SearchableSelect
                 required
                 value={formState.company_id}
+                disabled={isLocked}
                 onChange={(event) => handleChange("company_id", event.target.value)}
               >
                 <option value="">Select Insurance Company</option>
@@ -404,6 +418,7 @@ export default function IssuePolicyPage() {
                 required
                 value={formState.product_id}
                 placeholder="Search product name"
+                disabled={isLocked}
                 onChange={(event) => handleChange("product_id", event.target.value)}
               >
                 <option value="">Search product name</option>
@@ -429,6 +444,7 @@ export default function IssuePolicyPage() {
               <FormLabel>Vehicle Make</FormLabel>
               <input
                 type="text"
+                disabled={isLocked}
                 value={formState.vehicle_make}
                 onChange={(event) => handleChange("vehicle_make", event.target.value)}
               />
@@ -438,6 +454,7 @@ export default function IssuePolicyPage() {
               <FormLabel>Vehicle Model</FormLabel>
               <input
                 type="text"
+                disabled={isLocked}
                 value={formState.vehicle_model}
                 onChange={(event) => handleChange("vehicle_model", event.target.value)}
               />
@@ -450,6 +467,7 @@ export default function IssuePolicyPage() {
                 min="1900"
                 max="9999"
                 step="1"
+                disabled={isLocked}
                 value={formState.year_of_manufacture}
                 onChange={(event) => handleChange("year_of_manufacture", event.target.value)}
               />
@@ -459,6 +477,7 @@ export default function IssuePolicyPage() {
               <FormLabel>Registration No.</FormLabel>
               <input
                 type="text"
+                disabled={isLocked}
                 value={formState.registration_no}
                 onChange={(event) => handleChange("registration_no", event.target.value)}
               />
@@ -469,6 +488,7 @@ export default function IssuePolicyPage() {
               <SearchableSelect
                 required
                 value={formState.paid_by_type}
+                disabled={isLocked}
                 onChange={(event) => handleChange("paid_by_type", event.target.value)}
               >
                 <option value="">Select Payment By</option>
@@ -484,6 +504,7 @@ export default function IssuePolicyPage() {
                   <SearchableSelect
                     required
                     value={formState.agent_payment_account_id}
+                    disabled={isLocked}
                     onChange={(event) => handleChange("agent_payment_account_id", event.target.value)}
                   >
                     <option value="">Select Agent Account</option>
@@ -501,6 +522,7 @@ export default function IssuePolicyPage() {
                   <FormLabel>Payment Mode</FormLabel>
                   <SearchableSelect
                     value={formState.payment_mode}
+                    disabled={isLocked}
                     onChange={(event) => handleChange("payment_mode", event.target.value)}
                   >
                     <option value="">Select Payment Mode</option>
@@ -519,6 +541,7 @@ export default function IssuePolicyPage() {
                   <input
                     type="text"
                     required
+                    disabled={isLocked}
                     value={formState.cheque_number}
                     onChange={(event) => handleChange("cheque_number", event.target.value)}
                   />
@@ -529,6 +552,7 @@ export default function IssuePolicyPage() {
                   <input
                     type="date"
                     required
+                    disabled={isLocked}
                     value={formState.cheque_date}
                     onChange={(event) => handleChange("cheque_date", event.target.value)}
                   />
@@ -541,6 +565,7 @@ export default function IssuePolicyPage() {
                     min="0"
                     step="0.01"
                     required
+                    disabled={isLocked}
                     value={formState.cheque_amount}
                     onChange={(event) => handleChange("cheque_amount", event.target.value)}
                   />
@@ -552,7 +577,7 @@ export default function IssuePolicyPage() {
               <button type="button" className="secondary-button" onClick={resetForm}>
                 Reset
               </button>
-              <button type="submit" className="primary-button" disabled={saving}>
+              <button type="submit" className="primary-button" disabled={saving || isLocked}>
                 {saving ? <ButtonSpinner label="Saving..." /> : "Save Policy"}
               </button>
             </div>
@@ -565,5 +590,7 @@ export default function IssuePolicyPage() {
     </div>
   );
 }
+
+
 
 
