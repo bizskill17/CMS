@@ -325,6 +325,7 @@ export default function MasterPage({
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isFormLocked, setIsFormLocked] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [searchTerm, setSearchTerm] = useState("");
   const deferredSearchTerm = useDeferredValue(searchTerm);
@@ -365,6 +366,7 @@ export default function MasterPage({
   const closeForm = ({ notifyCancel = true } = {}) => {
     setFormState(emptyState(config));
     setEditingId(null);
+    setIsFormLocked(false);
     setIsFormOpen(false);
 
     if (notifyCancel && embeddedFormOnly && onFormCancel) {
@@ -534,12 +536,22 @@ export default function MasterPage({
   }, [config.resource, dependencies, deferredSearchTerm]);
 
   const resetForm = () => {
+    if (isFormLocked) {
+      setFormState(emptyState(config));
+      setEditingId(null);
+      setIsFormLocked(false);
+      setMessage("");
+      setError("");
+      return;
+    }
+
     closeForm();
   };
 
   const handleAdd = () => {
     setFormState(emptyState(config));
     setEditingId(null);
+    setIsFormLocked(false);
     setMessage("");
     setError("");
     setIsFormOpen(true);
@@ -599,6 +611,7 @@ export default function MasterPage({
     }
     setFormState(nextState);
     setEditingId(record.id);
+    setIsFormLocked(false);
     setMessage("");
     setError("");
     setIsFormOpen(true);
@@ -606,6 +619,10 @@ export default function MasterPage({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (isFormLocked) {
+      return;
+    }
     setMessage("");
     setError("");
 
@@ -684,7 +701,7 @@ export default function MasterPage({
 
       const savedRecordId = method === "POST" ? Number(json.id || 0) : Number(editingId || 0);
       setMessage(json.message || "Saved successfully.");
-      closeForm({ notifyCancel: false });
+      setIsFormLocked(true);
 
       const refresh = await fetch(`${API_BASE}/masters/${config.resource}?limit=500000`);
       const refreshJson = await readApiJson(refresh);
@@ -1286,17 +1303,18 @@ export default function MasterPage({
 
   const formModal = isFormOpen ? (
     <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="master-form-title">
-      <div className="master-modal__backdrop" onClick={resetForm} />
+      <div className="master-modal__backdrop" onClick={isFormLocked ? undefined : resetForm} />
       <section className="master-card master-modal__panel">
         <div className="master-card__header">
           <h3 id="master-form-title">{editingId ? `Edit ${config.title}` : `Add ${config.title}`}</h3>
           <button type="button" className="text-button" onClick={resetForm}>
-            Cancel
+            {isFormLocked ? "Reset" : "Cancel"}
           </button>
         </div>
 
         <div className="master-modal__body">
           <form className="master-form" onSubmit={handleSubmit}>
+            <fieldset disabled={isFormLocked} className="master-form__fieldset">
             {config.fields.map((field) => {
               if (field.type === "checklist") {
                 const checklistOptions = (field.optionGroups || []).flatMap((group) =>
@@ -1494,11 +1512,12 @@ export default function MasterPage({
               );
             })}
 
+            </fieldset>
             <div className="form-actions">
               <button type="button" className="secondary-button form-actions__cancel" onClick={resetForm}>
-                Cancel
+                {isFormLocked ? "Reset" : "Cancel"}
               </button>
-              <button type="submit" className="primary-button" disabled={saving}>
+              <button type="submit" className="primary-button" disabled={saving || isFormLocked}>
                 {saving ? <ButtonSpinner label="Saving..." /> : editingId ? "Update Record" : "Save Record"}
               </button>
             </div>
@@ -2235,6 +2254,8 @@ export default function MasterPage({
     </div>
   );
 }
+
+
 
 
 
