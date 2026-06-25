@@ -1325,8 +1325,20 @@ button {
   cursor: not-allowed;
 }
 
+.searchable-select__option-content {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
 .searchable-select__option-label {
   min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.searchable-select__option-description {
+  color: #6f7b8c;
+  font-size: 12px;
   overflow-wrap: anywhere;
 }
 
@@ -1394,6 +1406,12 @@ button {
 
 .checklist-field__matrix-head--allow {
   width: 70px;
+}
+
+.checklist-field__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
 }
 
 .checklist-field__matrix-cell {
@@ -2616,4 +2634,6 @@ button {
   }
 
 }
+
+
 

@@ -1305,11 +1305,24 @@ export default function MasterPage({
                     groupLabel: group.label
                   }))
                 );
+                const checklistValues = Array.isArray(formState[field.name]) ? formState[field.name] : [];
+                const allChecklistValues = checklistOptions.map((option) => option.value);
+                const isAllSelected =
+                  checklistOptions.length > 0 && allChecklistValues.every((value) => checklistValues.includes(value));
                 const checklistRows = chunkItems(checklistOptions, 2);
 
                 return (
                   <div key={field.name} className="form-field checklist-field">
                     <FormLabel required={Boolean(field.required)}>{field.label}</FormLabel>
+                    <div className="checklist-field__actions">
+                      <button
+                        type="button"
+                        className="text-button"
+                        onClick={() => handleChange(field, isAllSelected ? [] : allChecklistValues)}
+                      >
+                        {isAllSelected ? "Clear All" : "Select All"}
+                      </button>
+                    </div>
                     <div className="checklist-field__matrix-wrap">
                       <table className="checklist-field__matrix">
                         <thead>
@@ -1336,9 +1349,7 @@ export default function MasterPage({
                                   ];
                                 }
 
-                                const checked = Array.isArray(formState[field.name])
-                                  ? formState[field.name].includes(option.value)
-                                  : false;
+                                const checked = checklistValues.includes(option.value);
 
                                 return [
                                   <td key={`${field.name}-menu-${option.value}`} className="checklist-field__matrix-cell">
@@ -1361,7 +1372,7 @@ export default function MasterPage({
                                         handleChange(
                                           field,
                                           event.target.checked
-                                            ? [...nextValues, option.value]
+                                            ? [...new Set([...nextValues, option.value])]
                                             : nextValues.filter((item) => item !== option.value)
                                         );
                                       }}
@@ -2224,6 +2235,7 @@ export default function MasterPage({
     </div>
   );
 }
+
 
 
 

@@ -19,11 +19,21 @@ function optionText(children) {
 function buildOptions(children) {
   return Children.toArray(children)
     .filter((child) => isValidElement(child) && child.type === "option")
-    .map((child) => ({
-      value: String(child.props.value ?? ""),
-      label: optionText(child.props.children).trim() || String(child.props.value ?? ""),
-      disabled: Boolean(child.props.disabled)
-    }));
+    .map((child) => {
+      const label = optionText(child.props.children).trim() || String(child.props.value ?? "");
+      const description = String(child.props["data-description"] ?? "").trim();
+      const searchText = String(child.props["data-search-text"] ?? `${label} ${description}`)
+        .trim()
+        .toLowerCase();
+
+      return {
+        value: String(child.props.value ?? ""),
+        label,
+        description,
+        searchText,
+        disabled: Boolean(child.props.disabled)
+      };
+    });
 }
 
 export default function SearchableSelect({
@@ -59,7 +69,7 @@ export default function SearchableSelect({
       return visibleOptions;
     }
 
-    return visibleOptions.filter((option) => option.label.toLowerCase().includes(normalizedQuery));
+    return visibleOptions.filter((option) => option.searchText.includes(normalizedQuery));
   }, [query, visibleOptions]);
 
   useEffect(() => {
@@ -198,7 +208,12 @@ export default function SearchableSelect({
                   aria-selected={option.value === stringValue}
                   onClick={() => handleSelect(option)}
                 >
-                  <span className="searchable-select__option-label">{option.label}</span>
+                  <span className="searchable-select__option-content">
+                    <span className="searchable-select__option-label">{option.label}</span>
+                    {option.description ? (
+                      <span className="searchable-select__option-description">{option.description}</span>
+                    ) : null}
+                  </span>
                 </button>
               ))
             ) : (

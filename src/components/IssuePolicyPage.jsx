@@ -82,8 +82,6 @@ export default function IssuePolicyPage() {
     products: [],
     agentAccounts: []
   });
-  const [customerQuery, setCustomerQuery] = useState("");
-  const [productQuery, setProductQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -120,61 +118,29 @@ export default function IssuePolicyPage() {
     load();
   }, []);
 
-  const filteredCustomers = useMemo(() => {
-    const query = customerQuery.trim().toLowerCase();
-
-    return lookupData.customers.filter((customer) => {
-      const matchesGroup =
-        !formState.customer_group_id || String(customer.group_id || "") === formState.customer_group_id;
-      const matchesQuery =
-        !query ||
-        customer.full_name.toLowerCase().includes(query) ||
-        String(customer.mobile || "").toLowerCase().includes(query);
-
-      return matchesGroup && matchesQuery;
-    });
-  }, [customerQuery, formState.customer_group_id, lookupData.customers]);
-
-  const filteredProducts = useMemo(() => {
-    const query = productQuery.trim().toLowerCase();
-
-    return lookupData.products.filter((product) => {
-      const matchesCompany =
-        !formState.company_id || String(product.company_id || "") === formState.company_id;
-      const matchesPolicyType =
-        !formState.policy_type || String(product.category_id || "") === formState.policy_type;
-      const matchesQuery =
-        !query ||
-        product.product_name.toLowerCase().includes(query) ||
-        String(product.company_name || "").toLowerCase().includes(query);
-
-      return matchesCompany && matchesPolicyType && matchesQuery;
-    });
-  }, [productQuery, formState.company_id, formState.policy_type, lookupData.products]);
-
-  const selectedCustomer = useMemo(
-    () => lookupData.customers.find((customer) => String(customer.id) === formState.customer_id),
-    [formState.customer_id, lookupData.customers]
+  const filteredCustomers = useMemo(
+    () =>
+      lookupData.customers.filter(
+        (customer) =>
+          !formState.customer_group_id || String(customer.group_id || "") === formState.customer_group_id
+      ),
+    [formState.customer_group_id, lookupData.customers]
   );
 
-  const selectedProduct = useMemo(
-    () => lookupData.products.find((product) => String(product.id) === formState.product_id),
-    [formState.product_id, lookupData.products]
+  const filteredProducts = useMemo(
+    () =>
+      lookupData.products.filter((product) => {
+        const matchesCompany =
+          !formState.company_id || String(product.company_id || "") === formState.company_id;
+        const matchesPolicyType =
+          !formState.policy_type || String(product.category_id || "") === formState.policy_type;
+
+        return matchesCompany && matchesPolicyType;
+      }),
+    [formState.company_id, formState.policy_type, lookupData.products]
   );
   const showAgentChequeFields =
     formState.paid_by_type === "Agent" && formState.payment_mode === "Cheque";
-
-  useEffect(() => {
-    if (selectedCustomer) {
-      setCustomerQuery(selectedCustomer.full_name);
-    }
-  }, [selectedCustomer]);
-
-  useEffect(() => {
-    if (selectedProduct) {
-      setProductQuery(selectedProduct.product_name);
-    }
-  }, [selectedProduct]);
 
   const handleChange = (name, value) => {
     setFormState((current) => {
@@ -182,17 +148,14 @@ export default function IssuePolicyPage() {
 
       if (name === "customer_group_id" && current.customer_group_id !== value) {
         next.customer_id = "";
-        setCustomerQuery("");
       }
 
       if (name === "company_id" && current.company_id !== value) {
         next.product_id = "";
-        setProductQuery("");
       }
 
       if (name === "policy_type" && current.policy_type !== value) {
         next.product_id = "";
-        setProductQuery("");
       }
 
       if (name === "product_id") {
@@ -220,7 +183,6 @@ export default function IssuePolicyPage() {
 
   const resetForm = () => {
     setFormState(createInitialFormState());
-    setCustomerQuery("");
     setProductQuery("");
   };
 
@@ -291,26 +253,31 @@ export default function IssuePolicyPage() {
 
             <label className="form-field">
               <FormLabel required>Customer</FormLabel>
-              <input
-                list="customer-options"
-                value={customerQuery}
+              <SearchableSelect
                 required
+                value={formState.customer_id}
                 placeholder="Search customer by name, code, or mobile"
-                onChange={(event) => {
-                  const nextValue = event.target.value;
-                  setCustomerQuery(nextValue);
-                  const match = filteredCustomers.find((customer) => customer.full_name === nextValue);
-                  handleChange("customer_id", match ? String(match.id) : "");
-                }}
-              />
-              <datalist id="customer-options">
-                {filteredCustomers.map((customer) => (
-                  <option
-                    key={customer.id}
-                    value={customer.full_name}
-                  >{customer.mobile || ""}</option>
-                ))}
-              </datalist>
+                onChange={(event) => handleChange("customer_id", event.target.value)}
+              >
+                <option value="">Search customer by name, code, or mobile</option>
+                {filteredCustomers.map((customer) => {
+                  const customerCode = String(customer.customer_code || "").trim();
+                  const customerMobile = String(customer.mobile || "").trim();
+                  const description = [customerCode, customerMobile].filter(Boolean).join(" | ");
+                  const searchText = [customer.full_name, customerCode, customerMobile].filter(Boolean).join(" ");
+
+                  return (
+                    <option
+                      key={customer.id}
+                      value={customer.id}
+                      data-description={description}
+                      data-search-text={searchText}
+                    >
+                      {customer.full_name}
+                    </option>
+                  );
+                })}
+              </SearchableSelect>
             </label>
 
             <label className="form-field">
@@ -436,25 +403,29 @@ export default function IssuePolicyPage() {
 
             <label className="form-field">
               <FormLabel required>Product Name</FormLabel>
-              <input
-                list="product-options"
+              <SearchableSelect
                 required
-                value={productQuery}
+                value={formState.product_id}
                 placeholder="Search product name"
-                onChange={(event) => {
-                  const nextValue = event.target.value;
-                  setProductQuery(nextValue);
-                  const match = filteredProducts.find((product) => product.product_name === nextValue);
-                  handleChange("product_id", match ? String(match.id) : "");
-                }}
-              />
-              <datalist id="product-options">
-                {filteredProducts.map((product) => (
-                  <option key={product.id} value={product.product_name}>
-                    {product.company_name || ""}
-                  </option>
-                ))}
-              </datalist>
+                onChange={(event) => handleChange("product_id", event.target.value)}
+              >
+                <option value="">Search product name</option>
+                {filteredProducts.map((product) => {
+                  const companyName = String(product.company_name || "").trim();
+                  const searchText = [product.product_name, companyName].filter(Boolean).join(" ");
+
+                  return (
+                    <option
+                      key={product.id}
+                      value={product.id}
+                      data-description={companyName}
+                      data-search-text={searchText}
+                    >
+                      {product.product_name}
+                    </option>
+                  );
+                })}
+              </SearchableSelect>
             </label>
 
             <label className="form-field">
@@ -597,3 +568,4 @@ export default function IssuePolicyPage() {
     </div>
   );
 }
+
