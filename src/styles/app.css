@@ -2030,50 +2030,83 @@ button {
 }
 
 .record-detail__actions {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  gap: 12px;
-  margin-bottom: 20px;
-  padding: 14px 16px;
-  border: 1px solid #d7e1f1;
-  border-radius: 16px;
-  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
-}
-
-.record-detail__actions-label {
-  color: #4d6ba7;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-weight: 800;
+  margin-bottom: 24px;
+  padding: 0 0 18px;
+  border-bottom: 1px solid #e3eaf5;
 }
 
 .record-detail__actions .table-actions {
+  justify-content: center;
+  gap: 26px;
   flex-wrap: wrap;
+}
+
+.record-detail__actions .icon-action-button {
+  width: 88px;
+  height: auto;
+  min-height: 72px;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
+  color: #2d57d7;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 8px;
+  box-shadow: none;
+}
+
+.record-detail__actions .icon-action-button:hover {
+  background: #f5f8ff;
+}
+
+.record-detail__actions .icon-action-button svg {
+  width: 32px;
+  height: 32px;
+  padding: 7px;
+  border-radius: 999px;
+  background: #2d57d7;
+  color: #ffffff;
+}
+
+.record-detail__actions .icon-action-button::after {
+  content: attr(aria-label);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 500;
+  color: #334155;
+  text-align: center;
+  white-space: normal;
 }
 
 .record-detail__list {
   display: grid;
-  gap: 18px;
+  gap: 0;
 }
 
 .record-detail__item {
   display: grid;
-  gap: 8px;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.4fr);
+  gap: 18px;
+  padding: 14px 0;
+  border-bottom: 1px solid #eef2f8;
+}
+
+.record-detail__item:last-child {
+  border-bottom: 0;
 }
 
 .record-detail__field {
   color: #5d6b82;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .record-detail__value {
   color: var(--text-dark);
-  font-size: 17px;
-  line-height: 1.4;
+  font-size: 18px;
+  line-height: 1.45;
   font-weight: 500;
   word-break: break-word;
 }
@@ -2495,6 +2528,30 @@ button {
     min-height: 46px;
   }
 
+  .record-detail__actions .table-actions {
+    gap: 12px;
+    justify-content: flex-start;
+  }
+
+  .record-detail__actions .icon-action-button {
+    width: 72px;
+    min-height: 66px;
+  }
+
+  .record-detail__actions .icon-action-button::after {
+    font-size: 11px;
+  }
+
+  .record-detail__item {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 12px 0;
+  }
+
+  .record-detail__value {
+    font-size: 16px;
+  }
+
   .form-field {
     gap: 6px;
   }
@@ -2660,6 +2717,7 @@ button {
   }
 
 }
+
 
 
 

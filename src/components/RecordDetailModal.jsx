@@ -17,7 +17,6 @@ export default function RecordDetailModal({ isOpen, title, rows, actions = null,
         <div className="master-modal__body">
           {actions ? (
             <div className="record-detail__actions">
-              <span className="record-detail__actions-label">Actions</span>
               <div className="table-actions">{actions}</div>
             </div>
           ) : null}
@@ -31,13 +30,9 @@ export default function RecordDetailModal({ isOpen, title, rows, actions = null,
             ))}
           </div>
 
-          <div className="form-actions">
-            <button type="button" className="secondary-button form-actions__cancel" onClick={onClose}>
-              Cancel
-            </button>
-          </div>
         </div>
       </section>
     </div>
   );
 }
+
