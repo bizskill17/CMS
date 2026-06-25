@@ -409,17 +409,15 @@ button {
   padding-right: 0;
   scroll-behavior: auto;
 }
-@media (min-width: 901px) {
-  .content-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 40;
-    padding-top: 12px;
-    padding-bottom: 12px;
-    background: #dde6f0;
-    border-bottom: 1px solid rgba(22, 33, 45, 0.08);
-    box-shadow: 0 6px 18px rgba(38, 60, 89, 0.06);
-  }
+.content-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  background: #dde6f0;
+  border-bottom: 1px solid rgba(22, 33, 45, 0.08);
+  box-shadow: 0 6px 18px rgba(38, 60, 89, 0.06);
 }
 
 .page-shell {
@@ -2647,6 +2645,7 @@ button {
   }
 
 }
+
 
 
 
