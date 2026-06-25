@@ -397,17 +397,16 @@ button {
   width: 100%;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow: visible;
   padding: 0 clamp(12px, 2vw, 24px) clamp(12px, 2vw, 24px);
 }
 
 .content-body {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-right: 4px;
+  overflow: visible;
+  padding-right: 0;
   scroll-behavior: auto;
 }
 
@@ -2636,6 +2635,8 @@ button {
   }
 
 }
+
+
 
 
 

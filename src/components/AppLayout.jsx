@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { API_BASE } from "../config/api";
 import { menuSections } from "../data/menu";
@@ -83,8 +83,6 @@ function getCurrentViewName(pathname) {
 
 export default function AppLayout({ currentUser, allowedMenuSections, allowedRoutes, onLogout }) {
   const location = useLocation();
-  const topbarRef = useRef(null);
-  const contentBodyRef = useRef(null);
   const [isMobile, setIsMobile] = useState(() => getIsMobileViewport());
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => !getIsMobileViewport());
   const [appBrand, setAppBrand] = useState({
@@ -124,11 +122,9 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
 
   useEffect(() => {
     const scrollToTop = () => {
-      if (contentBodyRef.current) {
-        contentBodyRef.current.scrollTop = 0;
-      }
       window.scrollTo(0, 0);
       document.documentElement.scrollTo(0, 0);
+      document.body.scrollTo(0, 0);
     };
 
     scrollToTop();
@@ -185,10 +181,11 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
             </div>
           ) : null}
         </div>
-        <div ref={contentBodyRef} className="content-body">
+        <div className="content-body">
           <Outlet />
         </div>
       </main>
     </div>
   );
 }
+
