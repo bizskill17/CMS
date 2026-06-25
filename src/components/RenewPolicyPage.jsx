@@ -121,6 +121,14 @@ function buildPolicyHolderDetail(policy) {
   return parts.join(" | ");
 }
 
+function validatePolicyDates(issueDate, riskEndDate) {
+  if (issueDate && riskEndDate && riskEndDate < issueDate) {
+    return "Risk Expiry Date must be greater than or equal to Policy Issued Date.";
+  }
+
+  return "";
+}
+
 function buildOldPolicyDetail(policy) {
   if (!policy) return "";
 
@@ -271,6 +279,13 @@ export default function RenewPolicyPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    const dateValidationError = validatePolicyDates(formState.issue_date, formState.risk_end_date);
+    if (dateValidationError) {
+      setError(dateValidationError);
+      return;
+    }
+
     setSaving(true);
     setMessage("");
     setError("");
@@ -624,7 +639,7 @@ export default function RenewPolicyPage() {
                 </label>
                 <label className="form-field">
                   <FormLabel>Risk Expiry Date</FormLabel>
-                  <input type="date" value={formState.risk_end_date} onChange={(event) => handleChange("risk_end_date", event.target.value)} />
+                  <input type="date" value={formState.risk_end_date} min={formState.issue_date || undefined} onChange={(event) => handleChange("risk_end_date", event.target.value)} />
                 </label>
                 <label className="form-field">
                   <FormLabel>Business Type</FormLabel>

@@ -38,11 +38,11 @@ function getColumnWidthStyle(column, fallback = "140px") {
     token.includes("insurance company") ||
     token.includes("company")
   ) {
-    width = "240px";
+      width = "260px";
   } else if (token.includes("customer") || token.includes("agent")) {
     width = "145px";
   } else if (token.includes("product")) {
-    width = "170px";
+      width = "300px";
   } else if (
     token.includes("premium") ||
     token.includes("amount") ||
@@ -85,7 +85,11 @@ export default function ResponsiveDataView({
   initialSort = null,
   headerExtras = null,
   customFilterContent = null,
-  onClearCustomFilters = null
+  onClearCustomFilters = null,
+  detailTitle = null,
+  getDetailRows = null,
+  loadDetailData = null,
+  renderDetailExtra = null
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState(initialSort);
@@ -93,6 +97,9 @@ export default function ResponsiveDataView({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [detailData, setDetailData] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
   const [activeFilters, setActiveFilters] = useState(() =>
     Object.fromEntries(filterConfigs.map((filter) => [filter.key, []]))
   );
@@ -149,12 +156,37 @@ export default function ResponsiveDataView({
       return [];
     }
 
+    if (getDetailRows) {
+      return getDetailRows(selectedRecord, detailData);
+    }
+
     return columns.map((column) => ({
       key: column.key,
       label: column.label,
       value: formatCellValue(getRecordValue(selectedRecord, column.key))
     }));
-  }, [columns, selectedRecord]);
+  }, [columns, detailData, getDetailRows, selectedRecord]);
+
+  const handleRecordOpen = async (record) => {
+    setSelectedRecord(record);
+    setDetailData(null);
+    setDetailError("");
+
+    if (!loadDetailData) {
+      setDetailLoading(false);
+      return;
+    }
+
+    setDetailLoading(true);
+    try {
+      const loadedDetail = await loadDetailData(record);
+      setDetailData(loadedDetail);
+    } catch (detailLoadError) {
+      setDetailError(detailLoadError.message || "Failed to load details.");
+    } finally {
+      setDetailLoading(false);
+    }
+  };
 
   return (
     <>
@@ -298,7 +330,7 @@ export default function ResponsiveDataView({
                     <tr
                       key={record[rowKey] ?? index}
                       className="master-table__row"
-                      onClick={() => setSelectedRecord(record)}
+                      onClick={() => handleRecordOpen(record)}
                     >
                       <td style={{ width: "72px", minWidth: "72px", maxWidth: "72px" }}>
                         {pageStart + index + 1}
@@ -350,11 +382,20 @@ export default function ResponsiveDataView({
           ) : null}
           <RecordDetailModal
             isOpen={Boolean(selectedRecord)}
-            title={title}
+            title={detailTitle || title}
             rows={detailRows}
             actions={selectedRecord && renderActions ? renderActions(selectedRecord) : null}
-            onClose={() => setSelectedRecord(null)}
-          />
+            onClose={() => {
+              setSelectedRecord(null);
+              setDetailData(null);
+              setDetailError("");
+              setDetailLoading(false);
+            }}
+          >
+            {renderDetailExtra
+              ? renderDetailExtra(selectedRecord, detailData, { loading: detailLoading, error: detailError })
+              : null}
+          </RecordDetailModal>
         </>
       )}
     </>

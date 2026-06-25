@@ -1728,6 +1728,16 @@ try {
         $organizationId = requireOrganizationId();
         $leadId = (int) $matches[1];
 
+        $issueDate = trim((string) ($payload['issue_date'] ?? ''));
+        $riskEndDate = trim((string) ($payload['risk_end_date'] ?? ''));
+        if ($issueDate !== '' && $riskEndDate !== '' && $riskEndDate < $issueDate) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Risk Expiry Date must be greater than or equal to Policy Issued Date.'
+            ], 422);
+            exit;
+        }
+
         $pdo->beginTransaction();
         try {
             // Delete related updates first
@@ -1993,16 +2003,27 @@ try {
         $statement = $pdo->prepare(
             'SELECT
                 p.id,
+                p.customer_id,
+                c.group_id AS customer_group_id,
+                p.company_id,
+                p.product_id,
+                pc.id AS policy_type_id,
                 p.policy_number,
                 p.policy_type,
                 p.business_type,
+                p.sum_insured,
                 p.gross_premium,
                 p.net_premium,
                 p.issue_date,
                 p.risk_start_date,
                 p.risk_end_date,
+                p.vehicle_make,
+                p.vehicle_model,
+                p.year_of_manufacture,
+                p.registration_no,
                 p.paid_by_type,
                 p.payment_mode,
+                p.agent_payment_account_id,
                 p.policy_status,
                 c.full_name AS customer_name,
                 cg.group_name AS customer_group_name,
@@ -2013,6 +2034,7 @@ try {
              LEFT JOIN customer_groups cg ON cg.id = c.group_id
              LEFT JOIN insurance_companies ic ON ic.id = p.company_id
              LEFT JOIN insurance_products ip ON ip.id = p.product_id
+             LEFT JOIN product_categories pc ON pc.category_name = p.policy_type AND pc.organization_id = p.organization_id
              WHERE p.organization_id = :organization_id
              ORDER BY p.id DESC
              LIMIT :limit'
@@ -3558,6 +3580,16 @@ try {
             $policyTypeName = $policyTypeStatement->fetchColumn() ?: null;
         }
 
+        $issueDate = trim((string) ($payload['issue_date'] ?? ''));
+        $riskEndDate = trim((string) ($payload['risk_end_date'] ?? ''));
+        if ($issueDate !== '' && $riskEndDate !== '' && $riskEndDate < $issueDate) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Risk Expiry Date must be greater than or equal to Policy Issued Date.'
+            ], 422);
+            exit;
+        }
+
         $pdo->beginTransaction();
 
         try {
@@ -3749,6 +3781,16 @@ try {
             exit;
         }
 
+        $issueDate = trim((string) ($payload['issue_date'] ?? ''));
+        $riskEndDate = trim((string) ($payload['risk_end_date'] ?? ''));
+        if ($issueDate !== '' && $riskEndDate !== '' && $riskEndDate < $issueDate) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Risk Expiry Date must be greater than or equal to Policy Issued Date.'
+            ], 422);
+            exit;
+        }
+
         $pdo->beginTransaction();
 
         try {
@@ -3888,6 +3930,69 @@ try {
             $pdo->rollBack();
             throw $throwable;
         }
+    }
+
+    if (preg_match('#^/api/policies/(\d+)/documents$#', $path, $matches) === 1 && $method === 'GET') {
+        $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
+        $policyId = (int) ($matches[1] ?? 0);
+
+        $statement = $pdo->prepare(
+            'SELECT dt.name AS document_type_name, d.file_name, d.file_url, d.document_number, d.document_date, d.expiry_date, d.remarks, d.uploaded_at
+             FROM documents d
+             LEFT JOIN document_types dt ON dt.id = d.document_type_id
+             WHERE d.policy_id = :policy_id
+               AND d.organization_id = :organization_id
+               AND d.deleted_at IS NULL
+               AND d.is_active = 1
+             ORDER BY d.uploaded_at DESC, d.id DESC'
+        );
+        $statement->bindValue(':policy_id', $policyId, PDO::PARAM_INT);
+        bindOrganizationId($statement, $organizationId);
+        $statement->execute();
+        Response::json(['status' => 'ok', 'data' => $statement->fetchAll()]);
+        exit;
+    }
+
+    if (preg_match('#^/api/policies/(\d+)$#', $path, $matches) === 1 && $method === 'PUT') {
+        $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
+        $policyId = (int) ($matches[1] ?? 0);
+        $payload = json_decode(file_get_contents('php://input') ?: '[]', true);
+        if (!is_array($payload)) { Response::json(['status' => 'error', 'message' => 'Invalid JSON payload.'], 422); exit; }
+        $issueDate = trim((string) ($payload['issue_date'] ?? ''));
+        $riskEndDate = trim((string) ($payload['risk_end_date'] ?? ''));
+        if ($issueDate !== '' && $riskEndDate !== '' && $riskEndDate < $issueDate) { Response::json(['status' => 'error', 'message' => 'Risk Expiry Date must be greater than or equal to Policy Issued Date.'], 422); exit; }
+        $typeStatement = $pdo->prepare('SELECT category_name FROM product_categories WHERE id = :id AND organization_id = :organization_id');
+        $typeStatement->bindValue(':id', (int) ($payload['policy_type'] ?? 0), PDO::PARAM_INT);
+        bindOrganizationId($typeStatement, $organizationId);
+        $typeStatement->execute();
+        $policyTypeName = $typeStatement->fetchColumn();
+        if ($policyTypeName === false) { Response::json(['status' => 'error', 'message' => 'Selected Policy Type was not found.'], 422); exit; }
+        $statement = $pdo->prepare('UPDATE policies SET company_id = :company_id, product_id = :product_id, policy_number = :policy_number, business_type = :business_type, policy_type = :policy_type, sum_insured = :sum_insured, gross_premium = :gross_premium, net_premium = :net_premium, issue_date = :issue_date, risk_start_date = :risk_start_date, risk_end_date = :risk_end_date, vehicle_make = :vehicle_make, vehicle_model = :vehicle_model, year_of_manufacture = :year_of_manufacture, registration_no = :registration_no, paid_by_type = :paid_by_type, payment_mode = :payment_mode, agent_payment_account_id = :agent_payment_account_id WHERE id = :id AND organization_id = :organization_id');
+        bindOrganizationId($statement, $organizationId);
+        $statement->bindValue(':company_id', (int) ($payload['company_id'] ?? 0), PDO::PARAM_INT);
+        $statement->bindValue(':product_id', (int) ($payload['product_id'] ?? 0), PDO::PARAM_INT);
+        $statement->bindValue(':policy_number', trim((string) ($payload['policy_number'] ?? '')));
+        $statement->bindValue(':business_type', trim((string) ($payload['business_type'] ?? '')) !== '' ? $payload['business_type'] : null);
+        $statement->bindValue(':policy_type', $policyTypeName);
+        $statement->bindValue(':sum_insured', trim((string) ($payload['sum_insured'] ?? '')) !== '' ? $payload['sum_insured'] : null);
+        $statement->bindValue(':gross_premium', trim((string) ($payload['gross_premium'] ?? '')) !== '' ? (float) $payload['gross_premium'] : null);
+        $statement->bindValue(':net_premium', trim((string) ($payload['net_premium'] ?? '')) !== '' ? (float) $payload['net_premium'] : null);
+        $statement->bindValue(':issue_date', $issueDate !== '' ? $issueDate : null);
+        $statement->bindValue(':risk_start_date', trim((string) ($payload['risk_start_date'] ?? '')) !== '' ? $payload['risk_start_date'] : null);
+        $statement->bindValue(':risk_end_date', $riskEndDate !== '' ? $riskEndDate : null);
+        $statement->bindValue(':vehicle_make', trim((string) ($payload['vehicle_make'] ?? '')) !== '' ? $payload['vehicle_make'] : null);
+        $statement->bindValue(':vehicle_model', trim((string) ($payload['vehicle_model'] ?? '')) !== '' ? $payload['vehicle_model'] : null);
+        $statement->bindValue(':year_of_manufacture', trim((string) ($payload['year_of_manufacture'] ?? '')) !== '' ? (int) $payload['year_of_manufacture'] : null, trim((string) ($payload['year_of_manufacture'] ?? '')) !== '' ? PDO::PARAM_INT : PDO::PARAM_NULL);
+        $statement->bindValue(':registration_no', trim((string) ($payload['registration_no'] ?? '')) !== '' ? $payload['registration_no'] : null);
+        $statement->bindValue(':paid_by_type', trim((string) ($payload['paid_by_type'] ?? '')) !== '' ? $payload['paid_by_type'] : null);
+        $statement->bindValue(':payment_mode', trim((string) ($payload['payment_mode'] ?? '')) !== '' ? $payload['payment_mode'] : null);
+        $statement->bindValue(':agent_payment_account_id', trim((string) ($payload['agent_payment_account_id'] ?? '')) !== '' ? (int) $payload['agent_payment_account_id'] : null, trim((string) ($payload['agent_payment_account_id'] ?? '')) !== '' ? PDO::PARAM_INT : PDO::PARAM_NULL);
+        $statement->bindValue(':id', $policyId, PDO::PARAM_INT);
+        $statement->execute();
+        Response::json(['status' => 'ok', 'message' => 'Policy updated successfully.']);
+        exit;
     }
 
     if (preg_match('#^/api/policies/(\\d+)$#', $path, $matches) === 1 && $method === 'DELETE') {

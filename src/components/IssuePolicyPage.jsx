@@ -70,6 +70,14 @@ function sortByLabel(items, key) {
   return [...items].sort((a, b) => String(a[key] || "").localeCompare(String(b[key] || "")));
 }
 
+function validatePolicyDates(issueDate, riskEndDate) {
+  if (issueDate && riskEndDate && riskEndDate < issueDate) {
+    return "Risk Expiry Date must be greater than or equal to Policy Issued Date.";
+  }
+
+  return "";
+}
+
 export default function IssuePolicyPage() {
   const [formState, setFormState] = useState(createInitialFormState);
   const [lookupData, setLookupData] = useState({
@@ -191,6 +199,12 @@ export default function IssuePolicyPage() {
     event.preventDefault();
 
     if (isLocked) {
+      return;
+    }
+
+    const dateValidationError = validatePolicyDates(formState.issue_date, formState.risk_end_date);
+    if (dateValidationError) {
+      setError(dateValidationError);
       return;
     }
     setSaving(true);
@@ -347,6 +361,7 @@ export default function IssuePolicyPage() {
                 required
                 disabled={isLocked}
                 value={formState.risk_end_date}
+                min={formState.issue_date || undefined}
                 onChange={(event) => handleChange("risk_end_date", event.target.value)}
               />
             </label>

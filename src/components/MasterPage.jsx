@@ -309,6 +309,25 @@ function isNameColumn(columnKey) {
   );
 }
 
+
+function getFixedColumnStyle(columnKey) {
+  const normalized = String(columnKey || "").toLowerCase();
+
+  if (normalized.includes("product")) {
+    return { width: "300px", minWidth: "300px", maxWidth: "300px" };
+  }
+
+  if (normalized.includes("company")) {
+    return { width: "260px", minWidth: "260px", maxWidth: "260px" };
+  }
+
+  return undefined;
+}
+
+function getTableCellClass(columnKey, extraClassName = "") {
+  return [isNameColumn(columnKey) ? "text-blue" : "", extraClassName].filter(Boolean).join(" ");
+}
+
 export default function MasterPage({
   resourceKey,
   embeddedFormOnly = false,
@@ -1703,7 +1722,7 @@ export default function MasterPage({
                         <th
                           key={column.key}
                           onClick={() => handleSort(column.key)}
-                          style={{ cursor: "pointer" }}
+                          style={{ cursor: "pointer", ...(getFixedColumnStyle(column.key) || {}) }}
                         >
                           {column.label}
                           {sortConfig.key === column.key && (
@@ -1747,7 +1766,8 @@ export default function MasterPage({
                                     return (
                                       <td
                                         key={`${record.id}-${column.key}`}
-                                        className={isNameColumn(column.key) ? "text-blue" : ""}
+                                        style={getFixedColumnStyle(column.key)}
+                                        className={getTableCellClass(column.key)}
                                       >
                                         {formatColumnValue(record, column)}
                                       </td>
@@ -1772,7 +1792,8 @@ export default function MasterPage({
                             return (
                               <td
                                 key={`${record.id}-${column.key}`}
-                                className={isNameColumn(column.key) ? "text-blue" : ""}
+                                        style={getFixedColumnStyle(column.key)}
+                                        className={getTableCellClass(column.key)}
                               >
                                 {formatColumnValue(record, column)}
                               </td>

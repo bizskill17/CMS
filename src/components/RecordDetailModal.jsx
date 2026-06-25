@@ -1,4 +1,4 @@
-export default function RecordDetailModal({ isOpen, title, rows, actions = null, onClose }) {
+export default function RecordDetailModal({ isOpen, title, rows, actions = null, children = null, onClose }) {
   if (!isOpen) {
     return null;
   }

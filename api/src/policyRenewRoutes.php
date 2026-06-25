@@ -409,6 +409,14 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
                 'message' => 'Risk expiry date is required in YYYY-MM-DD format.'
             ];
         }
+        if ($issueDate !== null && $riskEndDate !== null && $riskEndDate < $issueDate) {
+            $rowErrors[] = [
+                'row' => $rowNumber,
+                'field' => 'risk_end_date',
+                'value' => csvFieldValue($row, 'risk_end_date'),
+                'message' => 'Risk expiry date must be greater than or equal to policy issued date.'
+            ];
+        }
 
         if ($rowErrors !== []) {
             $errors = array_merge($errors, $rowErrors);
