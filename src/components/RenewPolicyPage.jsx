@@ -84,6 +84,31 @@ async function downloadResponseBlob(response, fallbackName) {
   URL.revokeObjectURL(url);
 }
 
+function escapeCsvValue(value) {
+  const stringValue = String(value ?? "");
+  if (/[",\n\r]/.test(stringValue)) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+  return stringValue;
+}
+
+function downloadCsvRows(headers, rows, fallbackName) {
+  const csvContent = [
+    headers.map(escapeCsvValue).join(","),
+    ...rows.map((row) => row.map(escapeCsvValue).join(","))
+  ].join("\r\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fallbackName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 function buildPolicyHolderDetail(policy) {
   if (!policy) return "";
 
@@ -427,6 +452,21 @@ export default function RenewPolicyPage() {
     }
   };
 
+  const handleErrorCsvDownload = () => {
+    if (bulkUploadResult.errors.length === 0) {
+      return;
+    }
+
+    const rows = bulkUploadResult.errors.map((errorItem) => [
+      errorItem.row,
+      errorItem.field,
+      formatCellValue(errorItem.value),
+      errorItem.message
+    ]);
+
+    downloadCsvRows(["Row", "Field", "Value", "Validation Error"], rows, "renew-policy-import-errors.csv");
+  };
+
   const dateFilteredRecords = useMemo(() => {
     return records.filter((record) => {
       const issueDate = String(record.issue_date || "").slice(0, 10);
@@ -729,9 +769,16 @@ export default function RenewPolicyPage() {
 
               {bulkUploadResult.total_rows > 0 || bulkUploadResult.errors.length > 0 || bulkUploadResult.warnings.length > 0 ? (
                 <div className="bulk-upload-results">
-                  <p className="feedback feedback--success">
-                    Total Rows: {bulkUploadResult.total_rows} | Imported: {bulkUploadResult.imported_count} | Imported With Warning: {bulkUploadResult.imported_with_warning_count} | Failed: {bulkUploadResult.failed_count}
-                  </p>
+                  <div className="form-actions">
+                    <p className="feedback feedback--success">
+                      Total Rows: {bulkUploadResult.total_rows} | Imported: {bulkUploadResult.imported_count} | Imported With Warning: {bulkUploadResult.imported_with_warning_count} | Failed: {bulkUploadResult.failed_count}
+                    </p>
+                    {bulkUploadResult.errors.length > 0 ? (
+                      <button type="button" className="secondary-button" onClick={handleErrorCsvDownload}>
+                        Download Errors CSV
+                      </button>
+                    ) : null}
+                  </div>
 
                   {bulkUploadResult.warnings.length > 0 ? (
                     <div className="table-wrap">
