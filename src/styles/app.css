@@ -2095,9 +2095,9 @@ button {
 }
 
 .master-card__actions .master-list-toolbar__search {
-  flex: 1;
-  min-width: 180px;
-  max-width: 260px;
+  flex: 1 1 420px;
+  min-width: 320px;
+  max-width: min(560px, 100%);
 }
 
 .master-card__actions--header .master-list-toolbar__search input {
