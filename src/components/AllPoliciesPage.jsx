@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import ResponsiveDataView from "./ResponsiveDataView";
+import { ActionIconButton } from "./ActionIcon";
 import { buildFilterOptions } from "../utils/dataView";
 import FormLabel from "./FormLabel";
 
@@ -59,28 +60,28 @@ export default function AllPoliciesPage() {
   const [expiryDateFrom, setExpiryDateFrom] = useState("");
   const [expiryDateTo, setExpiryDateTo] = useState("");
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError("");
 
-      try {
-        const response = await fetch(`${API_BASE}/policies?limit=100`);
-        const json = await readApiJson(response);
+  const loadRecords = async () => {
+    setLoading(true);
+    setError("");
 
-        if (!response.ok) {
-          throw new Error(json.message || "Failed to load policies.");
-        }
+    try {
+      const response = await fetch(`${API_BASE}/policies?limit=100`);
+      const json = await readApiJson(response);
 
-        setRecords(json.data || []);
-      } catch (loadError) {
-        setError(loadError.message);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to load policies.");
       }
-    };
 
-    load();
+      setRecords(json.data || []);
+    } catch (loadError) {
+      setError(loadError.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    loadRecords();
   }, []);
 
   const dateFilteredRecords = useMemo(() => {
@@ -96,6 +97,33 @@ export default function AllPoliciesPage() {
       return true;
     });
   }, [records, issueDateFrom, issueDateTo, expiryDateFrom, expiryDateTo]);
+
+  const deletePolicy = async (policy) => {
+    if (!window.confirm(`Are you sure you want to delete policy "${policy.policy_number}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/policies/${policy.id}`, {
+        method: "DELETE"
+      });
+
+      const json = await readApiJson(response);
+
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to delete policy.");
+      }
+
+      window.dispatchEvent(new Event("refresh-counts"));
+      await loadRecords();
+    } catch (deleteError) {
+      alert(deleteError.message);
+    }
+  };
+
+  const renderPolicyActions = (policy) => (
+    <ActionIconButton icon="delete" label="Delete Policy" tone="danger" onClick={() => deletePolicy(policy)} />
+  );
 
   const filterConfigs = useMemo(
     () => [
@@ -173,8 +201,10 @@ export default function AllPoliciesPage() {
             setExpiryDateFrom("");
             setExpiryDateTo("");
           }}
+          renderActions={renderPolicyActions}
         />
       </section>
     </div>
   );
 }
+

@@ -38,6 +38,7 @@ function singularizeMasterLabel(string $resource): string
         'users' => 'user',
         'agents' => 'agent',
         'agent-accounts' => 'agent account',
+        'policies' => 'policy',
         default => rtrim($label, 's'),
     };
 }
@@ -114,6 +115,13 @@ function linkedDeleteReferenceQueries(string $resource): array
         'agent-accounts' => [
             ['label' => 'policies', 'sql' => 'SELECT count(*) FROM policies WHERE agent_payment_account_id = :id'],
             ['label' => 'client_payments', 'sql' => 'SELECT count(*) FROM client_payments WHERE agent_payment_account_id = :id'],
+        ],
+        'policies' => [
+            ['label' => 'renewed policies', 'sql' => 'SELECT count(*) FROM policies WHERE previous_policy_id = :id'],
+            ['label' => 'follow ups', 'sql' => 'SELECT count(*) FROM follow_ups WHERE policy_id = :id'],
+            ['label' => 'client payments', 'sql' => 'SELECT count(*) FROM client_payments WHERE policy_id = :id'],
+            ['label' => 'documents', 'sql' => 'SELECT count(*) FROM documents WHERE policy_id = :id'],
+            ['label' => 'policy status history', 'sql' => 'SELECT count(*) FROM policy_status_history WHERE policy_id = :id'],
         ],
         default => [],
     };
@@ -3765,6 +3773,101 @@ try {
                     'policy_code' => $policyCode,
                 ],
             ], 201);
+            exit;
+        } catch (Throwable $throwable) {
+            $pdo->rollBack();
+            throw $throwable;
+        }
+    }
+
+    if (preg_match('#^/api/policies/(\\d+)$#', $path, $matches) === 1 && $method === 'DELETE') {
+        $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
+        $policyId = (int) ($matches[1] ?? 0);
+
+        $policyStatement = $pdo->prepare(
+            'SELECT id, policy_number, policy_family_id, previous_policy_id
+             FROM policies
+             WHERE id = :id
+               AND organization_id = :organization_id'
+        );
+        $policyStatement->bindValue(':id', $policyId, PDO::PARAM_INT);
+        bindOrganizationId($policyStatement, $organizationId);
+        $policyStatement->execute();
+        $policy = $policyStatement->fetch();
+
+        if (!$policy) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Policy not found.'
+            ], 404);
+            exit;
+        }
+
+        $references = linkedDeleteReferences($pdo, 'policies', $policyId);
+        if ($references !== []) {
+            Response::json([
+                'status' => 'error',
+                'message' => linkedDeleteMessage('policies', $references)
+            ], 409);
+            exit;
+        }
+
+        $pdo->beginTransaction();
+
+        try {
+            $deleteStatement = $pdo->prepare(
+                'DELETE FROM policies
+                 WHERE id = :id
+                   AND organization_id = :organization_id'
+            );
+            $deleteStatement->bindValue(':id', $policyId, PDO::PARAM_INT);
+            bindOrganizationId($deleteStatement, $organizationId);
+            $deleteStatement->execute();
+
+            if ($deleteStatement->rowCount() === 0) {
+                throw new RuntimeException('Policy not found.');
+            }
+
+            if (!empty($policy['previous_policy_id'])) {
+                $restorePrevious = $pdo->prepare(
+                    'UPDATE policies
+                     SET is_latest_in_family = 1, renewal_status = NULL, last_status = :last_status
+                     WHERE id = :id
+                       AND organization_id = :organization_id'
+                );
+                $restorePrevious->bindValue(':last_status', 'Issued');
+                $restorePrevious->bindValue(':id', (int) $policy['previous_policy_id'], PDO::PARAM_INT);
+                bindOrganizationId($restorePrevious, $organizationId);
+                $restorePrevious->execute();
+            }
+
+            $familyCountStatement = $pdo->prepare(
+                'SELECT count(*)
+                 FROM policies
+                 WHERE policy_family_id = :policy_family_id
+                   AND organization_id = :organization_id'
+            );
+            $familyCountStatement->bindValue(':policy_family_id', (int) $policy['policy_family_id'], PDO::PARAM_INT);
+            bindOrganizationId($familyCountStatement, $organizationId);
+            $familyCountStatement->execute();
+            $remainingPolicies = (int) $familyCountStatement->fetchColumn();
+
+            if ($remainingPolicies === 0) {
+                $deleteFamily = $pdo->prepare(
+                    'DELETE FROM policy_families
+                     WHERE id = :id'
+                );
+                $deleteFamily->bindValue(':id', (int) $policy['policy_family_id'], PDO::PARAM_INT);
+                $deleteFamily->execute();
+            }
+
+            $pdo->commit();
+
+            Response::json([
+                'status' => 'ok',
+                'message' => 'Policy deleted successfully.'
+            ]);
             exit;
         } catch (Throwable $throwable) {
             $pdo->rollBack();
