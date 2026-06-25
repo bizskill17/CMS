@@ -576,7 +576,7 @@ function csvOptionalDateValue(array $row, string $field, int $rowNumber, array &
 
     return $value;
 }
-function assertNoMasterDuplicate(PDO , array , array , ?int , ?int  = null): void
+function assertNoMasterDuplicate(PDO $pdo, array $config, array $normalized, ?int $organizationId, ?int $id = null): void
 {
     foreach (($config['duplicate_keys'] ?? []) as $rule) {
         $columns = $rule['columns'] ?? [];
@@ -4360,6 +4360,7 @@ try {
         'message' => $throwable->getMessage()
     ], 500);
 }
+
 
 
 
