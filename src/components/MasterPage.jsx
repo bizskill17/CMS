@@ -1308,7 +1308,7 @@ export default function MasterPage({
         <div className="master-card__header">
           <h3 id="master-form-title">{editingId ? `Edit ${config.title}` : `Add ${config.title}`}</h3>
           <button type="button" className="text-button" onClick={resetForm}>
-            {isFormLocked ? "Reset" : "Cancel"}
+            Cancel
           </button>
         </div>
 
@@ -1515,7 +1515,7 @@ export default function MasterPage({
             </fieldset>
             <div className="form-actions">
               <button type="button" className="secondary-button form-actions__cancel" onClick={resetForm}>
-                {isFormLocked ? "Reset" : "Cancel"}
+                Cancel
               </button>
               <button type="submit" className="primary-button" disabled={saving || isFormLocked}>
                 {saving ? <ButtonSpinner label="Saving..." /> : editingId ? "Update Record" : "Save Record"}
@@ -2254,6 +2254,7 @@ export default function MasterPage({
     </div>
   );
 }
+
 
 
 

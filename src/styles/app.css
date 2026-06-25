@@ -1142,6 +1142,16 @@ button {
   gap: 14px;
 }
 
+.master-form__fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: grid;
+  gap: inherit;
+  grid-column: 1 / -1;
+}
+
 .form-field {
   display: grid;
   gap: 7px;
@@ -2144,6 +2154,11 @@ button {
     align-items: start;
   }
 
+  .master-form__fieldset {
+    grid-template-columns: inherit;
+    align-items: start;
+  }
+
   .master-form--single {
     grid-template-columns: 1fr;
   }
@@ -2645,6 +2660,7 @@ button {
   }
 
 }
+
 
 
 
