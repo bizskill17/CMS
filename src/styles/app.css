@@ -407,8 +407,15 @@ button {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 4px;
+  padding-right: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   scroll-behavior: auto;
+}
+
+.content-body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .page-shell {
@@ -2636,6 +2643,7 @@ button {
   }
 
 }
+
 
 
 
