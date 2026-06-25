@@ -361,47 +361,11 @@ export default function AttachDocumentsPage() {
                           </label>
 
                           <label className="form-field">
-                            <FormLabel>Document Number</FormLabel>
-                            <input
-                              type="text"
-                              value={document.document_number}
-                              onChange={(event) => handleDocumentChange(index, "document_number", event.target.value)}
-                            />
-                          </label>
-
-                          <label className="form-field">
-                            <FormLabel>Document Date</FormLabel>
-                            <input
-                              type="date"
-                              value={document.document_date}
-                              onChange={(event) => handleDocumentChange(index, "document_date", event.target.value)}
-                            />
-                          </label>
-
-                          <label className="form-field">
-                            <FormLabel>Expiry Date</FormLabel>
-                            <input
-                              type="date"
-                              value={document.expiry_date}
-                              onChange={(event) => handleDocumentChange(index, "expiry_date", event.target.value)}
-                            />
-                          </label>
-
-                          <label className="form-field">
                             <FormLabel required>Choose File</FormLabel>
                             <input
                               type="file"
                               required
                               onChange={(event) => handleDocumentChange(index, "file", event.target.files?.[0] || null)}
-                            />
-                          </label>
-
-                          <label className="form-field issue-policy-form__wide">
-                            <FormLabel>Remarks</FormLabel>
-                            <textarea
-                              rows="3"
-                              value={document.remarks}
-                              onChange={(event) => handleDocumentChange(index, "remarks", event.target.value)}
                             />
                           </label>
                         </div>

@@ -13,7 +13,7 @@ export function formatDateDisplay(value) {
   }
 
   const [, year, month, day] = dateMatch;
-  return `${pad(day)}/${pad(month)}/${year}`;
+  return `${pad(day)}-${pad(month)}-${year}`;
 }
 
 export function formatAccountType(value) {

@@ -2047,7 +2047,6 @@ export default function MasterPage({
                                   { key: "document_date", label: "Document Date" },
                                   { key: "expiry_date", label: "Expiry Date" },
                                   { key: "remarks", label: "Remarks" },
-                                  { key: "uploaded_at", label: "Uploaded At" }
                                 ],
                                 records: relatedPoliciesModal.documents
                               })
@@ -2067,7 +2066,6 @@ export default function MasterPage({
                                   { key: "document_date", label: "Document Date" },
                                   { key: "expiry_date", label: "Expiry Date" },
                                   { key: "remarks", label: "Remarks" },
-                                  { key: "uploaded_at", label: "Uploaded At" }
                                 ],
                                 records: relatedPoliciesModal.documents
                               })
@@ -2085,13 +2083,12 @@ export default function MasterPage({
                               <th>Document Date</th>
                               <th>Expiry Date</th>
                               <th>Remarks</th>
-                              <th>Uploaded At</th>
                             </tr>
                           </thead>
                           <tbody>
                             {relatedPoliciesModal.documents.length === 0 ? (
                               <tr>
-                                <td colSpan="7" className="table-state">
+                                <td colSpan="6" className="table-state">
                                   No documents found for this customer.
                                 </td>
                               </tr>
@@ -2117,7 +2114,6 @@ export default function MasterPage({
 	                                  <td>{formatCellValue(document.document_date)}</td>
 	                                  <td>{formatCellValue(document.expiry_date)}</td>
                                   <td>{formatCellValue(document.remarks)}</td>
-                                  <td>{formatCellValue(document.uploaded_at)}</td>
                                 </tr>
                               ))
                             )}

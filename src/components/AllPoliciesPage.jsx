@@ -6,6 +6,7 @@ import { buildFilterOptions } from "../utils/dataView";
 import FormLabel from "./FormLabel";
 import { ButtonSpinner } from "./Spinner";
 import SearchableSelect from "./SearchableSelect";
+import { formatCellValue } from "../utils/formatting";
 
 async function readApiJson(response) {
   const rawText = await response.text();
@@ -372,17 +373,12 @@ export default function AllPoliciesPage() {
                 <tr>
                   <th>Document Type</th>
                   <th>File</th>
-                  <th>Document No.</th>
-                  <th>Document Date</th>
-                  <th>Expiry Date</th>
-                  <th>Remarks</th>
-                  <th>Uploaded At</th>
                 </tr>
               </thead>
               <tbody>
                 {detailData.documents.map((document, index) => (
                   <tr key={`${policy.id}-document-${index}`}>
-                    <td>{document.document_type_name || "-"}</td>
+                    <td>{formatCellValue(document.document_type_name)}</td>
                     <td>
                       {document.file_url ? (
                         <a
@@ -392,17 +388,12 @@ export default function AllPoliciesPage() {
                           style={{ textDecoration: "underline", fontWeight: 600 }}
                           title={document.file_name || "Download File"}
                         >
-                          {document.file_name || "Download File"}
+                          Link
                         </a>
                       ) : (
-                        document.file_name || "-"
+                        "-"
                       )}
                     </td>
-                    <td>{document.document_number || "-"}</td>
-                    <td>{document.document_date || "-"}</td>
-                    <td>{document.expiry_date || "-"}</td>
-                    <td>{document.remarks || "-"}</td>
-                    <td>{document.uploaded_at || "-"}</td>
                   </tr>
                 ))}
               </tbody>
