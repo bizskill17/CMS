@@ -363,6 +363,13 @@ export default function MasterPage({
   });
   const [selectedRecord, setSelectedRecord] = useState(null);
 
+  const selectedCompanyType =
+    resourceKey === "insurance-products" && formState.company_id
+      ? (optionsMap["insurance-companies"] || []).find(
+          (company) => String(company.id ?? "") === String(formState.company_id)
+        )?.company_type || ""
+      : "";
+
   const closeForm = ({ notifyCancel = true } = {}) => {
     setFormState(emptyState(config));
     setEditingId(null);
@@ -1491,6 +1498,9 @@ export default function MasterPage({
                             </option>
                           ))}
                     </SearchableSelect>
+                    {resourceKey === "insurance-products" && field.name === "category_id" && selectedCompanyType ? (
+                      <p className="table-state">Selected Company Type: {selectedCompanyType}</p>
+                    ) : null}
                   </label>
                 );
               }
