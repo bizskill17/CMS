@@ -154,7 +154,7 @@ button {
   height: 24px;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   color: currentColor;
   flex: 0 0 auto;
 }
@@ -224,7 +224,7 @@ button {
   color: #fff;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   font-size: 13px;
   font-weight: 800;
   flex: 0 0 auto;
@@ -251,7 +251,7 @@ button {
   color: #fff;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 10px;
   font-size: 16px;
   font-weight: 800;
@@ -296,7 +296,7 @@ button {
 
 .login-form__submit {
   width: 100%;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .content-topbar {
@@ -377,16 +377,16 @@ button {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: 4px;
+  justify-content: center;
+  gap: 3px;
   padding: 0;
   cursor: pointer;
   box-shadow: 0 6px 16px rgba(45, 87, 215, 0.24);
 }
 
 .sidebar-toggle__line {
-  width: 18px;
-  height: 2px;
+  width: 19px;
+  height: 2.5px;
   border-radius: 999px;
   background: currentColor;
 }
@@ -571,7 +571,7 @@ button {
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   font-size: 20px;
   font-weight: 800;
 }
@@ -670,7 +670,7 @@ button {
   border-radius: 14px;
   padding: 4px;
   background: #f8fbff;
-  gap: 4px;
+  gap: 3px;
 }
 
 .icon-toggle-button,
@@ -678,7 +678,7 @@ button {
   border: none;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   cursor: pointer;
   transition: transform 0.16s ease, background 0.16s ease, color 0.16s ease;
 }
@@ -766,7 +766,7 @@ button {
 
 .icon-toggle-button svg,
 .icon-action-button svg {
-  width: 18px;
+  width: 19px;
   height: 18px;
   fill: none;
   stroke: currentColor;
@@ -879,7 +879,7 @@ button {
 }
 
 .multi-filter__option input {
-  width: 18px;
+  width: 19px;
   height: 18px;
   accent-color: #6d7dff;
 }
@@ -1174,7 +1174,7 @@ button {
 .form-label {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .form-label__required {
@@ -1379,7 +1379,7 @@ button {
   line-height: 1;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   cursor: pointer;
 }
 
@@ -1561,7 +1561,7 @@ button {
 
 .form-actions--stacked {
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .customer-view-sections {
@@ -1611,7 +1611,7 @@ button {
   color: #fff;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .primary-button--add,
@@ -1631,7 +1631,7 @@ button {
 .primary-button__label {
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .primary-button__icon {
@@ -1645,7 +1645,7 @@ button {
   height: 100%;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   font-size: 16px;
   font-weight: 700;
   line-height: 1;
@@ -1686,14 +1686,14 @@ button {
   border-radius: 10px;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   cursor: pointer;
   background: #f8fbff;
   color: #2d57d7;
 }
 
 .icon-button svg {
-  width: 18px;
+  width: 19px;
   height: 18px;
   fill: currentColor;
 }
@@ -1885,7 +1885,7 @@ button {
   font-weight: 700;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   cursor: pointer;
   font-size: 16px;
   line-height: 1;
@@ -2026,7 +2026,7 @@ button {
   gap: 8px;
   flex-wrap: nowrap;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .record-detail__actions {
@@ -2036,7 +2036,7 @@ button {
 }
 
 .record-detail__actions .table-actions {
-  justify-content: flex-start;
+  justify-content: center;
   gap: 26px;
   flex-wrap: wrap;
 }
@@ -2247,7 +2247,7 @@ button {
   .sidebar-close-button {
     display: inline-flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
   }
 
   .menu {
@@ -2426,7 +2426,7 @@ button {
     align-items: center;
     flex-direction: row;
     width: 100%;
-    justify-content: flex-start;
+    justify-content: center;
     flex-wrap: wrap;
     gap: 8px;
   }
@@ -2434,7 +2434,7 @@ button {
   .master-card__actions--header {
     width: 100%;
     flex: 1;
-    justify-content: flex-start;
+    justify-content: center;
     gap: 12px;
   }
 
@@ -2530,7 +2530,7 @@ button {
 
   .record-detail__actions .table-actions {
     gap: 12px;
-    justify-content: flex-start;
+    justify-content: center;
   }
 
   .record-detail__actions .icon-action-button {
@@ -2665,7 +2665,7 @@ button {
 
   .master-list-toolbar__actions {
     width: 100%;
-    justify-content: flex-start;
+    justify-content: center;
     flex-wrap: wrap;
   }
 
@@ -2717,6 +2717,7 @@ button {
   }
 
 }
+
 
 
 
