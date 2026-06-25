@@ -1,7 +1,7 @@
 <?php
 
 if ($path === '/api/policies/inactivated' && $method === 'GET') {
-    $pdo = Database::connection();
+    $pdo = \App\Database::connection();
     $organizationId = requireOrganizationId();
 
     $statement = $pdo->prepare(
@@ -32,7 +32,7 @@ if ($path === '/api/policies/inactivated' && $method === 'GET') {
     bindOrganizationId($statement, $organizationId);
     $statement->execute();
 
-    Response::json([
+    \App\Response::json([
         'status' => 'ok',
         'data' => [
             'policies' => $statement->fetchAll(),
@@ -107,12 +107,12 @@ if ($path === '/api/policies/renew-import-template' && $method === 'GET') {
 }
 
 if (preg_match('#^/api/policies/(\d+)/inactivate$#', $path, $matches) === 1 && $method === 'POST') {
-    $pdo = Database::connection();
+    $pdo = \App\Database::connection();
     $organizationId = requireOrganizationId();
     $payload = json_decode(file_get_contents('php://input') ?: '[]', true);
 
     if (!is_array($payload)) {
-        Response::json([
+        \App\Response::json([
             'status' => 'error',
             'message' => 'Invalid JSON payload.'
         ], 422);
@@ -121,7 +121,7 @@ if (preg_match('#^/api/policies/(\d+)/inactivate$#', $path, $matches) === 1 && $
 
     $reason = trim((string) ($payload['reason'] ?? ''));
     if ($reason === '') {
-        Response::json([
+        \App\Response::json([
             'status' => 'error',
             'message' => 'Inactivation reason is required.'
         ], 422);
@@ -135,13 +135,13 @@ if (preg_match('#^/api/policies/(\d+)/inactivate$#', $path, $matches) === 1 && $
          WHERE id = :id
            AND organization_id = :organization_id'
     );
-    $policyStatement->bindValue(':id', $policyId, PDO::PARAM_INT);
+    $policyStatement->bindValue(':id', $policyId, \PDO::PARAM_INT);
     bindOrganizationId($policyStatement, $organizationId);
     $policyStatement->execute();
     $policy = $policyStatement->fetch();
 
     if (!$policy) {
-        Response::json([
+        \App\Response::json([
             'status' => 'error',
             'message' => 'Policy not found.'
         ], 404);
@@ -149,7 +149,7 @@ if (preg_match('#^/api/policies/(\d+)/inactivate$#', $path, $matches) === 1 && $
     }
 
     if (trim((string) ($policy['renewal_status'] ?? '')) === 'Renewed') {
-        Response::json([
+        \App\Response::json([
             'status' => 'error',
             'message' => 'Renewed policies cannot be marked inactive.'
         ], 422);
@@ -157,7 +157,7 @@ if (preg_match('#^/api/policies/(\d+)/inactivate$#', $path, $matches) === 1 && $
     }
 
     if (trim((string) ($policy['policy_status'] ?? '')) === 'Inactive' && trim((string) ($policy['inactive_reason'] ?? '')) !== '') {
-        Response::json([
+        \App\Response::json([
             'status' => 'error',
             'message' => 'Policy is already inactive.'
         ], 409);
@@ -175,11 +175,11 @@ if (preg_match('#^/api/policies/(\d+)/inactivate$#', $path, $matches) === 1 && $
     $update->bindValue(':policy_status', 'Inactive');
     $update->bindValue(':inactive_reason', $reason);
     $update->bindValue(':last_status', 'Inactive');
-    $update->bindValue(':id', $policyId, PDO::PARAM_INT);
+    $update->bindValue(':id', $policyId, \PDO::PARAM_INT);
     bindOrganizationId($update, $organizationId);
     $update->execute();
 
-    Response::json([
+    \App\Response::json([
         'status' => 'ok',
         'message' => 'Policy marked inactive successfully.'
     ]);
@@ -187,7 +187,7 @@ if (preg_match('#^/api/policies/(\d+)/inactivate$#', $path, $matches) === 1 && $
 }
 
 if (preg_match('#^/api/policies/(\d+)/reactivate$#', $path, $matches) === 1 && $method === 'POST') {
-    $pdo = Database::connection();
+    $pdo = \App\Database::connection();
     $organizationId = requireOrganizationId();
     $policyId = (int) $matches[1];
 
@@ -197,13 +197,13 @@ if (preg_match('#^/api/policies/(\d+)/reactivate$#', $path, $matches) === 1 && $
          WHERE id = :id
            AND organization_id = :organization_id'
     );
-    $policyStatement->bindValue(':id', $policyId, PDO::PARAM_INT);
+    $policyStatement->bindValue(':id', $policyId, \PDO::PARAM_INT);
     bindOrganizationId($policyStatement, $organizationId);
     $policyStatement->execute();
     $policy = $policyStatement->fetch();
 
     if (!$policy) {
-        Response::json([
+        \App\Response::json([
             'status' => 'error',
             'message' => 'Policy not found.'
         ], 404);
@@ -211,7 +211,7 @@ if (preg_match('#^/api/policies/(\d+)/reactivate$#', $path, $matches) === 1 && $
     }
 
     if (trim((string) ($policy['policy_status'] ?? '')) !== 'Inactive' || trim((string) ($policy['inactive_reason'] ?? '')) === '') {
-        Response::json([
+        \App\Response::json([
             'status' => 'error',
             'message' => 'Policy is not currently inactive.'
         ], 422);
@@ -228,11 +228,11 @@ if (preg_match('#^/api/policies/(\d+)/reactivate$#', $path, $matches) === 1 && $
     );
     $update->bindValue(':policy_status', 'Active');
     $update->bindValue(':last_status', 'Active');
-    $update->bindValue(':id', $policyId, PDO::PARAM_INT);
+    $update->bindValue(':id', $policyId, \PDO::PARAM_INT);
     bindOrganizationId($update, $organizationId);
     $update->execute();
 
-    Response::json([
+    \App\Response::json([
         'status' => 'ok',
         'message' => 'Policy reactivated successfully.'
     ]);
@@ -240,11 +240,11 @@ if (preg_match('#^/api/policies/(\d+)/reactivate$#', $path, $matches) === 1 && $
 }
 
 if ($path === '/api/policies/renew-import' && $method === 'POST') {
-    $pdo = Database::connection();
+    $pdo = \App\Database::connection();
     $organizationId = requireOrganizationId();
 
     if (!isset($_FILES['file']) || !is_array($_FILES['file'])) {
-        Response::json([
+        \App\Response::json([
             'status' => 'error',
             'message' => 'Please upload a CSV file.'
         ], 422);
@@ -253,7 +253,7 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
 
     $file = $_FILES['file'];
     if ((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-        Response::json([
+        \App\Response::json([
             'status' => 'error',
             'message' => 'Failed to upload the CSV file.'
         ], 422);
@@ -262,7 +262,7 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
 
     $handle = fopen((string) $file['tmp_name'], 'r');
     if ($handle === false) {
-        Response::json([
+        \App\Response::json([
             'status' => 'error',
             'message' => 'Unable to read the uploaded CSV file.'
         ], 422);
@@ -272,7 +272,7 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
     $headers = fgetcsv($handle);
     if (!is_array($headers) || $headers === []) {
         fclose($handle);
-        Response::json([
+        \App\Response::json([
             'status' => 'error',
             'message' => 'The uploaded CSV file is empty.'
         ], 422);
@@ -669,20 +669,20 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
                      WHERE previous_policy_id = :previous_policy_id
                        AND organization_id = :organization_id'
                 );
-                $successorCountStatement->bindValue(':previous_policy_id', (int) $previousPolicy['id'], PDO::PARAM_INT);
+                $successorCountStatement->bindValue(':previous_policy_id', (int) $previousPolicy['id'], \PDO::PARAM_INT);
                 bindOrganizationId($successorCountStatement, $organizationId);
                 $successorCountStatement->execute();
 
                 if ((int) $successorCountStatement->fetchColumn() > 0) {
-                    throw new RuntimeException('Previous policy is already linked to another renewal.');
+                    throw new \RuntimeException('Previous policy is already linked to another renewal.');
                 }
 
                 if (trim((string) ($previousPolicy['renewal_status'] ?? '')) === 'Renewed') {
-                    throw new RuntimeException('Previous policy is already marked as renewed.');
+                    throw new \RuntimeException('Previous policy is already marked as renewed.');
                 }
 
                 if (trim((string) ($previousPolicy['policy_status'] ?? '')) === 'Inactive' || trim((string) ($previousPolicy['inactive_reason'] ?? '')) !== '') {
-                    throw new RuntimeException('Previous policy is inactive and cannot be linked for renewal.');
+                    throw new \RuntimeException('Previous policy is inactive and cannot be linked for renewal.');
                 }
 
                 $policyFamilyId = !empty($previousPolicy['policy_family_id'])
@@ -696,8 +696,8 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
                          WHERE id = :id
                            AND organization_id = :organization_id'
                     );
-                    $updatePreviousFamily->bindValue(':policy_family_id', $policyFamilyId, PDO::PARAM_INT);
-                    $updatePreviousFamily->bindValue(':id', (int) $previousPolicy['id'], PDO::PARAM_INT);
+                    $updatePreviousFamily->bindValue(':policy_family_id', $policyFamilyId, \PDO::PARAM_INT);
+                    $updatePreviousFamily->bindValue(':id', (int) $previousPolicy['id'], \PDO::PARAM_INT);
                     bindOrganizationId($updatePreviousFamily, $organizationId);
                     $updatePreviousFamily->execute();
                 }
@@ -787,40 +787,40 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
 
             bindOrganizationId($statement, $organizationId);
             $statement->bindValue(':policy_code', generatePolicyCode());
-            $statement->bindValue(':policy_family_id', $policyFamilyId, PDO::PARAM_INT);
-            $statement->bindValue(':previous_policy_id', $previousPolicyId, $previousPolicyId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
-            $statement->bindValue(':customer_id', (int) $customer['id'], PDO::PARAM_INT);
-            $statement->bindValue(':company_id', (int) $company['id'], PDO::PARAM_INT);
-            $statement->bindValue(':product_id', $product !== null ? (int) $product['id'] : null, $product !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $statement->bindValue(':policy_family_id', $policyFamilyId, \PDO::PARAM_INT);
+            $statement->bindValue(':previous_policy_id', $previousPolicyId, $previousPolicyId === null ? \PDO::PARAM_NULL : \PDO::PARAM_INT);
+            $statement->bindValue(':customer_id', (int) $customer['id'], \PDO::PARAM_INT);
+            $statement->bindValue(':company_id', (int) $company['id'], \PDO::PARAM_INT);
+            $statement->bindValue(':product_id', $product !== null ? (int) $product['id'] : null, $product !== null ? \PDO::PARAM_INT : \PDO::PARAM_NULL);
             $statement->bindValue(':policy_number', $policyNumber);
             $statement->bindValue(':business_type', $businessType !== '' ? $businessType : null);
             $statement->bindValue(':policy_type', $policyTypeName);
             $statement->bindValue(':sum_insured', $sumInsured);
             $statement->bindValue(':gross_premium', $grossPremium);
             $statement->bindValue(':net_premium', $netPremium);
-            $statement->bindValue(':issue_date', $issueDate, $issueDate === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
-            $statement->bindValue(':risk_start_date', $riskStartDate, $riskStartDate === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
-            $statement->bindValue(':risk_end_date', $riskEndDate, $riskEndDate === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $statement->bindValue(':issue_date', $issueDate, $issueDate === null ? \PDO::PARAM_NULL : \PDO::PARAM_STR);
+            $statement->bindValue(':risk_start_date', $riskStartDate, $riskStartDate === null ? \PDO::PARAM_NULL : \PDO::PARAM_STR);
+            $statement->bindValue(':risk_end_date', $riskEndDate, $riskEndDate === null ? \PDO::PARAM_NULL : \PDO::PARAM_STR);
             $statement->bindValue(':vehicle_make', $vehicleMake !== '' ? $vehicleMake : null);
             $statement->bindValue(':vehicle_model', $vehicleModel !== '' ? $vehicleModel : null);
-            $statement->bindValue(':year_of_manufacture', $yearOfManufacture, $yearOfManufacture === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+            $statement->bindValue(':year_of_manufacture', $yearOfManufacture, $yearOfManufacture === null ? \PDO::PARAM_NULL : \PDO::PARAM_INT);
             $statement->bindValue(':registration_no', $registrationNo !== '' ? $registrationNo : null);
             $statement->bindValue(':paid_by_type', $paidByType !== '' ? $paidByType : null);
             $statement->bindValue(':payment_mode', $paymentMode !== '' ? $paymentMode : null);
-            $statement->bindValue(':agent_payment_account_id', $agentAccount !== null ? (int) $agentAccount['id'] : null, $agentAccount !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $statement->bindValue(':agent_payment_account_id', $agentAccount !== null ? (int) $agentAccount['id'] : null, $agentAccount !== null ? \PDO::PARAM_INT : \PDO::PARAM_NULL);
             $statement->bindValue(':payment_status', 'Pending');
             $statement->bindValue(':client_payment_status', 'Pending');
             $statement->bindValue(':payment_received_amount', 0);
             $statement->bindValue(':payment_pending_amount', $netPremium ?? 0);
             $statement->bindValue(':client_cheque_number', $chequeNumber !== '' ? $chequeNumber : null);
-            $statement->bindValue(':client_cheque_date', $chequeDate, $chequeDate === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $statement->bindValue(':client_cheque_date', $chequeDate, $chequeDate === null ? \PDO::PARAM_NULL : \PDO::PARAM_STR);
             $statement->bindValue(':payment_remarks', $chequeAmount !== null ? sprintf('Imported cheque amount: %s', $chequeAmount) : null);
-            $statement->bindValue(':renewal_status', null, PDO::PARAM_NULL);
+            $statement->bindValue(':renewal_status', null, \PDO::PARAM_NULL);
             $statement->bindValue(':policy_status', 'Active');
-            $statement->bindValue(':inactive_reason', null, PDO::PARAM_NULL);
-            $statement->bindValue(':is_latest_in_family', 1, PDO::PARAM_INT);
+            $statement->bindValue(':inactive_reason', null, \PDO::PARAM_NULL);
+            $statement->bindValue(':is_latest_in_family', 1, \PDO::PARAM_INT);
             $statement->bindValue(':last_status', $lastStatus);
-            $statement->bindValue(':fiscal_year_ending', $fiscalYearEnding, PDO::PARAM_INT);
+            $statement->bindValue(':fiscal_year_ending', $fiscalYearEnding, \PDO::PARAM_INT);
             $statement->execute();
 
             if ($shouldLinkPrevious && $previousPolicyId !== null) {
@@ -834,7 +834,7 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
                 );
                 $updatePrevious->bindValue(':renewal_status', 'Renewed');
                 $updatePrevious->bindValue(':last_status', 'Superseded');
-                $updatePrevious->bindValue(':id', $previousPolicyId, PDO::PARAM_INT);
+                $updatePrevious->bindValue(':id', $previousPolicyId, \PDO::PARAM_INT);
                 bindOrganizationId($updatePrevious, $organizationId);
                 $updatePrevious->execute();
             }
@@ -846,7 +846,7 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
                 $importedWithWarningCount++;
                 $warnings = array_merge($warnings, $rowWarnings);
             }
-        } catch (Throwable $throwable) {
+        } catch (\Throwable $throwable) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
@@ -867,7 +867,7 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
         $failedRows[(int) ($error['row'] ?? 0)] = true;
     }
 
-    Response::json([
+    \App\Response::json([
         'status' => 'ok',
         'message' => 'Renewal import processed.',
         'data' => [
@@ -881,3 +881,5 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
     ]);
     exit;
 }
+
+
