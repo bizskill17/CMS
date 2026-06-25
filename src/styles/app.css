@@ -534,6 +534,7 @@ button {
 }
 
 .master-card__actions--header {
+  margin-left: 16px;
   flex: 1;
   min-width: 0;
   flex-wrap: nowrap;
