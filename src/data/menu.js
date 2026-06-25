@@ -70,6 +70,7 @@ export const menuSections = [
       { label: "All Policies", path: "/policies/all", countKey: "all-policies" },
       { label: "Issue Policy", path: "/policies/issue" },
       { label: "Renew Policy", path: "/policies/renew", countKey: "renew-policy" },
+      { label: "Inactivated Policies", path: "/policies/inactivated", countKey: "inactivated-policies" },
       { label: "Attach Documents", path: "/policies/attach-documents", countKey: "attach-documents" }
     ]
   },
@@ -195,4 +196,6 @@ export function formatMenuViews(value) {
     .map((item) => labelMap.get(item) || item)
     .join(", ");
 }
+
+
 

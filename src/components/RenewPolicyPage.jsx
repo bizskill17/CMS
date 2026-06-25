@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
-import { ActionIconButton } from "./ActionIcon";
+import { ActionIconButton, ActionIconDisplay } from "./ActionIcon";
 import FollowUpModal from "./FollowUpModal";
-import { formatDateDisplay } from "../utils/formatting";
+import { formatCellValue, formatDateDisplay } from "../utils/formatting";
 import FormLabel from "./FormLabel";
 import ResponsiveDataView from "./ResponsiveDataView";
 import { ButtonSpinner } from "./Spinner";
@@ -32,6 +32,15 @@ const initialFormState = {
   payment_mode: ""
 };
 
+const initialBulkUploadResult = {
+  total_rows: 0,
+  imported_count: 0,
+  imported_with_warning_count: 0,
+  failed_count: 0,
+  warnings: [],
+  errors: []
+};
+
 async function readApiJson(response) {
   const rawText = await response.text();
   const contentType = response.headers.get("content-type") || "";
@@ -58,6 +67,21 @@ async function readApiJson(response) {
       `API returned an unreadable response (${response.status} ${response.statusText || "Unknown Status"}).`
     );
   }
+}
+
+async function downloadResponseBlob(response, fallbackName) {
+  const blob = await response.blob();
+  const contentDisposition = response.headers.get("content-disposition") || "";
+  const match = contentDisposition.match(/filename="?([^";]+)"?/i);
+  const fileName = match?.[1] || fallbackName;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 function buildPolicyHolderDetail(policy) {
@@ -107,56 +131,62 @@ const columns = [
 
 export default function RenewPolicyPage() {
   const [formState, setFormState] = useState(initialFormState);
-  const [lookupData, setLookupData] = useState({
-    policies: []
-  });
+  const [records, setRecords] = useState([]);
   const [users, setUsers] = useState([]);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
+  const [inactiveReason, setInactiveReason] = useState("");
+  const [bulkUploadFile, setBulkUploadFile] = useState(null);
+  const [bulkUploadResult, setBulkUploadResult] = useState(initialBulkUploadResult);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
+  const [isInactiveOpen, setIsInactiveOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingFollowUp, setSavingFollowUp] = useState(false);
+  const [savingInactive, setSavingInactive] = useState(false);
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
+  const [bulkUploading, setBulkUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [followUpError, setFollowUpError] = useState("");
+  const [inactiveError, setInactiveError] = useState("");
+  const [bulkUploadError, setBulkUploadError] = useState("");
   const [issueDateFrom, setIssueDateFrom] = useState("");
   const [issueDateTo, setIssueDateTo] = useState("");
   const [expiryDateFrom, setExpiryDateFrom] = useState("");
   const [expiryDateTo, setExpiryDateTo] = useState("");
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError("");
+  const loadData = async () => {
+    setLoading(true);
+    setError("");
 
-      try {
-        const [response, usersResponse] = await Promise.all([
-          fetch(`${API_BASE}/policies/renew-form`),
-          fetch(`${API_BASE}/masters/users?limit=250`)
-        ]);
-        const json = await readApiJson(response);
-        const usersJson = await readApiJson(usersResponse);
+    try {
+      const [response, usersResponse] = await Promise.all([
+        fetch(`${API_BASE}/policies/renew-form`),
+        fetch(`${API_BASE}/masters/users?limit=250`)
+      ]);
+      const json = await readApiJson(response);
+      const usersJson = await readApiJson(usersResponse);
 
-        if (!response.ok) {
-          throw new Error(json.message || "Failed to load renewal form data.");
-        }
-        if (!usersResponse.ok) {
-          throw new Error(usersJson.message || "Failed to load users.");
-        }
-
-        setLookupData({
-          policies: json.data.policies || []
-        });
-        setUsers(usersJson.data || []);
-      } catch (loadError) {
-        setError(loadError.message);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to load renewal form data.");
       }
-    };
+      if (!usersResponse.ok) {
+        throw new Error(usersJson.message || "Failed to load users.");
+      }
 
-    load();
+      setRecords(json.data?.policies || []);
+      setUsers(usersJson.data || []);
+    } catch (loadError) {
+      setError(loadError.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   const handleChange = (name, value) => {
@@ -236,14 +266,8 @@ export default function RenewPolicyPage() {
 
       setMessage(json.message || "Policy renewed successfully.");
       resetForm();
-      const refreshResponse = await fetch(`${API_BASE}/policies/renew-form`);
-      const refreshJson = await readApiJson(refreshResponse);
-      if (!refreshResponse.ok) {
-        throw new Error(refreshJson.message || "Failed to refresh renewal list.");
-      }
-      setLookupData({
-        policies: refreshJson.data.policies || []
-      });
+      window.dispatchEvent(new Event("refresh-counts"));
+      await loadData();
     } catch (saveError) {
       setError(saveError.message);
     } finally {
@@ -270,9 +294,8 @@ export default function RenewPolicyPage() {
         throw new Error(json.message || "Failed to save follow up.");
       }
 
-      setLookupData((current) => ({
-        ...current,
-        policies: (current.policies || []).map((record) =>
+      setRecords((current) =>
+        current.map((record) =>
           record.id === payload.policy_id
             ? {
                 ...record,
@@ -285,7 +308,7 @@ export default function RenewPolicyPage() {
               }
             : record
         )
-      }));
+      );
       setMessage(json.message || "Follow up saved successfully.");
       closeFollowUpModal();
     } catch (saveError) {
@@ -295,7 +318,115 @@ export default function RenewPolicyPage() {
     }
   };
 
-  const records = lookupData.policies || [];
+  const openInactiveModal = (policy) => {
+    setSelectedPolicy(policy);
+    setInactiveReason("");
+    setInactiveError("");
+    setMessage("");
+    setIsInactiveOpen(true);
+  };
+
+  const closeInactiveModal = () => {
+    setSelectedPolicy(null);
+    setInactiveReason("");
+    setInactiveError("");
+    setIsInactiveOpen(false);
+  };
+
+  const closeBulkUpload = () => {
+    setIsBulkUploadOpen(false);
+    setBulkUploadFile(null);
+    setBulkUploadError("");
+    setBulkUploadResult(initialBulkUploadResult);
+  };
+
+  const handleInactiveSubmit = async (event) => {
+    event.preventDefault();
+    setSavingInactive(true);
+    setInactiveError("");
+    setMessage("");
+
+    try {
+      const response = await fetch(`${API_BASE}/policies/${selectedPolicy?.id}/inactivate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ reason: inactiveReason })
+      });
+      const json = await readApiJson(response);
+
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to mark policy inactive.");
+      }
+
+      setMessage(json.message || "Policy marked inactive successfully.");
+      closeInactiveModal();
+      window.dispatchEvent(new Event("refresh-counts"));
+      await loadData();
+    } catch (inactiveSaveError) {
+      setInactiveError(inactiveSaveError.message);
+    } finally {
+      setSavingInactive(false);
+    }
+  };
+
+  const handleTemplateDownload = async () => {
+    setDownloadingTemplate(true);
+    setBulkUploadError("");
+
+    try {
+      const response = await fetch(`${API_BASE}/policies/renew-import-template`);
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Failed to download template.");
+      }
+
+      await downloadResponseBlob(response, "renew-policy-import-template.csv");
+    } catch (downloadError) {
+      setBulkUploadError(downloadError.message);
+    } finally {
+      setDownloadingTemplate(false);
+    }
+  };
+
+  const handleBulkUpload = async (event) => {
+    event.preventDefault();
+
+    if (!bulkUploadFile) {
+      setBulkUploadError("Please select a CSV file to upload.");
+      return;
+    }
+
+    setBulkUploading(true);
+    setBulkUploadError("");
+    setMessage("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", bulkUploadFile);
+
+      const response = await fetch(`${API_BASE}/policies/renew-import`, {
+        method: "POST",
+        body: formData
+      });
+      const json = await readApiJson(response);
+
+      if (!response.ok) {
+        throw new Error(json.message || "Failed to upload renewal CSV.");
+      }
+
+      setBulkUploadResult(json.data || initialBulkUploadResult);
+      setMessage(json.message || "Renewal import processed.");
+      window.dispatchEvent(new Event("refresh-counts"));
+      await loadData();
+    } catch (uploadError) {
+      setBulkUploadError(uploadError.message);
+    } finally {
+      setBulkUploading(false);
+    }
+  };
+
   const dateFilteredRecords = useMemo(() => {
     return records.filter((record) => {
       const issueDate = String(record.issue_date || "").slice(0, 10);
@@ -343,39 +474,45 @@ export default function RenewPolicyPage() {
             "registration_no"
           ]}
           filterConfigs={filterConfigs}
+          headerExtras={
+            <>
+              <ActionIconDisplay
+                icon="excel"
+                label={downloadingTemplate ? "Downloading..." : "CSV Template"}
+                showLabel
+                variant="toolbar"
+                onClick={handleTemplateDownload}
+              />
+              <ActionIconDisplay
+                icon="upload"
+                label="Upload CSV"
+                showLabel
+                variant="toolbar"
+                onClick={() => {
+                  setBulkUploadError("");
+                  setBulkUploadResult(initialBulkUploadResult);
+                  setIsBulkUploadOpen(true);
+                }}
+              />
+            </>
+          }
           customFilterContent={
             <>
               <label className="form-field data-toolbar__date-field">
                 <FormLabel>Issue Date From</FormLabel>
-                <input
-                  type="date"
-                  value={issueDateFrom}
-                  onChange={(event) => setIssueDateFrom(event.target.value)}
-                />
+                <input type="date" value={issueDateFrom} onChange={(event) => setIssueDateFrom(event.target.value)} />
               </label>
               <label className="form-field data-toolbar__date-field">
                 <FormLabel>Issue Date To</FormLabel>
-                <input
-                  type="date"
-                  value={issueDateTo}
-                  onChange={(event) => setIssueDateTo(event.target.value)}
-                />
+                <input type="date" value={issueDateTo} onChange={(event) => setIssueDateTo(event.target.value)} />
               </label>
               <label className="form-field data-toolbar__date-field">
                 <FormLabel>Expiry Date From</FormLabel>
-                <input
-                  type="date"
-                  value={expiryDateFrom}
-                  onChange={(event) => setExpiryDateFrom(event.target.value)}
-                />
+                <input type="date" value={expiryDateFrom} onChange={(event) => setExpiryDateFrom(event.target.value)} />
               </label>
               <label className="form-field data-toolbar__date-field">
                 <FormLabel>Expiry Date To</FormLabel>
-                <input
-                  type="date"
-                  value={expiryDateTo}
-                  onChange={(event) => setExpiryDateTo(event.target.value)}
-                />
+                <input type="date" value={expiryDateTo} onChange={(event) => setExpiryDateTo(event.target.value)} />
               </label>
             </>
           }
@@ -388,12 +525,8 @@ export default function RenewPolicyPage() {
           renderActions={(policy) => (
             <>
               <ActionIconButton icon="followup" label="Followup" onClick={() => openFollowUpModal(policy)} />
-              <ActionIconButton
-                icon="renew"
-                label="Renew"
-                tone="primary"
-                onClick={() => openRenewForm(policy)}
-              />
+              <ActionIconButton icon="renew" label="Renew" tone="primary" onClick={() => openRenewForm(policy)} />
+              <ActionIconButton icon="delete" label="Make Inactive" tone="danger" onClick={() => openInactiveModal(policy)} />
             </>
           )}
         />
@@ -431,132 +564,75 @@ export default function RenewPolicyPage() {
 
                 <label className="form-field">
                   <FormLabel required>New Policy Number</FormLabel>
-                  <input
-                    type="text"
-                    value={formState.new_policy_number}
-                    required
-                    onChange={(event) => handleChange("new_policy_number", event.target.value)}
-                  />
+                  <input type="text" value={formState.new_policy_number} required onChange={(event) => handleChange("new_policy_number", event.target.value)} />
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Gross Premium</FormLabel>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formState.gross_premium}
-                    onChange={(event) => handleChange("gross_premium", event.target.value)}
-                  />
+                  <input type="number" min="0" step="0.01" value={formState.gross_premium} onChange={(event) => handleChange("gross_premium", event.target.value)} />
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Net Premium</FormLabel>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formState.net_premium}
-                    onChange={(event) => handleChange("net_premium", event.target.value)}
-                  />
+                  <input type="number" min="0" step="0.01" value={formState.net_premium} onChange={(event) => handleChange("net_premium", event.target.value)} />
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Policy Issued Date</FormLabel>
-                  <input
-                    type="date"
-                    value={formState.issue_date}
-                    onChange={(event) => handleChange("issue_date", event.target.value)}
-                  />
+                  <input type="date" value={formState.issue_date} onChange={(event) => handleChange("issue_date", event.target.value)} />
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Risk Inception Date</FormLabel>
-                  <input
-                    type="date"
-                    value={formState.risk_start_date}
-                    onChange={(event) => handleChange("risk_start_date", event.target.value)}
-                  />
+                  <input type="date" value={formState.risk_start_date} onChange={(event) => handleChange("risk_start_date", event.target.value)} />
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Risk Expiry Date</FormLabel>
-                  <input
-                    type="date"
-                    value={formState.risk_end_date}
-                    onChange={(event) => handleChange("risk_end_date", event.target.value)}
-                  />
+                  <input type="date" value={formState.risk_end_date} onChange={(event) => handleChange("risk_end_date", event.target.value)} />
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Business Type</FormLabel>
                   <input type="text" readOnly value={formState.business_type} />
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Sum Insured</FormLabel>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formState.sum_insured}
-                    onChange={(event) => handleChange("sum_insured", event.target.value)}
-                  />
+                  <input type="number" min="0" step="0.01" value={formState.sum_insured} onChange={(event) => handleChange("sum_insured", event.target.value)} />
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Policy Type</FormLabel>
                   <input type="text" readOnly value={formState.policy_type} />
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Company Name</FormLabel>
                   <input type="text" readOnly value={selectedPolicy?.company_name || ""} />
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Product Name</FormLabel>
                   <input type="text" readOnly value={selectedPolicy?.product_name || ""} />
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Vehicle Make</FormLabel>
                   <input type="text" readOnly value={formState.vehicle_make} />
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Vehicle Model</FormLabel>
                   <input type="text" readOnly value={formState.vehicle_model} />
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Year of Manufacture</FormLabel>
                   <input type="number" readOnly value={formState.year_of_manufacture} />
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Registration No.</FormLabel>
                   <input type="text" readOnly value={formState.registration_no} />
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Payment made by</FormLabel>
-                  <SearchableSelect
-                    value={formState.paid_by_type}
-                    onChange={(event) => handleChange("paid_by_type", event.target.value)}
-                  >
+                  <SearchableSelect value={formState.paid_by_type} onChange={(event) => handleChange("paid_by_type", event.target.value)}>
                     <option value="">Select Payment made by</option>
                     <option value="Client">Client</option>
                     <option value="Agent">Agent</option>
                   </SearchableSelect>
                 </label>
-
                 <label className="form-field">
                   <FormLabel>Payment Mode</FormLabel>
-                  <SearchableSelect
-                    value={formState.payment_mode}
-                    onChange={(event) => handleChange("payment_mode", event.target.value)}
-                  >
+                  <SearchableSelect value={formState.payment_mode} onChange={(event) => handleChange("payment_mode", event.target.value)}>
                     <option value="">Select Payment Mode</option>
                     <option value="Cheque">Cheque</option>
                     <option value="Online">Online</option>
@@ -575,6 +651,139 @@ export default function RenewPolicyPage() {
               </form>
 
               {error ? <p className="feedback feedback--error">{error}</p> : null}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {isInactiveOpen ? (
+        <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="inactive-policy-title">
+          <div className="master-modal__backdrop" onClick={closeInactiveModal} />
+          <section className="master-card master-modal__panel master-modal__panel--small">
+            <div className="master-card__header">
+              <h3 id="inactive-policy-title">Make Policy Inactive</h3>
+              <button type="button" className="text-button" onClick={closeInactiveModal}>
+                Cancel
+              </button>
+            </div>
+
+            <div className="master-modal__body">
+              <form className="master-form" onSubmit={handleInactiveSubmit}>
+                <label className="form-field">
+                  <FormLabel>Policy No.</FormLabel>
+                  <input type="text" readOnly value={selectedPolicy?.policy_number || ""} />
+                </label>
+                <label className="form-field">
+                  <FormLabel>Customer</FormLabel>
+                  <input type="text" readOnly value={selectedPolicy?.customer_name || ""} />
+                </label>
+                <label className="form-field issue-policy-form__wide">
+                  <FormLabel required>Reason</FormLabel>
+                  <textarea rows="4" required value={inactiveReason} onChange={(event) => setInactiveReason(event.target.value)} />
+                </label>
+                <div className="form-actions">
+                  <button type="button" className="secondary-button form-actions__cancel" onClick={closeInactiveModal}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="primary-button" disabled={savingInactive}>
+                    {savingInactive ? <ButtonSpinner label="Saving..." /> : "Save Inactive"}
+                  </button>
+                </div>
+              </form>
+              {inactiveError ? <p className="feedback feedback--error">{inactiveError}</p> : null}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {isBulkUploadOpen ? (
+        <div className="master-modal" role="dialog" aria-modal="true" aria-labelledby="renew-bulk-upload-title">
+          <div className="master-modal__backdrop" onClick={closeBulkUpload} />
+          <section className="master-card master-modal__panel master-modal__panel--wide">
+            <div className="master-card__header">
+              <h3 id="renew-bulk-upload-title">Historical Renewal CSV Upload</h3>
+              <button type="button" className="text-button" onClick={closeBulkUpload}>
+                Cancel
+              </button>
+            </div>
+            <div className="master-modal__body">
+              <form className="master-form" onSubmit={handleBulkUpload}>
+                <label className="form-field">
+                  <FormLabel required>Upload CSV File</FormLabel>
+                  <input type="file" accept=".csv,text/csv" onChange={(event) => setBulkUploadFile(event.target.files?.[0] || null)} />
+                </label>
+                <p className="table-state">
+                  Download the CSV template with the dummy example row first. Do not enter IDs in the file. The backend will resolve labels to IDs where applicable.
+                </p>
+                <div className="form-actions">
+                  <button type="button" className="secondary-button form-actions__cancel" onClick={handleTemplateDownload}>
+                    {downloadingTemplate ? "Downloading..." : "Download Template"}
+                  </button>
+                  <button type="submit" className="primary-button" disabled={bulkUploading}>
+                    {bulkUploading ? <ButtonSpinner label="Uploading..." /> : "Upload CSV"}
+                  </button>
+                </div>
+              </form>
+
+              {bulkUploadError ? <p className="feedback feedback--error">{bulkUploadError}</p> : null}
+
+              {bulkUploadResult.total_rows > 0 || bulkUploadResult.errors.length > 0 || bulkUploadResult.warnings.length > 0 ? (
+                <div className="bulk-upload-results">
+                  <p className="feedback feedback--success">
+                    Total Rows: {bulkUploadResult.total_rows} | Imported: {bulkUploadResult.imported_count} | Imported With Warning: {bulkUploadResult.imported_with_warning_count} | Failed: {bulkUploadResult.failed_count}
+                  </p>
+
+                  {bulkUploadResult.warnings.length > 0 ? (
+                    <div className="table-wrap">
+                      <table className="master-table">
+                        <thead>
+                          <tr>
+                            <th>Row</th>
+                            <th>Field</th>
+                            <th>Value</th>
+                            <th>Warning</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {bulkUploadResult.warnings.map((warning, index) => (
+                            <tr key={`warning-${warning.row}-${warning.field}-${index}`}>
+                              <td>{warning.row}</td>
+                              <td>{warning.field}</td>
+                              <td>{formatCellValue(warning.value)}</td>
+                              <td>{warning.message}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : null}
+
+                  {bulkUploadResult.errors.length > 0 ? (
+                    <div className="table-wrap">
+                      <table className="master-table">
+                        <thead>
+                          <tr>
+                            <th>Row</th>
+                            <th>Field</th>
+                            <th>Value</th>
+                            <th>Validation Error</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {bulkUploadResult.errors.map((errorItem, index) => (
+                            <tr key={`${errorItem.row}-${errorItem.field}-${index}`}>
+                              <td>{errorItem.row}</td>
+                              <td>{errorItem.field}</td>
+                              <td>{formatCellValue(errorItem.value)}</td>
+                              <td>{errorItem.message}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </section>
         </div>

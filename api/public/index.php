@@ -223,6 +223,7 @@ function buildFullAccessViews(bool $includeOrganizations = true): string
         '/policies/all',
         '/policies/issue',
         '/policies/renew',
+        '/policies/inactivated',
         '/policies/attach-documents',
         '/payments/pending',
         '/payments/received',
@@ -478,7 +479,104 @@ function ensureCustomerLocationMasters(PDO $pdo, int $organizationId, array &$no
         findOrCreateCity($pdo, $organizationId, $stateId, $cityName);
     }
 }
-function assertNoMasterDuplicate(PDO $pdo, array $config, array $normalized, ?int $organizationId, ?int $id = null): void
+
+function createPolicyFamily(PDO $pdo, int $organizationId, int $customerId, string $familyLabel): int
+{
+    $familyCode = 'PF' . date('YmdHis') . random_int(100, 999);
+
+    $familyStatement = $pdo->prepare(
+        'INSERT INTO policy_families (organization_id, policy_family_code, customer_id, family_label)
+         VALUES (:organization_id, :policy_family_code, :customer_id, :family_label)'
+    );
+    bindOrganizationId($familyStatement, $organizationId);
+    $familyStatement->bindValue(':policy_family_code', $familyCode);
+    $familyStatement->bindValue(':customer_id', $customerId, PDO::PARAM_INT);
+    $familyStatement->bindValue(':family_label', $familyLabel);
+    $familyStatement->execute();
+
+    return (int) $pdo->lastInsertId();
+}
+
+function generatePolicyCode(): string
+{
+    return 'PL' . date('YmdHis') . random_int(100, 999);
+}
+
+function normalizeLookupValue($value): string
+{
+    return strtolower(trim((string) $value));
+}
+
+function csvFieldValue(array $row, string $field): string
+{
+    return trim((string) ($row[$field] ?? ''));
+}
+
+function csvOptionalNumericValue(array $row, string $field, int $rowNumber, array &$errors): ?float
+{
+    $value = csvFieldValue($row, $field);
+    if ($value === '') {
+        return null;
+    }
+
+    if (!is_numeric($value)) {
+        $errors[] = [
+            'row' => $rowNumber,
+            'field' => $field,
+            'value' => $value,
+            'message' => 'Expected a numeric value.'
+        ];
+        return null;
+    }
+
+    return (float) $value;
+}
+
+function csvOptionalIntegerValue(array $row, string $field, int $rowNumber, array &$errors): ?int
+{
+    $value = csvFieldValue($row, $field);
+    if ($value === '') {
+        return null;
+    }
+
+    if (!preg_match('/^\d+$/', $value)) {
+        $errors[] = [
+            'row' => $rowNumber,
+            'field' => $field,
+            'value' => $value,
+            'message' => 'Expected a whole number.'
+        ];
+        return null;
+    }
+
+    return (int) $value;
+}
+
+function csvOptionalDateValue(array $row, string $field, int $rowNumber, array &$errors): ?string
+{
+    $value = csvFieldValue($row, $field);
+    if ($value === '') {
+        return null;
+    }
+
+    $date = DateTime::createFromFormat('Y-m-d', $value);
+    $dateErrors = DateTime::getLastErrors();
+    $hasDateErrors = is_array($dateErrors)
+        && (($dateErrors['warning_count'] ?? 0) > 0 || ($dateErrors['error_count'] ?? 0) > 0);
+
+    if (!$date || $hasDateErrors || $date->format('Y-m-d') !== $value) {
+        $errors[] = [
+            'row' => $rowNumber,
+            'field' => $field,
+            'value' => $value,
+            'message' => 'Expected date format YYYY-MM-DD.'
+        ];
+        return null;
+    }
+
+    return $value;
+}
+function assertNoMasterDuplicate(PDO , array , array , ?int , ?int  = null): void
 {
     foreach (($config['duplicate_keys'] ?? []) as $rule) {
         $columns = $rule['columns'] ?? [];
@@ -740,8 +838,9 @@ try {
         $counts['tasks-activity-log'] = $scopedCount('SELECT count(*) FROM task_updates WHERE organization_id = :organization_id');
 
         $counts['all-policies'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id');
-        $counts['renew-policy'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND risk_end_date >= curdate() AND coalesce(renewal_status, "") <> "Renewed"');
-        $counts['renew-policy-today'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date = curdate() AND coalesce(renewal_status, "") <> "Renewed"');
+        $counts['renew-policy'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND coalesce(renewal_status, "") <> "Renewed" AND coalesce(policy_status, "") <> "Inactive" AND coalesce(inactive_reason, "") = ""');
+        $counts['renew-policy-today'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date = curdate() AND coalesce(renewal_status, "") <> "Renewed" AND coalesce(policy_status, "") <> "Inactive" AND coalesce(inactive_reason, "") = ""');
+        $counts['inactivated-policies'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND coalesce(policy_status, "") = "Inactive" AND coalesce(inactive_reason, "") <> ""');
         $counts['attach-documents'] = $scopedCount('SELECT count(*) FROM (SELECT p.id FROM policies p LEFT JOIN documents d ON d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1 WHERE p.organization_id = :organization_id GROUP BY p.id HAVING count(d.id) = 0) pending_docs');
         $counts['pending-payments'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND paid_by_type = "Agent" AND coalesce(payment_pending_amount, 0) > 0');
         $counts['policies-added'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND date(p.created_at) = curdate()');
@@ -2176,9 +2275,10 @@ try {
                AND p.risk_end_date IS NOT NULL
                AND p.risk_end_date >= curdate()
                AND p.risk_end_date <= date_add(curdate(), interval 7 day)
-               AND coalesce(p.renewal_status, "") <> "Renewed"'
+               AND coalesce(p.renewal_status, "") <> "Renewed"
+               AND coalesce(p.policy_status, "") <> "Inactive"
+               AND coalesce(p.inactive_reason, "") = ""'
         );
-
         $pendingDocumentUploads = $scopedCount(
             'SELECT count(*)
              FROM (
@@ -2200,9 +2300,10 @@ try {
              WHERE p.organization_id = :organization_id
                AND p.risk_end_date IS NOT NULL
                AND p.risk_end_date < curdate()
-               AND coalesce(p.renewal_status, "") <> "Renewed"'
+               AND coalesce(p.renewal_status, "") <> "Renewed"
+               AND coalesce(p.policy_status, "") <> "Inactive"
+               AND coalesce(p.inactive_reason, "") = ""'
         );
-
         $pendingClientCollections = $scopedCount(
             'SELECT count(*)
              FROM policies p
@@ -3235,6 +3336,7 @@ try {
                 c.full_name AS customer_name,
                 c.mobile AS customer_mobile,
                 p.policy_number,
+                p.issue_date,
                 p.policy_type,
                 p.company_id,
                 ic.company_name,
@@ -3247,6 +3349,8 @@ try {
                 p.registration_no,
                 p.risk_end_date,
                 p.renewal_status,
+                p.policy_status,
+                p.inactive_reason,
                 fu.follow_up_at,
                 fu.follow_up_mode,
                 fu.next_follow_up_at,
@@ -3270,9 +3374,13 @@ try {
              LEFT JOIN insurance_products ip ON ip.id = p.product_id
              WHERE p.organization_id = :organization_id
                AND p.risk_end_date IS NOT NULL
-               AND p.risk_end_date >= curdate()
                AND coalesce(p.renewal_status, "") <> "Renewed"
-             ORDER BY p.risk_end_date ASC, p.policy_number ASC'
+               AND coalesce(p.policy_status, "") <> "Inactive"
+               AND coalesce(p.inactive_reason, "") = ""
+             ORDER BY CASE WHEN p.risk_end_date < curdate() THEN 0 ELSE 1 END ASC,
+                      ABS(datediff(p.risk_end_date, curdate())) ASC,
+                      p.risk_end_date ASC,
+                      p.policy_number ASC'
         );
         bindOrganizationId($statement, $organizationId);
         $statement->execute();
@@ -3286,6 +3394,8 @@ try {
         ]);
         exit;
     }
+    require dirname(__DIR__) . '/src/policyRenewRoutes.php';
+
     if ($path === '/api/policies/issue-form' && $method === 'GET') {
         $pdo = Database::connection();
         $organizationId = requireOrganizationId();
@@ -3452,7 +3562,7 @@ try {
 
         try {
             $familyCode = 'PF' . date('YmdHis') . random_int(100, 999);
-            $policyCode = 'PL' . date('YmdHis') . random_int(100, 999);
+            $policyCode = generatePolicyCode();
 
             $familyStatement = $pdo->prepare(
                 'INSERT INTO policy_families (organization_id, policy_family_code, customer_id, family_label)
@@ -3642,7 +3752,7 @@ try {
         $pdo->beginTransaction();
 
         try {
-            $policyCode = 'PL' . date('YmdHis') . random_int(100, 999);
+            $policyCode = generatePolicyCode();
             $grossPremium = $payload['gross_premium'] !== '' ? (float) $payload['gross_premium'] : null;
             $netPremium = $payload['net_premium'] !== '' ? (float) $payload['net_premium'] : null;
 
@@ -4250,6 +4360,16 @@ try {
         'message' => $throwable->getMessage()
     ], 500);
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
