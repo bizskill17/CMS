@@ -143,6 +143,69 @@ function buildOldPolicyDetail(policy) {
   return parts.join(" | ");
 }
 
+const renewalViewConfig = {
+  all: {
+    title: "Renew Policy",
+    emptyMessage: "No policies are currently eligible for renewal."
+  },
+  "upcoming-45-days": {
+    title: "Renew Policy - Upcoming 45 Days",
+    emptyMessage: "No policies are due for renewal in the upcoming 45 days."
+  },
+  overdue: {
+    title: "Renew Policy - Overdue",
+    emptyMessage: "No overdue renewal policies found."
+  }
+};
+
+function toDateKey(value) {
+  return String(value || "").slice(0, 10);
+}
+
+function getTodayKey() {
+  const now = new Date();
+  const offsetDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return offsetDate.toISOString().slice(0, 10);
+}
+
+function formatDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addDaysKey(dateKey, days) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() + days);
+  return formatDateKey(date);
+}
+
+function filterRenewalView(records, viewMode) {
+  if (viewMode === "all") {
+    return records;
+  }
+
+  const today = getTodayKey();
+  const next45Days = addDaysKey(today, 45);
+
+  return records.filter((record) => {
+    const riskEndDate = toDateKey(record.risk_end_date);
+    if (!riskEndDate) return false;
+
+    if (viewMode === "upcoming-45-days") {
+      return riskEndDate >= today && riskEndDate <= next45Days;
+    }
+
+    if (viewMode === "overdue") {
+      return riskEndDate < today;
+    }
+
+    return true;
+  });
+}
+
 const columns = [
   { key: "risk_end_date", label: "Expiry Date" },
   { key: "policy_number", label: "Policy No." },
@@ -162,7 +225,7 @@ const columns = [
   { key: "follow_up_remarks", label: "Follow Up Remarks", className: "table-cell--follow-up" }
 ];
 
-export default function RenewPolicyPage() {
+export default function RenewPolicyPage({ viewMode = "all" }) {
   const [formState, setFormState] = useState(initialFormState);
   const [records, setRecords] = useState([]);
   const [users, setUsers] = useState([]);
@@ -189,6 +252,9 @@ export default function RenewPolicyPage() {
   const [issueDateTo, setIssueDateTo] = useState("");
   const [expiryDateFrom, setExpiryDateFrom] = useState("");
   const [expiryDateTo, setExpiryDateTo] = useState("");
+
+  const normalizedViewMode = renewalViewConfig[viewMode] ? viewMode : "all";
+  const viewConfig = renewalViewConfig[normalizedViewMode];
 
   const loadData = async () => {
     setLoading(true);
@@ -482,10 +548,15 @@ export default function RenewPolicyPage() {
     downloadCsvRows(["Row", "Field", "Value", "Validation Error"], rows, "renew-policy-import-errors.csv");
   };
 
+  const viewFilteredRecords = useMemo(
+    () => filterRenewalView(records, normalizedViewMode),
+    [records, normalizedViewMode]
+  );
+
   const dateFilteredRecords = useMemo(() => {
-    return records.filter((record) => {
-      const issueDate = String(record.issue_date || "").slice(0, 10);
-      const expiryDate = String(record.risk_end_date || "").slice(0, 10);
+    return viewFilteredRecords.filter((record) => {
+      const issueDate = toDateKey(record.issue_date);
+      const expiryDate = toDateKey(record.risk_end_date);
 
       if (issueDateFrom && issueDate < issueDateFrom) return false;
       if (issueDateTo && issueDate > issueDateTo) return false;
@@ -494,30 +565,30 @@ export default function RenewPolicyPage() {
 
       return true;
     });
-  }, [records, issueDateFrom, issueDateTo, expiryDateFrom, expiryDateTo]);
+  }, [viewFilteredRecords, issueDateFrom, issueDateTo, expiryDateFrom, expiryDateTo]);
 
   const filterConfigs = useMemo(
     () => [
-      { key: "customer_name", label: "Customer", options: buildFilterOptions(records, "customer_name") },
-      { key: "company_name", label: "Company", options: buildFilterOptions(records, "company_name") },
-      { key: "product_name", label: "Product", options: buildFilterOptions(records, "product_name") },
-      { key: "policy_type", label: "Policy Type", options: buildFilterOptions(records, "policy_type") },
-      { key: "customer_group_name", label: "Group", options: buildFilterOptions(records, "customer_group_name") }
+      { key: "customer_name", label: "Customer", options: buildFilterOptions(viewFilteredRecords, "customer_name") },
+      { key: "company_name", label: "Company", options: buildFilterOptions(viewFilteredRecords, "company_name") },
+      { key: "product_name", label: "Product", options: buildFilterOptions(viewFilteredRecords, "product_name") },
+      { key: "policy_type", label: "Policy Type", options: buildFilterOptions(viewFilteredRecords, "policy_type") },
+      { key: "customer_group_name", label: "Group", options: buildFilterOptions(viewFilteredRecords, "customer_group_name") }
     ],
-    [records]
+    [viewFilteredRecords]
   );
 
   return (
     <div className="page-shell issue-policy-page">
       <section className="master-card issue-policy-card">
         <ResponsiveDataView
-          title="Renew Policy"
+          title={viewConfig.title}
           records={dateFilteredRecords}
           columns={columns}
           loading={loading}
           error={error && !isFormOpen ? error : ""}
           loadingMessage="Loading renewal policies..."
-          emptyMessage="No policies are currently eligible for renewal."
+          emptyMessage={viewConfig.emptyMessage}
           searchKeys={[
             "policy_number",
             "customer_name",

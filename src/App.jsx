@@ -52,6 +52,10 @@ function buildRoutes(items) {
           <IssuePolicyPage />
         ) : item.path === "/policies/renew" ? (
           <RenewPolicyPage />
+        ) : item.path === "/policies/renew/upcoming-45-days" ? (
+          <RenewPolicyPage viewMode="upcoming-45-days" />
+        ) : item.path === "/policies/renew/overdue" ? (
+          <RenewPolicyPage viewMode="overdue" />
         ) : item.path === "/policies/inactivated" ? (
           <InactivatedPoliciesPage />
         ) : item.section === "Leads" ? (

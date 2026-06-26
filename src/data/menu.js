@@ -70,6 +70,18 @@ export const menuSections = [
       { label: "All Policies", path: "/policies/all", countKey: "all-policies" },
       { label: "Issue Policy", path: "/policies/issue" },
       { label: "Renew Policy", path: "/policies/renew", countKey: "renew-policy" },
+      {
+        label: "Renew Policy - Upcoming 45 Days",
+        path: "/policies/renew/upcoming-45-days",
+        countKey: "renew-policy-upcoming-45-days",
+        fallbackView: "/policies/renew"
+      },
+      {
+        label: "Renew Policy - Overdue",
+        path: "/policies/renew/overdue",
+        countKey: "renew-policy-overdue",
+        fallbackView: "/policies/renew"
+      },
       { label: "Inactivated Policies", path: "/policies/inactivated", countKey: "inactivated-policies" },
       { label: "Attach Documents", path: "/policies/attach-documents", countKey: "attach-documents" }
     ]
@@ -139,7 +151,9 @@ export function filterMenuSectionsByViews(allowedViews = [], sections = menuSect
 
   return sections
     .map((section) => {
-      const filteredItems = (section.items || []).filter((item) => allowedSet.has(item.path));
+      const filteredItems = (section.items || []).filter(
+        (item) => allowedSet.has(item.path) || (item.fallbackView && allowedSet.has(item.fallbackView))
+      );
 
       if (!filteredItems.length) {
         return null;
