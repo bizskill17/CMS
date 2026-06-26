@@ -318,6 +318,34 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
         return $matches[0];
     };
 
+    $resolveDuplicateCustomerByPreviousPolicy = static function (array $customerMatches, string $previousPolicyNumber) use ($findMatches): ?array {
+        if ($previousPolicyNumber === '') {
+            return null;
+        }
+
+        $previousMatches = $findMatches(
+            'SELECT customer_id
+             FROM policies
+             WHERE organization_id = :organization_id
+               AND lower(trim(policy_number)) = :lookup_value
+             LIMIT 2',
+            [':lookup_value' => normalizeLookupValue($previousPolicyNumber)]
+        );
+
+        if (count($previousMatches) !== 1) {
+            return null;
+        }
+
+        $previousCustomerId = (int) ($previousMatches[0]['customer_id'] ?? 0);
+        foreach ($customerMatches as $customerMatch) {
+            if ((int) ($customerMatch['id'] ?? 0) === $previousCustomerId) {
+                return $customerMatch;
+            }
+        }
+
+        return null;
+    };
+
     $totalRows = 0;
     $importedCount = 0;
     $importedWithWarningCount = 0;
@@ -458,12 +486,16 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
             );
 
             if (count($customerMatches) > 1) {
-                $rowErrors[] = [
-                    'row' => $rowNumber,
-                    'field' => 'customer_mobile',
-                    'value' => $customerMobile,
-                    'message' => 'Multiple customers matched this mobile number.'
-                ];
+                $customer = $resolveDuplicateCustomerByPreviousPolicy($customerMatches, $previousPolicyNumber);
+
+                if ($customer === null) {
+                    $rowErrors[] = [
+                        'row' => $rowNumber,
+                        'field' => 'customer_mobile',
+                        'value' => $customerMobile,
+                        'message' => 'Multiple customers matched this mobile number. Add previous_policy_number to select the customer for this policy.'
+                    ];
+                }
             } elseif (count($customerMatches) === 1) {
                 $customer = $customerMatches[0];
             }
@@ -486,12 +518,16 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
                     'message' => 'No matching customer was found.'
                 ];
             } elseif (count($customerMatches) > 1) {
-                $rowErrors[] = [
-                    'row' => $rowNumber,
-                    'field' => 'customer_name',
-                    'value' => $customerName,
-                    'message' => 'Multiple customers matched this name.'
-                ];
+                $customer = $resolveDuplicateCustomerByPreviousPolicy($customerMatches, $previousPolicyNumber);
+
+                if ($customer === null) {
+                    $rowErrors[] = [
+                        'row' => $rowNumber,
+                        'field' => 'customer_name',
+                        'value' => $customerName,
+                        'message' => 'Multiple customers matched this name. Add previous_policy_number to select the customer for this policy.'
+                    ];
+                }
             } else {
                 $customer = $customerMatches[0];
             }
