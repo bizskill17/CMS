@@ -348,10 +348,19 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
 
     $findOrCreateCustomerGroup = static function (string $groupName) use ($pdo, $organizationId, $findMatches): ?array {
         $groupName = trim($groupName);
-        if ($groupName === '') {
-            $groupName = 'Imported Customers';
+        $lookupValue = normalizeLookupValue($groupName);
+
+        if ($lookupValue !== '' && $lookupValue !== '-') {
+            $matches = $findMatches(
+                'SELECT id, group_name FROM customer_groups WHERE organization_id = :organization_id AND lower(trim(group_name)) = :lookup_value LIMIT 1',
+                [':lookup_value' => $lookupValue]
+            );
+            if ($matches !== []) {
+                return $matches[0];
+            }
         }
 
+        $groupName = 'Ungroup';
         $matches = $findMatches(
             'SELECT id, group_name FROM customer_groups WHERE organization_id = :organization_id AND lower(trim(group_name)) = :lookup_value LIMIT 1',
             [':lookup_value' => normalizeLookupValue($groupName)]
@@ -556,6 +565,8 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
         $customerName = csvFieldValue($row, 'customer_name');
         $customerMobile = csvFieldValue($row, 'customer_mobile');
         $customerGroupName = csvFieldValue($row, 'customer_group_name');
+        $customerGroupLookupValue = normalizeLookupValue($customerGroupName);
+        $customerGroupWasProvided = !in_array($customerGroupLookupValue, ['', '-'], true);
         $companyName = csvFieldValue($row, 'company_name');
         $productName = csvFieldValue($row, 'product_name');
         $policyTypeLabel = csvFieldValue($row, 'policy_type');
@@ -638,6 +649,9 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
             continue;
         }
         $group = $findOrCreateCustomerGroup($customerGroupName);
+        $customerGroupMatchedCsv = $customerGroupWasProvided
+            && $group !== null
+            && normalizeLookupValue($group['group_name'] ?? '') === $customerGroupLookupValue;
 
         $customer = null;
         if ($customerMobile !== '') {
@@ -714,7 +728,7 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
             ];
         }
 
-        if ($group !== null && $customer !== null && (int) ($customer['group_id'] ?? 0) !== (int) $group['id']) {
+        if ($customerGroupMatchedCsv && $customer !== null && (int) ($customer['group_id'] ?? 0) !== (int) $group['id']) {
             $rowErrors[] = [
                 'row' => $rowNumber,
                 'field' => 'customer_group_name',
