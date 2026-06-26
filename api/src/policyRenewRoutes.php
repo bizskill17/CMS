@@ -668,16 +668,7 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
                     $customer = $findOrCreateCustomer($customerName, $customerMobile, $group);
                 }
             } elseif (count($customerMatches) > 1) {
-                $customer = $resolveDuplicateCustomerByPreviousPolicy($customerMatches, $previousPolicyNumber);
-
-                if ($customer === null && $customerName === '') {
-                    $rowErrors[] = [
-                        'row' => $rowNumber,
-                        'field' => 'customer_mobile',
-                        'value' => $customerMobile,
-                        'message' => 'Multiple customers matched this mobile number. Add customer_name or previous_policy_number to select the customer for this policy.'
-                    ];
-                }
+                $customer = $resolveDuplicateCustomerByPreviousPolicy($customerMatches, $previousPolicyNumber) ?? $customerMatches[0];
             } elseif (count($customerMatches) === 1) {
                 $customer = $customerMatches[0];
             }
@@ -704,16 +695,7 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
                     ];
                 }
             } elseif (count($customerMatches) > 1) {
-                $customer = $resolveDuplicateCustomerByPreviousPolicy($customerMatches, $previousPolicyNumber);
-
-                if ($customer === null) {
-                    $rowErrors[] = [
-                        'row' => $rowNumber,
-                        'field' => 'customer_name',
-                        'value' => $customerName,
-                        'message' => 'Multiple customers matched this name. Add previous_policy_number to select the customer for this policy.'
-                    ];
-                }
+                $customer = $resolveDuplicateCustomerByPreviousPolicy($customerMatches, $previousPolicyNumber) ?? $customerMatches[0];
             } else {
                 $customer = $customerMatches[0];
             }
