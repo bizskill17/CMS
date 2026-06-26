@@ -741,6 +741,10 @@ export default function MasterPage({
         const savedRecord = nextRecords.find((record) => Number(record.id) === savedRecordId) || null;
         onFormSaved(savedRecord);
       }
+
+      if (editingId) {
+        closeForm({ notifyCancel: false });
+      }
     } catch (saveError) {
       setError(saveError.message);
     } finally {
