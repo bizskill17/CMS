@@ -346,6 +346,179 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
         return null;
     };
 
+    $findOrCreateCustomerGroup = static function (string $groupName) use ($pdo, $organizationId, $findMatches): ?array {
+        $groupName = trim($groupName);
+        if ($groupName === '') {
+            $groupName = 'Imported Customers';
+        }
+
+        $matches = $findMatches(
+            'SELECT id, group_name FROM customer_groups WHERE organization_id = :organization_id AND lower(trim(group_name)) = :lookup_value LIMIT 1',
+            [':lookup_value' => normalizeLookupValue($groupName)]
+        );
+        if ($matches !== []) {
+            return $matches[0];
+        }
+
+        $insert = $pdo->prepare(
+            'INSERT INTO customer_groups (organization_id, group_name, notes) VALUES (:organization_id, :group_name, :notes)'
+        );
+        bindOrganizationId($insert, $organizationId);
+        $insert->bindValue(':group_name', $groupName);
+        $insert->bindValue(':notes', 'Created from renewal CSV import.');
+        $insert->execute();
+
+        return ['id' => (int) $pdo->lastInsertId(), 'group_name' => $groupName];
+    };
+
+    $findOrCreateInsuranceCompany = static function (string $companyName) use ($pdo, $organizationId, $findMatches): ?array {
+        $companyName = trim($companyName);
+        if ($companyName === '') {
+            return null;
+        }
+
+        $matches = $findMatches(
+            'SELECT id, company_name FROM insurance_companies WHERE organization_id = :organization_id AND lower(trim(company_name)) = :lookup_value LIMIT 1',
+            [':lookup_value' => normalizeLookupValue($companyName)]
+        );
+        if ($matches !== []) {
+            return $matches[0];
+        }
+
+        $insert = $pdo->prepare(
+            'INSERT INTO insurance_companies (organization_id, company_name, is_active) VALUES (:organization_id, :company_name, 1)'
+        );
+        bindOrganizationId($insert, $organizationId);
+        $insert->bindValue(':company_name', $companyName);
+        $insert->execute();
+
+        return ['id' => (int) $pdo->lastInsertId(), 'company_name' => $companyName];
+    };
+
+    $findOrCreatePolicyType = static function (string $policyTypeLabel) use ($pdo, $organizationId, $findMatches): ?array {
+        $policyTypeLabel = trim($policyTypeLabel);
+        if ($policyTypeLabel === '') {
+            return null;
+        }
+
+        $matches = $findMatches(
+            'SELECT id, category_name FROM product_categories WHERE organization_id = :organization_id AND lower(trim(category_name)) = :lookup_value LIMIT 1',
+            [':lookup_value' => normalizeLookupValue($policyTypeLabel)]
+        );
+        if ($matches !== []) {
+            return $matches[0];
+        }
+
+        $parentMatches = $findMatches(
+            'SELECT id, category_name FROM product_categories WHERE organization_id = :organization_id AND lower(trim(category_name)) = :lookup_value LIMIT 1',
+            [':lookup_value' => normalizeLookupValue('Imported Policy Types')]
+        );
+
+        if ($parentMatches === []) {
+            $parentInsert = $pdo->prepare(
+                'INSERT INTO product_categories (organization_id, category_name, parent_category_id, is_active) VALUES (:organization_id, :category_name, null, 1)'
+            );
+            bindOrganizationId($parentInsert, $organizationId);
+            $parentInsert->bindValue(':category_name', 'Imported Policy Types');
+            $parentInsert->execute();
+            $parentId = (int) $pdo->lastInsertId();
+        } else {
+            $parentId = (int) $parentMatches[0]['id'];
+        }
+
+        $insert = $pdo->prepare(
+            'INSERT INTO product_categories (organization_id, category_name, parent_category_id, is_active) VALUES (:organization_id, :category_name, :parent_category_id, 1)'
+        );
+        bindOrganizationId($insert, $organizationId);
+        $insert->bindValue(':category_name', $policyTypeLabel);
+        $insert->bindValue(':parent_category_id', $parentId, \PDO::PARAM_INT);
+        $insert->execute();
+
+        return ['id' => (int) $pdo->lastInsertId(), 'category_name' => $policyTypeLabel];
+    };
+
+    $findOrCreateCustomer = static function (string $customerName, string $customerMobile, ?array $group) use ($pdo, $organizationId, $findMatches): ?array {
+        $customerName = trim($customerName);
+        $customerMobile = trim($customerMobile);
+        if ($customerName === '' && $customerMobile !== '') {
+            $customerName = $customerMobile;
+        }
+        if ($customerName === '' || $group === null) {
+            return null;
+        }
+
+        $matches = $findMatches(
+            'SELECT c.id, c.group_id, c.full_name, c.mobile
+             FROM customers c
+             WHERE c.organization_id = :organization_id
+               AND lower(trim(c.full_name)) = :lookup_value
+               AND c.group_id = :group_id
+             LIMIT 1',
+            [':lookup_value' => normalizeLookupValue($customerName), ':group_id' => (int) $group['id']]
+        );
+        if ($matches !== []) {
+            return $matches[0];
+        }
+
+        $insert = $pdo->prepare(
+            'INSERT INTO customers (organization_id, customer_code, group_id, full_name, mobile, is_active, notes)
+             VALUES (:organization_id, :customer_code, :group_id, :full_name, :mobile, 1, :notes)'
+        );
+        bindOrganizationId($insert, $organizationId);
+        $insert->bindValue(':customer_code', generateCustomerCode($pdo, $organizationId));
+        $insert->bindValue(':group_id', (int) $group['id'], \PDO::PARAM_INT);
+        $insert->bindValue(':full_name', $customerName);
+        $insert->bindValue(':mobile', $customerMobile !== '' ? $customerMobile : null);
+        $insert->bindValue(':notes', 'Created from renewal CSV import.');
+        $insert->execute();
+
+        return [
+            'id' => (int) $pdo->lastInsertId(),
+            'group_id' => (int) $group['id'],
+            'full_name' => $customerName,
+            'mobile' => $customerMobile
+        ];
+    };
+
+    $findOrCreateInsuranceProduct = static function (string $productName, ?array $company, ?array $policyType) use ($pdo, $organizationId, $findMatches): ?array {
+        $productName = trim($productName);
+        if ($productName === '' || $company === null) {
+            return null;
+        }
+
+        $matches = $findMatches(
+            'SELECT ip.id, ip.company_id, ip.category_id, ip.product_name, pc.category_name
+             FROM insurance_products ip
+             LEFT JOIN product_categories pc ON pc.id = ip.category_id
+             WHERE ip.organization_id = :organization_id
+               AND ip.company_id = :company_id
+               AND lower(trim(ip.product_name)) = :lookup_value
+             LIMIT 1',
+            [':company_id' => (int) $company['id'], ':lookup_value' => normalizeLookupValue($productName)]
+        );
+        if ($matches !== []) {
+            return $matches[0];
+        }
+
+        $insert = $pdo->prepare(
+            'INSERT INTO insurance_products (organization_id, company_id, product_name, category_id, is_active)
+             VALUES (:organization_id, :company_id, :product_name, :category_id, 1)'
+        );
+        bindOrganizationId($insert, $organizationId);
+        $insert->bindValue(':company_id', (int) $company['id'], \PDO::PARAM_INT);
+        $insert->bindValue(':product_name', $productName);
+        $insert->bindValue(':category_id', $policyType !== null ? (int) $policyType['id'] : null, $policyType !== null ? \PDO::PARAM_INT : \PDO::PARAM_NULL);
+        $insert->execute();
+
+        return [
+            'id' => (int) $pdo->lastInsertId(),
+            'company_id' => (int) $company['id'],
+            'category_id' => $policyType !== null ? (int) $policyType['id'] : null,
+            'product_name' => $productName,
+            'category_name' => $policyType['category_name'] ?? null
+        ];
+    };
+
     $totalRows = 0;
     $importedCount = 0;
     $importedWithWarningCount = 0;
@@ -464,16 +637,7 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
             ];
             continue;
         }
-        $group = null;
-        if ($customerGroupName !== '') {
-            $group = $findOneByName(
-                'customer_group_name',
-                $customerGroupName,
-                'SELECT id, group_name FROM customer_groups WHERE organization_id = :organization_id AND lower(trim(group_name)) = :lookup_value',
-                $rowErrors,
-                $rowNumber
-            );
-        }
+        $group = $findOrCreateCustomerGroup($customerGroupName);
 
         $customer = null;
         if ($customerMobile !== '') {
@@ -485,15 +649,19 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
                 [':lookup_value' => normalizeLookupValue($customerMobile)]
             );
 
-            if (count($customerMatches) > 1) {
+            if ($customerMatches === []) {
+                if ($customerName === '') {
+                    $customer = $findOrCreateCustomer($customerName, $customerMobile, $group);
+                }
+            } elseif (count($customerMatches) > 1) {
                 $customer = $resolveDuplicateCustomerByPreviousPolicy($customerMatches, $previousPolicyNumber);
 
-                if ($customer === null) {
+                if ($customer === null && $customerName === '') {
                     $rowErrors[] = [
                         'row' => $rowNumber,
                         'field' => 'customer_mobile',
                         'value' => $customerMobile,
-                        'message' => 'Multiple customers matched this mobile number. Add previous_policy_number to select the customer for this policy.'
+                        'message' => 'Multiple customers matched this mobile number. Add customer_name or previous_policy_number to select the customer for this policy.'
                     ];
                 }
             } elseif (count($customerMatches) === 1) {
@@ -511,12 +679,16 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
             );
 
             if ($customerMatches === []) {
-                $rowErrors[] = [
-                    'row' => $rowNumber,
-                    'field' => 'customer_name',
-                    'value' => $customerName,
-                    'message' => 'No matching customer was found.'
-                ];
+                $customer = $findOrCreateCustomer($customerName, $customerMobile, $group);
+
+                if ($customer === null) {
+                    $rowErrors[] = [
+                        'row' => $rowNumber,
+                        'field' => 'customer_name',
+                        'value' => $customerName,
+                        'message' => 'No matching customer was found and the row did not include enough data to create one.'
+                    ];
+                }
             } elseif (count($customerMatches) > 1) {
                 $customer = $resolveDuplicateCustomerByPreviousPolicy($customerMatches, $previousPolicyNumber);
 
@@ -551,68 +723,9 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
             ];
         }
 
-        $company = $findOneByName(
-            'company_name',
-            $companyName,
-            'SELECT id, company_name FROM insurance_companies WHERE organization_id = :organization_id AND lower(trim(company_name)) = :lookup_value',
-            $rowErrors,
-            $rowNumber
-        );
-
-        $policyType = null;
-        if ($policyTypeLabel !== '') {
-            $policyType = $findOneByName(
-                'policy_type',
-                $policyTypeLabel,
-                'SELECT id, category_name FROM product_categories WHERE organization_id = :organization_id AND parent_category_id IS NOT NULL AND lower(trim(category_name)) = :lookup_value',
-                $rowErrors,
-                $rowNumber
-            );
-        }
-
-        $product = null;
-        if ($productName !== '') {
-            $productMatches = $findMatches(
-                'SELECT ip.id, ip.company_id, ip.category_id, ip.product_name, pc.category_name
-                 FROM insurance_products ip
-                 LEFT JOIN product_categories pc ON pc.id = ip.category_id
-                 WHERE ip.organization_id = :organization_id
-                   AND lower(trim(ip.product_name)) = :lookup_value',
-                [':lookup_value' => normalizeLookupValue($productName)]
-            );
-
-            if ($company !== null) {
-                $productMatches = array_values(array_filter(
-                    $productMatches,
-                    static fn (array $candidate): bool => (int) ($candidate['company_id'] ?? 0) === (int) $company['id']
-                ));
-            }
-
-            if ($policyType !== null) {
-                $productMatches = array_values(array_filter(
-                    $productMatches,
-                    static fn (array $candidate): bool => (int) ($candidate['category_id'] ?? 0) === (int) $policyType['id']
-                ));
-            }
-
-            if ($productMatches === []) {
-                $rowErrors[] = [
-                    'row' => $rowNumber,
-                    'field' => 'product_name',
-                    'value' => $productName,
-                    'message' => 'No matching product was found for the selected company/policy type.'
-                ];
-            } elseif (count($productMatches) > 1) {
-                $rowErrors[] = [
-                    'row' => $rowNumber,
-                    'field' => 'product_name',
-                    'value' => $productName,
-                    'message' => 'Multiple products matched this value.'
-                ];
-            } else {
-                $product = $productMatches[0];
-            }
-        }
+        $company = $findOrCreateInsuranceCompany($companyName);
+        $policyType = $findOrCreatePolicyType($policyTypeLabel);
+        $product = $findOrCreateInsuranceProduct($productName, $company, $policyType);
 
         if ($policyType === null && $product !== null && trim((string) ($product['category_name'] ?? '')) !== '') {
             $policyType = [
@@ -681,14 +794,6 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
             ];
         }
 
-        if ($shouldLinkPrevious && $previousPolicy !== null && $company !== null && (int) $previousPolicy['company_id'] !== (int) $company['id']) {
-            $rowErrors[] = [
-                'row' => $rowNumber,
-                'field' => 'previous_policy_number',
-                'value' => $previousPolicyNumber,
-                'message' => 'Previous policy belongs to a different company.'
-            ];
-        }
 
         if ($rowErrors !== []) {
             $errors = array_merge($errors, $rowErrors);
