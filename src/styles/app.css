@@ -2938,20 +2938,23 @@ button {
 }
 /* Stronger organization identity in the sidebar and header. */
 .brand-panel {
-  min-height: 124px;
-  padding: 24px 26px;
+  min-height: 132px;
+  padding: 26px 24px;
   container-type: inline-size;
+  align-items: center;
+  justify-content: center;
 }
 
 .brand-panel__main,
 .brand-copy {
   min-width: 0;
   width: 100%;
+  justify-content: center;
 }
 
 .brand-copy h1,
 .brand-panel .brand-copy h1 {
-  font-size: clamp(23px, 8.2cqw, 32px);
+  font-size: clamp(27px, 9.5cqw, 38px);
   line-height: 1.15;
   font-weight: 800;
   letter-spacing: 0;
@@ -2959,6 +2962,7 @@ button {
   overflow-wrap: anywhere;
   word-break: break-word;
   max-width: 100%;
+  text-align: center;
 }
 
 .content-topbar__brand-logo {
