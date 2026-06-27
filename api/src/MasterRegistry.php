@@ -120,8 +120,8 @@ final class MasterRegistry
                 'from' => 'users u',
                 'order_by' => 'u.id desc',
                 'write_columns' => ['full_name', 'login_id', 'password', 'views', 'email', 'mobile', 'role_name', 'notes', 'is_active'],
-                'required' => ['full_name', 'login_id', 'password', 'views', 'email', 'role_name'],
-                'nullable' => ['mobile', 'notes'],
+                'required' => ['full_name', 'login_id', 'password', 'views', 'role_name'],
+                'nullable' => ['email', 'mobile', 'notes'],
                 'boolean' => ['is_active'],
                 'duplicate_keys' => [
                     ['columns' => ['login_id'], 'label' => 'Log In Id', 'display_column' => 'login_id'],

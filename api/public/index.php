@@ -1084,7 +1084,7 @@ try {
                 'id' => $adminUser['id'] ?? -1,
                 'full_name' => $adminUser['full_name'] ?? 'Bizskill Admin',
                 'login_id' => $loginId,
-                'views' => buildFullAccessViews($canManageOrganizations),
+                'views' => buildFullAccessViews(true),
                 'email' => $adminUser['email'] ?? null,
                 'mobile' => $adminUser['mobile'] ?? null,
                 'role_name' => 'Super Admin',

@@ -125,7 +125,7 @@ export const masterConfigs = {
       { name: "full_name", label: "Full Name", type: "text", required: true },
       { name: "login_id", label: "Log In Id", type: "text", required: true },
       { name: "password", label: "Password", type: "password", required: true },
-      { name: "email", label: "Email", type: "email", required: true },
+      { name: "email", label: "Email", type: "email" },
       { name: "mobile", label: "Mobile", type: "text", validation: mobileFieldValidation },
       {
         name: "role_name",
