@@ -1680,8 +1680,8 @@ button {
 }
 
 .icon-button {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   border: 1px solid #d5dfec;
   border-radius: 10px;
   display: inline-flex;
@@ -1693,8 +1693,8 @@ button {
 }
 
 .icon-button svg {
-  width: 19px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   fill: currentColor;
 }
 
@@ -1803,7 +1803,7 @@ button {
 }
 
 .master-table th {
-  padding: 12px 14px;
+  padding: 8px 12px;
   background: #2d57d7;
   color: #fff;
   text-align: left;
@@ -1827,12 +1827,13 @@ button {
 }
 
 .master-table td {
-  padding: 12px 14px;
+  padding: 7px 12px;
   border-right: 1px solid #000;
   border-bottom: 1px solid #000;
   background: #fff;
-  font-size: 14px;
-  vertical-align: top;
+  font-size: 13px;
+  line-height: 1.25;
+  vertical-align: middle;
 }
 
 .master-table td:first-child {
@@ -1859,7 +1860,7 @@ button {
 }
 
 .table-pagination {
-  margin-top: 14px;
+  margin-top: 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2023,7 +2024,7 @@ button {
 
 .table-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
