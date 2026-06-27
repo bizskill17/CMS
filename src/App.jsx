@@ -1,6 +1,7 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+﻿import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
+import DashboardPage from "./components/DashboardPage";
 import LeadsPage from "./components/LeadsPage";
 import LoginPage from "./components/LoginPage";
 import MasterPage from "./components/MasterPage";
@@ -9,7 +10,7 @@ import { filterMenuSectionsByViews, getMenuRouteEntries } from "./data/menu";
 import { masterConfigs } from "./data/masterConfigs";
 import { clearStoredAuthUser, getStoredAuthUser, setStoredAuthUser } from "./utils/auth";
 
-const DEFAULT_PATH = "/masters/customers";
+const DEFAULT_PATH = "/dashboard";
 
 function buildRoutes(items) {
   return items.map((item) => (
@@ -17,7 +18,9 @@ function buildRoutes(items) {
       key={item.path}
       path={item.path}
       element={
-        item.section === "Leads" ? (
+        item.section === "Dashboard" ? (
+          <DashboardPage />
+        ) : item.section === "Leads" ? (
           <LeadsPage viewPath={item.path} />
         ) : item.section === "Tasks" ? (
           <TasksPage viewPath={item.path} />

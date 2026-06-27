@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { menuSections } from "../data/menu";
 import { API_BASE } from "../config/api";
@@ -107,9 +107,13 @@ export default function Sidebar({
   }, [currentUser?.organization_name, location.pathname]);
 
   const defaultOpenKey = useMemo(() => {
-    const matched = visibleMenuSections.find((section) =>
-      section.items.some((item) => matchesMenuPath(location.pathname, item))
-    );
+    const matched = visibleMenuSections.find((section) => {
+      if (section.standalone) {
+        return section.path === location.pathname;
+      }
+
+      return (section.items || []).some((item) => matchesMenuPath(location.pathname, item));
+    });
     return matched?.standalone ? null : matched?.label ?? "Masters";
   }, [location.pathname, visibleMenuSections]);
 
@@ -191,7 +195,7 @@ export default function Sidebar({
               </button>
 
               <div className="submenu">
-                {section.items.map((item) => (
+                {(section.items || []).map((item) => (
                   <NavLink
                     key={item.path}
                     to={item.path}
@@ -233,4 +237,5 @@ export default function Sidebar({
     </>
   );
 }
+
 

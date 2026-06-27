@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 declare(strict_types=1);
 
@@ -134,6 +134,7 @@ function isAdminOrganization(array $organization): bool
 function buildFullAccessViews(bool $includeOrganizations = true): string
 {
     $views = [
+        '/dashboard',
         '/masters/organizations',
         '/masters/customers',
         '/masters/states',
@@ -4372,6 +4373,8 @@ try {
         'message' => $throwable->getMessage()
     ], 500);
 }
+
+
 
 
 

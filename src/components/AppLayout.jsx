@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { API_BASE } from "../config/api";
 import { menuSections } from "../data/menu";
@@ -14,7 +14,7 @@ function getCurrentViewName(pathname) {
       return section.label;
     }
 
-    const matchedItem = section.items.find((item) => item.path === pathname);
+    const matchedItem = (section.items || []).find((item) => item.path === pathname);
     if (matchedItem) {
       return matchedItem.label;
     }
@@ -127,5 +127,6 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
     </div>
   );
 }
+
 
 

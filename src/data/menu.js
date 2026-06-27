@@ -1,4 +1,10 @@
-export const menuSections = [
+﻿export const menuSections = [
+  {
+    label: "Dashboard",
+    path: "/dashboard",
+    icon: "dashboard",
+    standalone: true
+  },
   {
     label: "Masters",
     path: "/masters",
@@ -52,13 +58,24 @@ export const menuSections = [
 ];
 
 export function getMenuRouteEntries(sections = menuSections) {
-  return sections.flatMap((section) =>
-    section.items.map((item) => ({
+  return sections.flatMap((section) => {
+    if (section.standalone) {
+      return [
+        {
+          label: section.label,
+          path: section.path,
+          section: section.label,
+          standalone: true
+        }
+      ];
+    }
+
+    return (section.items || []).map((item) => ({
       ...item,
       section: section.label,
       resourceKey: section.label === "Masters" ? item.path.replace("/masters/", "") : undefined
-    }))
-  );
+    }));
+  });
 }
 
 export function filterMenuSectionsByViews(allowedViews = [], sections = menuSections) {
@@ -66,6 +83,10 @@ export function filterMenuSectionsByViews(allowedViews = [], sections = menuSect
 
   return sections
     .map((section) => {
+      if (section.standalone) {
+        return allowedSet.has(section.path) ? section : null;
+      }
+
       const filteredItems = (section.items || []).filter(
         (item) => allowedSet.has(item.path) || (item.fallbackView && allowedSet.has(item.fallbackView))
       );
@@ -83,18 +104,32 @@ export function filterMenuSectionsByViews(allowedViews = [], sections = menuSect
 }
 
 export const menuViewOptions = menuSections.flatMap((section) =>
-  (section.items || []).map((item) => ({
-    value: item.path,
-    label: section.label + " / " + item.label
-  }))
+  section.standalone
+    ? [
+        {
+          value: section.path,
+          label: section.label
+        }
+      ]
+    : (section.items || []).map((item) => ({
+        value: item.path,
+        label: section.label + " / " + item.label
+      }))
 );
 
 export const menuViewGroups = menuSections.map((section) => ({
   label: section.label,
-  options: (section.items || []).map((item) => ({
-    value: item.path,
-    label: item.label
-  }))
+  options: section.standalone
+    ? [
+        {
+          value: section.path,
+          label: section.label
+        }
+      ]
+    : (section.items || []).map((item) => ({
+        value: item.path,
+        label: item.label
+      }))
 }));
 
 export function formatMenuViews(value) {
