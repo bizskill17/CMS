@@ -9,6 +9,22 @@ final class MasterRegistry
     public static function all(): array
     {
         $resources = [
+            'organizations' => [
+                'table' => 'organizations',
+                'select' => 'o.id, o.organization_code, o.organization_name, s.gst, s.address, s.logo, o.is_active, o.created_at',
+                'from' => 'organizations o left join settings s on s.organization_id = o.id',
+                'order_by' => 'o.id desc',
+                'search_columns' => ['o.organization_code', 'o.organization_name', 's.gst', 's.address'],
+                'write_columns' => ['organization_code', 'organization_name', 'gst', 'address', 'logo', 'is_active'],
+                'required' => ['organization_code', 'organization_name'],
+                'nullable' => ['gst', 'address', 'logo'],
+                'boolean' => ['is_active'],
+                'duplicate_keys' => [
+                    ['columns' => ['organization_code'], 'label' => 'Organization Code', 'display_column' => 'organization_code'],
+                    ['columns' => ['organization_name'], 'label' => 'Organization Name', 'display_column' => 'organization_name'],
+                ],
+                'organization_owned' => false,
+            ],
             'customer-groups' => [
                 'table' => 'customer_groups',
                 'select' => 'cg.id, cg.group_name, cg.notes, cg.created_at',

@@ -144,6 +144,7 @@ function isAdminOrganization(array $organization): bool
 function buildFullAccessViews(bool $includeOrganizations = true): string
 {
     $views = [
+        '/masters/organizations',
         '/masters/customers',
         '/masters/customer-groups',
         '/masters/states',

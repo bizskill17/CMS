@@ -4,6 +4,26 @@ const mobileFieldValidation = {
   message: "Mobile number must be exactly 10 digits."
 };
 export const masterConfigs = {
+  organizations: {
+    title: 'Organizations',
+    resource: 'organizations',
+    tableColumns: [
+      { key: 'organization_code', label: 'Organization Code' },
+      { key: 'organization_name', label: 'Organization Name' },
+      { key: 'gst', label: 'GST' },
+      { key: 'address', label: 'Address' },
+      { key: 'logo', label: 'Logo' },
+      { key: 'is_active', label: 'Active', type: 'boolean' }
+    ],
+    fields: [
+      { name: 'organization_code', label: 'Organization Code', type: 'text', required: true },
+      { name: 'organization_name', label: 'Organization Name', type: 'text', required: true },
+      { name: 'gst', label: 'GST', type: 'text' },
+      { name: 'address', label: 'Address', type: 'textarea' },
+      { name: 'logo', label: 'Logo URL / Path', type: 'text' },
+      { name: 'is_active', label: 'Active', type: 'checkbox' }
+    ]
+  },
   customers: {
     title: "Customers",
     resource: "customers",
