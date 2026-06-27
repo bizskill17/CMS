@@ -673,7 +673,6 @@ export default function MasterPage({
 
       const savedRecordId = method === "POST" ? Number(json.id || 0) : Number(editingId || 0);
       setMessage(json.message || "Saved successfully.");
-      setIsFormLocked(true);
 
       const refresh = await fetch(`${API_BASE}/masters/${config.resource}?limit=500000`);
       const refreshJson = await readApiJson(refresh);
@@ -688,9 +687,7 @@ export default function MasterPage({
         onFormSaved(savedRecord);
       }
 
-      if (editingId) {
-        closeForm({ notifyCancel: false });
-      }
+      closeForm({ notifyCancel: false });
     } catch (saveError) {
       setError(saveError.message);
     } finally {
