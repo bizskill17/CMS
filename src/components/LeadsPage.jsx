@@ -477,12 +477,46 @@ export default function LeadsPage({ viewPath }) {
     }
   };
 
+  const deleteLeadActivity = async (activity) => {
+    const isUpdate = Boolean(activity.update_id);
+    const label = isUpdate ? "lead log" : "lead";
+
+    if (!window.confirm(`Are you sure you want to delete this ${label}?`)) {
+      return;
+    }
+
+    try {
+      const endpoint = isUpdate
+        ? `${API_BASE}/leads/updates/${activity.update_id}`
+        : `${API_BASE}/leads/${activity.lead_id}`;
+      const response = await fetch(endpoint, {
+        method: "DELETE"
+      });
+      const json = await readApiJson(response);
+
+      if (!response.ok) {
+        throw new Error(json.message || `Failed to delete ${label}.`);
+      }
+
+      window.dispatchEvent(new Event("refresh-counts"));
+      await loadRecords();
+    } catch (deleteError) {
+      alert(deleteError.message);
+    }
+  };
+
   const renderLeadActions = (lead) => (
     <div className="table-actions">
       <ActionIconButton icon="user" label="Assign" onClick={() => openAssignLead(lead)} />
       <ActionIconButton icon="pencil" label="Edit" onClick={() => openEditLead(lead)} />
       <ActionIconButton icon="call" label="Update" tone="primary" onClick={() => openUpdateLead(lead)} />
       <ActionIconButton icon="delete" label="Delete" tone="danger" onClick={() => deleteLead(lead)} />
+    </div>
+  );
+
+  const renderActivityActions = (activity) => (
+    <div className="table-actions">
+      <ActionIconButton icon="delete" label="Delete" tone="danger" onClick={() => deleteLeadActivity(activity)} />
     </div>
   );
   const loadLeadDetailData = async (lead) => {
@@ -591,7 +625,7 @@ export default function LeadsPage({ viewPath }) {
           emptyMessage={viewConfig.emptyMessage}
           searchKeys={currentSearchKeys}
           filterConfigs={filterConfigs}
-          renderActions={isActivityLog ? null : renderLeadActions}
+          renderActions={isActivityLog ? renderActivityActions : renderLeadActions}
           rowKey={isActivityLog ? "activity_key" : "id"}
           headerExtras={
             !isActivityLog ? (

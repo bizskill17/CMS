@@ -889,6 +889,8 @@ try {
              FROM (
                 SELECT
                     concat("lead-", l.id) AS activity_key,
+                    l.id AS lead_id,
+                    null AS update_id,
                     "Lead Created" AS activity_type,
                     l.client_name,
                     l.lead_status,
@@ -907,6 +909,8 @@ try {
 
                 SELECT
                     concat("update-", lu.id) AS activity_key,
+                    l.id AS lead_id,
+                    lu.id AS update_id,
                     "Follow Up" AS activity_type,
                     l.client_name,
                     l.lead_status,
@@ -1718,6 +1722,31 @@ try {
         ]);
         exit;
     }
+    if (preg_match('#^/api/leads/updates/(\d+)$#', $path, $matches) === 1 && $method === 'DELETE') {
+        $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
+        $updateId = (int) $matches[1];
+
+        $statement = $pdo->prepare('DELETE FROM lead_updates WHERE id = :id AND organization_id = :organization_id');
+        $statement->bindValue(':id', $updateId, PDO::PARAM_INT);
+        bindOrganizationId($statement, $organizationId);
+        $statement->execute();
+
+        if ($statement->rowCount() === 0) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Lead log not found.'
+            ], 404);
+            exit;
+        }
+
+        Response::json([
+            'status' => 'ok',
+            'message' => 'Lead log deleted successfully.'
+        ]);
+        exit;
+    }
+
     if (preg_match('#^/api/leads/(\d+)/updates$#', $path, $matches) === 1 && $method === 'GET') {
         $pdo = Database::connection();
         $organizationId = requireOrganizationId();
