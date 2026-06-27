@@ -28,10 +28,10 @@ final class MasterRegistry
             ],
             'customers' => [
                 'table' => 'customers',
-                'select' => 'c.id, c.full_name, c.mobile, c.alternate_mobile, c.email, c.city, c.state, c.gstin, c.notes, c.is_active, c.created_at',
+                'select' => 'c.id, c.full_name, c.mobile, c.alternate_mobile, c.email, c.address_line_1, c.city, c.state, c.gstin, c.notes, c.is_active, c.created_at',
                 'from' => 'customers c',
                 'order_by' => 'c.id desc',
-                'search_columns' => ['c.full_name', 'c.mobile', 'c.email', 'c.city', 'c.state', 'c.gstin'],
+                'search_columns' => ['c.full_name', 'c.mobile', 'c.email', 'c.address_line_1', 'c.city', 'c.state', 'c.gstin'],
                 'write_columns' => [
                     'full_name',
                     'mobile',

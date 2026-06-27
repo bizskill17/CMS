@@ -31,6 +31,7 @@ export const masterConfigs = {
     tableColumns: [
       { key: "full_name", label: "Customer Name" },
       { key: "mobile", label: "Mobile" },
+      { key: "address_line_1", label: "Address" },
       { key: "city", label: "City" },
       { key: "state", label: "State" },
       { key: "is_active", label: "Active", type: "boolean" }
@@ -45,6 +46,7 @@ export const masterConfigs = {
         validation: mobileFieldValidation
       },
       { name: "email", label: "Email", type: "email" },
+      { name: "address_line_1", label: "Address", type: "textarea" },
       { name: "gstin", label: "GSTIN", type: "text" },
       {
         name: "state",
