@@ -885,52 +885,28 @@ try {
         $pdo = Database::connection();
         $organizationId = requireOrganizationId();
         $statement = $pdo->prepare(
-            'SELECT *
-             FROM (
-                SELECT
-                    concat("lead-", l.id) AS activity_key,
-                    l.id AS lead_id,
-                    null AS update_id,
-                    "Lead Created" AS activity_type,
-                    l.client_name,
-                    l.lead_status,
-                    null AS update_status,
-                    l.lead_date AS activity_date,
-                    u.full_name AS assigned_to_name,
-                    null AS update_by_name,
-                    l.next_follow_up_date,
-                    l.notes AS remarks,
-                    l.created_at AS sort_at
-                FROM leads l
-                LEFT JOIN users u ON u.id = l.assigned_to_user_id
-                WHERE l.organization_id = :organization_id
-
-                UNION ALL
-
-                SELECT
-                    concat("update-", lu.id) AS activity_key,
-                    l.id AS lead_id,
-                    lu.id AS update_id,
-                    "Follow Up" AS activity_type,
-                    l.client_name,
-                    l.lead_status,
-                    lu.status AS update_status,
-                    lu.update_date AS activity_date,
-                    u.full_name AS assigned_to_name,
-                    uu.full_name AS update_by_name,
-                    lu.next_follow_up_date,
-                    lu.remarks AS remarks,
-                    lu.created_at AS sort_at
-                FROM lead_updates lu
-                INNER JOIN leads l ON l.id = lu.lead_id
-                LEFT JOIN users u ON u.id = l.assigned_to_user_id
-                LEFT JOIN users uu ON uu.id = lu.update_by_user_id
-                WHERE lu.organization_id = :lead_update_organization_id
-             ) activity
-             ORDER BY sort_at DESC'
+            'SELECT
+                concat("update-", lu.id) AS activity_key,
+                l.id AS lead_id,
+                lu.id AS update_id,
+                "Follow Up" AS activity_type,
+                l.client_name,
+                l.lead_status,
+                lu.status AS update_status,
+                lu.update_date AS activity_date,
+                u.full_name AS assigned_to_name,
+                uu.full_name AS update_by_name,
+                lu.next_follow_up_date,
+                lu.remarks AS remarks,
+                lu.created_at AS sort_at
+             FROM lead_updates lu
+             INNER JOIN leads l ON l.id = lu.lead_id
+             LEFT JOIN users u ON u.id = l.assigned_to_user_id
+             LEFT JOIN users uu ON uu.id = lu.update_by_user_id
+             WHERE lu.organization_id = :organization_id
+             ORDER BY lu.created_at DESC'
         );
         bindOrganizationId($statement, $organizationId);
-        $statement->bindValue(':lead_update_organization_id', $organizationId, PDO::PARAM_INT);
         $statement->execute();
 
         Response::json([
@@ -1155,52 +1131,28 @@ try {
         $pdo = Database::connection();
         $organizationId = requireOrganizationId();
         $statement = $pdo->prepare(
-            'SELECT *
-             FROM (
-                SELECT
-                    concat("task-", t.id) AS activity_key,
-                    t.id AS task_id,
-                    null AS update_id,
-                    "Task Created" AS activity_type,
-                    t.client_name,
-                    t.task_status,
-                    null AS update_status,
-                    t.task_date AS activity_date,
-                    u.full_name AS assigned_to_name,
-                    null AS update_by_name,
-                    t.next_follow_up_date,
-                    t.notes AS remarks,
-                    t.created_at AS sort_at
-                FROM tasks t
-                LEFT JOIN users u ON u.id = t.assigned_to_user_id
-                WHERE t.organization_id = :organization_id
-
-                UNION ALL
-
-                SELECT
-                    concat("task-update-", tu.id) AS activity_key,
-                    t.id AS task_id,
-                    tu.id AS update_id,
-                    "Task Follow Up" AS activity_type,
-                    t.client_name,
-                    t.task_status,
-                    tu.status AS update_status,
-                    tu.update_date AS activity_date,
-                    u.full_name AS assigned_to_name,
-                    uu.full_name AS update_by_name,
-                    tu.next_follow_up_date,
-                    tu.remarks AS remarks,
-                    tu.created_at AS sort_at
-                FROM task_updates tu
-                INNER JOIN tasks t ON t.id = tu.task_id
-                LEFT JOIN users u ON u.id = t.assigned_to_user_id
-                LEFT JOIN users uu ON uu.id = tu.update_by_user_id
-                WHERE tu.organization_id = :task_update_organization_id
-             ) activity
-             ORDER BY sort_at DESC'
+            'SELECT
+                concat("task-update-", tu.id) AS activity_key,
+                t.id AS task_id,
+                tu.id AS update_id,
+                "Task Follow Up" AS activity_type,
+                t.client_name,
+                t.task_status,
+                tu.status AS update_status,
+                tu.update_date AS activity_date,
+                u.full_name AS assigned_to_name,
+                uu.full_name AS update_by_name,
+                tu.next_follow_up_date,
+                tu.remarks AS remarks,
+                tu.created_at AS sort_at
+             FROM task_updates tu
+             INNER JOIN tasks t ON t.id = tu.task_id
+             LEFT JOIN users u ON u.id = t.assigned_to_user_id
+             LEFT JOIN users uu ON uu.id = tu.update_by_user_id
+             WHERE tu.organization_id = :organization_id
+             ORDER BY tu.created_at DESC'
         );
         bindOrganizationId($statement, $organizationId);
-        $statement->bindValue(':task_update_organization_id', $organizationId, PDO::PARAM_INT);
         $statement->execute();
 
         Response::json([
