@@ -479,12 +479,82 @@ export default function LeadsPage({ viewPath }) {
 
   const renderLeadActions = (lead) => (
     <div className="table-actions">
-      <ActionIconButton icon="user" label="Update Assignee" onClick={() => openAssignLead(lead)} />
-      <ActionIconButton icon="pencil" label="Edit Lead" onClick={() => openEditLead(lead)} />
-      <ActionIconButton icon="call" label="Update Lead" tone="primary" onClick={() => openUpdateLead(lead)} />
-      <ActionIconButton icon="delete" label="Delete Lead" tone="danger" onClick={() => deleteLead(lead)} />
+      <ActionIconButton icon="user" label="Assign" onClick={() => openAssignLead(lead)} />
+      <ActionIconButton icon="pencil" label="Edit" onClick={() => openEditLead(lead)} />
+      <ActionIconButton icon="call" label="Update" tone="primary" onClick={() => openUpdateLead(lead)} />
+      <ActionIconButton icon="delete" label="Delete" tone="danger" onClick={() => deleteLead(lead)} />
     </div>
   );
+  const loadLeadDetailData = async (lead) => {
+    const response = await fetch(`${API_BASE}/leads/${lead.id}/updates`);
+    const json = await readApiJson(response);
+
+    if (!response.ok) {
+      throw new Error(json.message || "Failed to load lead activity.");
+    }
+
+    return { history: json.data || [] };
+  };
+
+  const renderLeadDetailExtra = (lead, detailData, state) => {
+    if (!lead) {
+      return null;
+    }
+
+    if (state.loading) {
+      return (
+        <div className="record-detail-history table-state">
+          <Spinner label="Loading lead activity..." />
+        </div>
+      );
+    }
+
+    if (state.error) {
+      return <p className="feedback feedback--error">{state.error}</p>;
+    }
+
+    const history = detailData?.history || [];
+
+    return (
+      <div className="record-detail-history">
+        <div className="master-card__header">
+          <h3>Activity History</h3>
+        </div>
+        <div className="table-wrap">
+          <table className="master-table master-table--compact-history">
+            <thead>
+              <tr>
+                <th>Sl.No.</th>
+                <th>Status</th>
+                <th>Update Date</th>
+                <th>Update By</th>
+                <th>Next Follow Up Date</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="table-state">No follow up activity found for this lead.</td>
+                </tr>
+              ) : (
+                history.map((item, index) => (
+                  <tr key={item.id || `${item.update_date}-${index + 1}`}>
+                    <td>{index + 1}</td>
+                    <td>{formatCellValue(item.status)}</td>
+                    <td>{formatCellValue(item.update_date)}</td>
+                    <td>{formatCellValue(item.update_by_name)}</td>
+                    <td>{formatCellValue(item.next_follow_up_date)}</td>
+                    <td>{formatCellValue(item.remarks)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
 
   const currentColumns = isActivityLog
     ? activityColumns
@@ -530,6 +600,8 @@ export default function LeadsPage({ viewPath }) {
               </button>
             ) : null
           }
+          loadDetailData={!isActivityLog ? loadLeadDetailData : null}
+          renderDetailExtra={!isActivityLog ? renderLeadDetailExtra : null}
           customFilterContent={
             null
           }

@@ -579,10 +579,10 @@ export default function TasksPage({ viewPath }) {
 
   const renderTaskActions = (task) => (
     <div className="table-actions">
-      <ActionIconButton icon="user" label="Update Assignee" onClick={() => openAssignTask(task)} />
-      <ActionIconButton icon="pencil" label="Edit Task" onClick={() => openEditTask(task)} />
-      <ActionIconButton icon="tick" label="Update Task" tone="primary" onClick={() => openUpdateTask(task)} />
-      <ActionIconButton icon="delete" label="Delete Task" tone="danger" onClick={() => deleteTask(task)} />
+      <ActionIconButton icon="user" label="Assign" onClick={() => openAssignTask(task)} />
+      <ActionIconButton icon="pencil" label="Edit" onClick={() => openEditTask(task)} />
+      <ActionIconButton icon="tick" label="Update" tone="primary" onClick={() => openUpdateTask(task)} />
+      <ActionIconButton icon="delete" label="Delete" tone="danger" onClick={() => deleteTask(task)} />
     </div>
   );
 
@@ -591,6 +591,76 @@ export default function TasksPage({ viewPath }) {
       <ActionIconButton icon="delete" label="Delete" tone="danger" onClick={() => deleteTaskActivity(activity)} />
     </div>
   );
+  const loadTaskDetailData = async (task) => {
+    const response = await fetch(`${API_BASE}/tasks/${task.id}/updates`);
+    const json = await readApiJson(response);
+
+    if (!response.ok) {
+      throw new Error(json.message || "Failed to load task activity.");
+    }
+
+    return { history: json.data || [] };
+  };
+
+  const renderTaskDetailExtra = (task, detailData, state) => {
+    if (!task) {
+      return null;
+    }
+
+    if (state.loading) {
+      return (
+        <div className="record-detail-history table-state">
+          <Spinner label="Loading task activity..." />
+        </div>
+      );
+    }
+
+    if (state.error) {
+      return <p className="feedback feedback--error">{state.error}</p>;
+    }
+
+    const history = detailData?.history || [];
+
+    return (
+      <div className="record-detail-history">
+        <div className="master-card__header">
+          <h3>Activity History</h3>
+        </div>
+        <div className="table-wrap">
+          <table className="master-table master-table--compact-history">
+            <thead>
+              <tr>
+                <th>Sl.No.</th>
+                <th>Status</th>
+                <th>Update Date</th>
+                <th>Update By</th>
+                <th>Next Follow Up Date</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="table-state">No activity found for this task.</td>
+                </tr>
+              ) : (
+                history.map((item, index) => (
+                  <tr key={item.id || `${item.update_date}-${index + 1}`}>
+                    <td>{index + 1}</td>
+                    <td>{formatCellValue(item.status)}</td>
+                    <td>{formatCellValue(item.update_date)}</td>
+                    <td>{formatCellValue(item.update_by_name)}</td>
+                    <td>{formatCellValue(item.next_follow_up_date)}</td>
+                    <td>{formatCellValue(item.remarks)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
 
   const currentColumns = isActivityLog ? activityColumns : taskColumns;
   const currentSearchKeys = isActivityLog
@@ -632,6 +702,8 @@ export default function TasksPage({ viewPath }) {
               </button>
             ) : null
           }
+          loadDetailData={!isActivityLog ? loadTaskDetailData : null}
+          renderDetailExtra={!isActivityLog ? renderTaskDetailExtra : null}
           customFilterContent={null}
           onClearCustomFilters={() => {}}
         />

@@ -1,10 +1,11 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config/api";
 
 const groups = [
   {
     title: "Masters",
+    tone: "masters",
     items: [
       { label: "Organizations", path: "/masters/organizations", countKey: "organizations" },
       { label: "Customers", path: "/masters/customers", countKey: "customers" },
@@ -16,6 +17,7 @@ const groups = [
   },
   {
     title: "Leads",
+    tone: "leads",
     items: [
       { label: "All Leads", path: "/leads/all", countKey: "leads-all" },
       { label: "Pending Assigning", path: "/leads/pending-assigning", countKey: "leads-pending-assigning" },
@@ -28,6 +30,7 @@ const groups = [
   },
   {
     title: "Tasks",
+    tone: "tasks",
     items: [
       { label: "All Tasks", path: "/tasks/all", countKey: "tasks-all" },
       { label: "Pending Tasks", path: "/tasks/pending", countKey: "tasks-pending" },
@@ -62,7 +65,7 @@ export default function DashboardPage() {
     <div className="dashboard-page">
       <div className="dashboard-grid">
         {groups.map((group) => (
-          <section className="master-card dashboard-card" key={group.title}>
+          <section className={`master-card dashboard-card dashboard-card--${group.tone}`} key={group.title}>
             <div className="master-card__header">
               <h3>{group.title}</h3>
             </div>
@@ -76,7 +79,7 @@ export default function DashboardPage() {
                 >
                   <span className="dashboard-tile__content">
                     <span className="dashboard-table__item">{item.label}</span>
-                    <span className="dashboard-table__count dashboard-table__count--info">
+                    <span className="dashboard-table__count">
                       {counts[item.countKey] ?? 0}
                     </span>
                   </span>

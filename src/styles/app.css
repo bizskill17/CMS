@@ -2778,3 +2778,107 @@ button {
   cursor: not-allowed;
   box-shadow: none;
 }
+
+.icon-action-button {
+  width: auto;
+  min-width: 66px;
+  height: 40px;
+  gap: 6px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.icon-action-button__label {
+  line-height: 1;
+}
+
+.record-detail__actions .icon-action-button__label {
+  white-space: normal;
+  text-align: center;
+}
+
+.record-detail__actions .icon-action-button::after {
+  content: none;
+}
+
+.record-detail-history {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e3eaf5;
+}
+
+.master-table--compact-history th,
+.master-table--compact-history td {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.dashboard-card {
+  overflow: hidden;
+  position: relative;
+  border: 0;
+}
+
+.dashboard-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 8px;
+}
+
+.dashboard-card--masters::before {
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
+}
+
+.dashboard-card--leads::before {
+  background: linear-gradient(90deg, #16a34a, #84cc16);
+}
+
+.dashboard-card--tasks::before {
+  background: linear-gradient(90deg, #f97316, #ef4444);
+}
+
+.dashboard-card--masters .dashboard-tile {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.dashboard-card--leads .dashboard-tile {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.dashboard-card--tasks .dashboard-tile {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.dashboard-card--masters .dashboard-table__count {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.dashboard-card--leads .dashboard-table__count {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.dashboard-card--tasks .dashboard-table__count {
+  background: #f97316;
+  color: #ffffff;
+}
+
+.dashboard-card--masters .dashboard-tile__content {
+  color: #1d4ed8;
+}
+
+.dashboard-card--leads .dashboard-tile__content {
+  color: #15803d;
+}
+
+.dashboard-card--tasks .dashboard-tile__content {
+  color: #c2410c;
+}

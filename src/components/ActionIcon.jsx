@@ -121,6 +121,7 @@ export function ActionIconButton({ icon, label, tone = "secondary", className = 
       {...props}
     >
       <IconSvg name={icon} />
+      <span className="icon-action-button__label">{label}</span>
     </button>
   );
 }
