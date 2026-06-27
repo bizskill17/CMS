@@ -72,7 +72,6 @@ const activityColumns = [
 
 const priorityOptions = ["High", "Medium", "Low"];
 const updateStatusOptions = ["Success", "Follow Up Again", "Cancel"];
-const finalTaskStatuses = ["Completed", "Canceled"];
 
 function todayInputValue() {
   const now = new Date();
@@ -578,23 +577,14 @@ export default function TasksPage({ viewPath }) {
     }
   };
 
-  const renderTaskActions = (task) => {
-    const isUnassigned = !task.assigned_to_user_id;
-    const canFollowUp = !finalTaskStatuses.includes(String(task.task_status || ""));
-
-    return (
-      <div className="table-actions">
-        {isUnassigned ? (
-          <ActionIconButton icon="user" label="Update Assignee" onClick={() => openAssignTask(task)} />
-        ) : null}
-        <ActionIconButton icon="pencil" label="Edit Task" onClick={() => openEditTask(task)} />
-        {canFollowUp ? (
-          <ActionIconButton icon="tick" label="Update Task" tone="primary" onClick={() => openUpdateTask(task)} />
-        ) : null}
-        <ActionIconButton icon="delete" label="Delete Task" tone="danger" onClick={() => deleteTask(task)} />
-      </div>
-    );
-  };
+  const renderTaskActions = (task) => (
+    <div className="table-actions">
+      <ActionIconButton icon="user" label="Update Assignee" onClick={() => openAssignTask(task)} />
+      <ActionIconButton icon="pencil" label="Edit Task" onClick={() => openEditTask(task)} />
+      <ActionIconButton icon="tick" label="Update Task" tone="primary" onClick={() => openUpdateTask(task)} />
+      <ActionIconButton icon="delete" label="Delete Task" tone="danger" onClick={() => deleteTask(task)} />
+    </div>
+  );
 
   const renderActivityActions = (activity) => (
     <div className="table-actions">

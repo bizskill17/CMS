@@ -98,7 +98,6 @@ const activityColumns = [
 
 const priorityOptions = ["High", "Medium", "Low"];
 const updateStatusOptions = ["Success", "Follow Up Again", "Lost", "Cancel"];
-const finalLeadStatuses = ["Converted", "Lost", "Canceled"];
 
 function todayInputValue() {
   const now = new Date();
@@ -478,36 +477,14 @@ export default function LeadsPage({ viewPath }) {
     }
   };
 
-  const renderLeadActions = (lead) => {
-    const isUnassigned = !lead.assigned_to_user_id;
-
-    if (viewPath === "/leads/pending-assigning") {
-      return (
-        <div className="table-actions">
-          {isUnassigned ? (
-            <ActionIconButton icon="user" label="Update Assignee" onClick={() => openAssignLead(lead)} />
-          ) : null}
-          <ActionIconButton icon="pencil" label="Edit Lead" onClick={() => openEditLead(lead)} />
-          <ActionIconButton icon="delete" label="Delete Lead" tone="danger" onClick={() => deleteLead(lead)} />
-        </div>
-      );
-    }
-
-    const canFollowUp = !finalLeadStatuses.includes(String(lead.lead_status || ""));
-
-    return (
-      <div className="table-actions">
-        {isUnassigned ? (
-          <ActionIconButton icon="user" label="Update Assignee" onClick={() => openAssignLead(lead)} />
-        ) : null}
-        <ActionIconButton icon="pencil" label="Edit Lead" onClick={() => openEditLead(lead)} />
-        {canFollowUp ? (
-          <ActionIconButton icon="call" label="Update Lead" tone="primary" onClick={() => openUpdateLead(lead)} />
-        ) : null}
-        <ActionIconButton icon="delete" label="Delete Lead" tone="danger" onClick={() => deleteLead(lead)} />
-      </div>
-    );
-  };
+  const renderLeadActions = (lead) => (
+    <div className="table-actions">
+      <ActionIconButton icon="user" label="Update Assignee" onClick={() => openAssignLead(lead)} />
+      <ActionIconButton icon="pencil" label="Edit Lead" onClick={() => openEditLead(lead)} />
+      <ActionIconButton icon="call" label="Update Lead" tone="primary" onClick={() => openUpdateLead(lead)} />
+      <ActionIconButton icon="delete" label="Delete Lead" tone="danger" onClick={() => deleteLead(lead)} />
+    </div>
+  );
 
   const currentColumns = isActivityLog
     ? activityColumns

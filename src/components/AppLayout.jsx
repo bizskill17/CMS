@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { API_BASE } from "../config/api";
 import { menuSections } from "../data/menu";
@@ -32,6 +32,7 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
     logo: currentUser?.organization_logo || ""
   });
   const currentViewName = getCurrentViewName(location.pathname);
+  const hideTopbarForMobileMenu = isMobile && isSidebarOpen;
   const fallbackPath = allowedRoutes[0]?.path || "/login";
   const isAllowedPath = allowedRoutes.some((item) => {
     if (item.path === location.pathname) {
@@ -92,34 +93,36 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
         onLogout={onLogout}
       />
       <main className="content-area">
-        <div className="content-topbar">
-          <button
-            className="sidebar-toggle"
-            type="button"
-            onClick={handleSidebarToggle}
-            aria-label={isSidebarOpen ? "Hide menu" : "Show menu"}
-          >
-            <span className="sidebar-toggle__line" aria-hidden="true"></span>
-            <span className="sidebar-toggle__line" aria-hidden="true"></span>
-            <span className="sidebar-toggle__line" aria-hidden="true"></span>
-          </button>
-          <div className="content-topbar__copy">
-            {currentViewName ? <h1 className="content-topbar__title">{currentViewName}</h1> : null}
-          </div>
-          {appBrand.logo ? (
-            <div className="content-topbar__brand">
-              <img
-                src={
-                  /^https?:\/\//i.test(appBrand.logo)
-                    ? appBrand.logo
-                    : `${API_BASE}/${String(appBrand.logo).replace(/^\/+/, "")}`
-                }
-                alt={appBrand.name}
-                className="content-topbar__brand-logo"
-              />
+        {!hideTopbarForMobileMenu ? (
+          <div className="content-topbar">
+            <button
+              className="sidebar-toggle"
+              type="button"
+              onClick={handleSidebarToggle}
+              aria-label={isSidebarOpen ? "Hide menu" : "Show menu"}
+            >
+              <span className="sidebar-toggle__line" aria-hidden="true"></span>
+              <span className="sidebar-toggle__line" aria-hidden="true"></span>
+              <span className="sidebar-toggle__line" aria-hidden="true"></span>
+            </button>
+            <div className="content-topbar__copy">
+              {currentViewName ? <h1 className="content-topbar__title">{currentViewName}</h1> : null}
             </div>
-          ) : null}
-        </div>
+            {appBrand.logo ? (
+              <div className="content-topbar__brand">
+                <img
+                  src={
+                    /^https?:\/\//i.test(appBrand.logo)
+                      ? appBrand.logo
+                      : `${API_BASE}/${String(appBrand.logo).replace(/^\/+/, "")}`
+                  }
+                  alt={appBrand.name}
+                  className="content-topbar__brand-logo"
+                />
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         <div className="content-body">
           <Outlet />
         </div>
