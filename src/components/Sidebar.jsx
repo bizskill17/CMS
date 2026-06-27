@@ -54,7 +54,7 @@ export default function Sidebar({
   const location = useLocation();
   const visibleMenuSections = providedMenuSections || menuSections;
   const [counts, setCounts] = useState({});
-  const [appBrandName, setAppBrandName] = useState(currentUser?.organization_name || "Policy Management System");
+  const [appBrandName, setAppBrandName] = useState(currentUser?.organization_name || "Leads & Tasks");
 
   useEffect(() => {
     let isActive = true;
@@ -72,7 +72,7 @@ export default function Sidebar({
 
     const loadBrand = () => {
       if (isActive) {
-        setAppBrandName(currentUser?.organization_name || "Policy Management System");
+        setAppBrandName(currentUser?.organization_name || "Leads & Tasks");
       }
     };
 

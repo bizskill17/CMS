@@ -28,7 +28,7 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
   const [isMobile, setIsMobile] = useState(() => getIsMobileViewport());
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => !getIsMobileViewport());
   const [appBrand, setAppBrand] = useState({
-    name: currentUser?.organization_name || "Policy Management System",
+    name: currentUser?.organization_name || "Leads & Tasks",
     logo: currentUser?.organization_logo || ""
   });
   const currentViewName = getCurrentViewName(location.pathname);
@@ -54,7 +54,7 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
 
   useEffect(() => {
     setAppBrand({
-      name: currentUser?.organization_name || "Policy Management System",
+      name: currentUser?.organization_name || "Leads & Tasks",
       logo: currentUser?.organization_logo || ""
     });
   }, [currentUser?.organization_logo, currentUser?.organization_name]);

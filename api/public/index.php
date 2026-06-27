@@ -719,7 +719,7 @@ try {
 
         Response::json([
             'status' => 'ok',
-            'app' => 'Policy Management System API',
+            'app' => 'Leads & Tasks API',
             'version' => '0.1.0',
             'database' => $dbName
         ]);
