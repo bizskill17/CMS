@@ -39,7 +39,7 @@ function getColumnWidthStyle(column, fallback = "140px") {
     token.includes("company")
   ) {
       width = "260px";
-  } else if (token.includes("customer") || token.includes("agent")) {
+  } else if (token.includes("customer")) {
     width = "145px";
   } else if (token.includes("product")) {
       width = "300px";
@@ -339,8 +339,7 @@ export default function ResponsiveDataView({
                         const isName =
                           col.key.toLowerCase().includes("name") ||
                           col.key.toLowerCase().includes("customer") ||
-                          col.key.toLowerCase().includes("company") ||
-                          col.key.toLowerCase().includes("agent");
+                          col.key.toLowerCase().includes("company");
 
                         return (
                           <td

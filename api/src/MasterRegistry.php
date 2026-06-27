@@ -131,32 +131,18 @@ final class MasterRegistry
             ],
             'users' => [
                 'table' => 'users',
-                'select' => 'u.id, u.full_name, u.login_id, u.password, u.views, u.email, u.mobile, u.role_name, u.is_active, u.created_at, u.linked_agent_id, a.full_name as linked_agent_name',
-                'from' => 'users u left join agents a on a.id = u.linked_agent_id',
+                'select' => 'u.id, u.full_name, u.login_id, u.password, u.views, u.email, u.mobile, u.role_name, u.is_active, u.created_at',
+                'from' => 'users u',
                 'order_by' => 'u.id desc',
-                'write_columns' => ['full_name', 'login_id', 'password', 'views', 'email', 'mobile', 'role_name', 'linked_agent_id', 'notes', 'is_active'],
+                'write_columns' => ['full_name', 'login_id', 'password', 'views', 'email', 'mobile', 'role_name', 'notes', 'is_active'],
                 'required' => ['full_name', 'login_id', 'password', 'views', 'email', 'role_name'],
-                'nullable' => ['mobile', 'linked_agent_id', 'notes'],
+                'nullable' => ['mobile', 'notes'],
                 'boolean' => ['is_active'],
                 'duplicate_keys' => [
                     ['columns' => ['login_id'], 'label' => 'Log In Id', 'display_column' => 'login_id'],
                     ['columns' => ['email'], 'label' => 'Email', 'display_column' => 'email'],
                 ],
                 'organization_scope_column' => 'u.organization_id',
-            ],
-            'agents' => [
-                'table' => 'agents',
-                'select' => 'a.id, a.employee_code, a.full_name, a.mobile, a.email, a.is_active, a.created_at',
-                'from' => 'agents a',
-                'order_by' => 'a.id desc',
-                'write_columns' => ['employee_code', 'full_name', 'mobile', 'email', 'is_active'],
-                'required' => ['employee_code', 'full_name'],
-                'nullable' => ['mobile', 'email'],
-                'boolean' => ['is_active'],
-                'duplicate_keys' => [
-                    ['columns' => ['employee_code'], 'label' => 'Employee Code', 'display_column' => 'employee_code'],
-                ],
-                'organization_scope_column' => 'a.organization_id',
             ],
         ];
 

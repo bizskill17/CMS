@@ -24,22 +24,6 @@ create table settings (
     foreign key (organization_id) references organizations(id)
 );
 
-create table agents (
-  id bigint unsigned auto_increment primary key,
-  organization_id bigint unsigned not null,
-  employee_code varchar(30) not null,
-  full_name varchar(150) not null,
-  mobile varchar(20),
-  email varchar(150),
-  is_active tinyint(1) not null default 1,
-  created_at datetime not null default current_timestamp,
-  updated_at datetime not null default current_timestamp on update current_timestamp,
-  unique key uk_agents_org_employee_code (organization_id, employee_code),
-  key idx_agents_organization (organization_id),
-  constraint fk_agents_organization
-    foreign key (organization_id) references organizations(id)
-);
-
 create table users (
   id bigint unsigned auto_increment primary key,
   organization_id bigint unsigned not null,
@@ -50,7 +34,6 @@ create table users (
   email varchar(150) not null,
   mobile varchar(20),
   role_name varchar(50) not null,
-  linked_agent_id bigint unsigned null,
   notes text,
   is_active tinyint(1) not null default 1,
   created_at datetime not null default current_timestamp,
@@ -58,11 +41,8 @@ create table users (
   unique key uk_users_org_login (organization_id, login_id),
   unique key uk_users_org_email (organization_id, email),
   key idx_users_organization (organization_id),
-  key idx_users_linked_agent (linked_agent_id),
   constraint fk_users_organization
-    foreign key (organization_id) references organizations(id),
-  constraint fk_users_linked_agent
-    foreign key (linked_agent_id) references agents(id)
+    foreign key (organization_id) references organizations(id)
 );
 
 create table customer_groups (

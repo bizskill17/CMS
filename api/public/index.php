@@ -33,7 +33,6 @@ function singularizeMasterLabel(string $resource): string
         'cities' => 'city',
         'product-categories' => 'category',
         'users' => 'user',
-        'agents' => 'agent',
         default => rtrim($label, 's'),
     };
 }
@@ -43,7 +42,6 @@ function linkedDeleteReferenceQueries(string $resource): array
     return match ($resource) {
         'organizations' => [
             ['label' => 'users', 'sql' => 'SELECT count(*) FROM users WHERE organization_id = :id'],
-            ['label' => 'agents', 'sql' => 'SELECT count(*) FROM agents WHERE organization_id = :id'],
             ['label' => 'customer_groups', 'sql' => 'SELECT count(*) FROM customer_groups WHERE organization_id = :id'],
             ['label' => 'customers', 'sql' => 'SELECT count(*) FROM customers WHERE organization_id = :id'],
             ['label' => 'states', 'sql' => 'SELECT count(*) FROM states WHERE organization_id = :id'],
@@ -71,9 +69,6 @@ function linkedDeleteReferenceQueries(string $resource): array
             ['label' => 'lead_updates', 'sql' => 'SELECT count(*) FROM lead_updates WHERE update_by_user_id = :id'],
             ['label' => 'tasks', 'sql' => 'SELECT count(*) FROM tasks WHERE assigned_to_user_id = :id'],
             ['label' => 'task_updates', 'sql' => 'SELECT count(*) FROM task_updates WHERE update_by_user_id = :id'],
-        ],
-        'agents' => [
-            ['label' => 'users', 'sql' => 'SELECT count(*) FROM users WHERE linked_agent_id = :id'],
         ],
         default => [],
     };
@@ -151,7 +146,6 @@ function buildFullAccessViews(bool $includeOrganizations = true): string
         '/masters/cities',
         '/masters/product-categories',
         '/masters/users',
-        '/masters/agents',
         '/leads/all',
         '/leads/add',
         '/leads/pending-assigning',
@@ -1079,7 +1073,7 @@ try {
 
         if ($isBizskillSuperAdminLogin) {
             $statement = $pdo->prepare(
-                'SELECT u.id, u.full_name, u.login_id, u.email, u.mobile, u.linked_agent_id, s.logo AS organization_logo
+                'SELECT u.id, u.full_name, u.login_id, u.email, u.mobile, s.logo AS organization_logo
                  FROM users u
                  LEFT JOIN settings s ON s.organization_id = :organization_id AND s.is_active = 1
                  WHERE LOWER(u.login_id) = LOWER(:login_id)
@@ -1099,13 +1093,12 @@ try {
                 'email' => $adminUser['email'] ?? null,
                 'mobile' => $adminUser['mobile'] ?? null,
                 'role_name' => 'Super Admin',
-                'linked_agent_id' => $adminUser['linked_agent_id'] ?? null,
                 'organization_logo' => $adminUser['organization_logo'] ?? null,
                 'is_active' => 1,
             ];
         } else {
             $statement = $pdo->prepare(
-                'SELECT u.id, u.full_name, u.login_id, u.password, u.views, u.email, u.mobile, u.role_name, u.linked_agent_id, u.is_active, s.logo AS organization_logo
+                'SELECT u.id, u.full_name, u.login_id, u.password, u.views, u.email, u.mobile, u.role_name, u.is_active, s.logo AS organization_logo
                  FROM users u
                  LEFT JOIN settings s ON s.organization_id = u.organization_id AND s.is_active = 1
                  WHERE u.organization_id = :organization_id
@@ -1158,7 +1151,6 @@ try {
                 'email' => $user['email'],
                 'mobile' => $user['mobile'],
                 'role_name' => $user['role_name'],
-                'linked_agent_id' => $user['linked_agent_id']
             ]
         ]);
         exit;

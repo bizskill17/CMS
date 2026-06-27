@@ -132,7 +132,6 @@ export const masterConfigs = {
       { key: "email", label: "Email" },
       { key: "mobile", label: "Mobile" },
       { key: "role_name", label: "Role" },
-      { key: "linked_agent_name", label: "Linked Agent" },
       { key: "is_active", label: "Active", type: "boolean" }
     ],
     fields: [
@@ -160,26 +159,7 @@ export const masterConfigs = {
         required: true,
         optionGroups: menuViewGroups
       },
-      { name: "linked_agent_id", label: "Linked Agent", type: "select", optionsFrom: "agents" },
       { name: "notes", label: "Notes", type: "textarea" },
-      { name: "is_active", label: "Active", type: "checkbox" }
-    ]
-  },
-  agents: {
-    title: "Agents",
-    resource: "agents",
-    tableColumns: [
-      { key: "employee_code", label: "Employee Code" },
-      { key: "full_name", label: "Agent Name" },
-      { key: "mobile", label: "Mobile" },
-      { key: "email", label: "Email" },
-      { key: "is_active", label: "Active", type: "boolean" }
-    ],
-    fields: [
-      { name: "employee_code", label: "Employee Code", type: "text", required: true },
-      { name: "full_name", label: "Full Name", type: "text", required: true },
-      { name: "mobile", label: "Mobile", type: "text", validation: mobileFieldValidation },
-      { name: "email", label: "Email", type: "email" },
       { name: "is_active", label: "Active", type: "checkbox" }
     ]
   },

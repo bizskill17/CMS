@@ -11,7 +11,6 @@ export const menuSections = [
       { label: "Cities", path: "/masters/cities", countKey: "cities" },
       { label: "Categories", path: "/masters/product-categories", countKey: "product-categories" },
       { label: "Users", path: "/masters/users", countKey: "users" },
-      { label: "Agents", path: "/masters/agents", countKey: "agents" }
     ]
   },
   {

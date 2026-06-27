@@ -60,7 +60,6 @@ function getOptionLabel(resource, item) {
   if (resource === "states") return item.state_name;
   if (resource === "cities") return item.city_name;
   if (resource === "product-categories") return item.category_name;
-  if (resource === "agents") return item.full_name;
   return item.name ?? item.label ?? item.id;
 }
 
@@ -277,8 +276,7 @@ function isNameColumn(columnKey) {
   return (
     normalized.includes("name") ||
     normalized.includes("customer") ||
-    normalized.includes("company") ||
-    normalized.includes("agent")
+    normalized.includes("company")
   );
 }
 
