@@ -27,7 +27,6 @@ function singularizeMasterLabel(string $resource): string
     $label = str_replace('-', ' ', $resource);
 
     return match ($resource) {
-        'customer-groups' => 'customer group',
         'customers' => 'customer',
         'states' => 'state',
         'cities' => 'city',
@@ -42,7 +41,6 @@ function linkedDeleteReferenceQueries(string $resource): array
     return match ($resource) {
         'organizations' => [
             ['label' => 'users', 'sql' => 'SELECT count(*) FROM users WHERE organization_id = :id'],
-            ['label' => 'customer_groups', 'sql' => 'SELECT count(*) FROM customer_groups WHERE organization_id = :id'],
             ['label' => 'customers', 'sql' => 'SELECT count(*) FROM customers WHERE organization_id = :id'],
             ['label' => 'states', 'sql' => 'SELECT count(*) FROM states WHERE organization_id = :id'],
             ['label' => 'cities', 'sql' => 'SELECT count(*) FROM cities WHERE organization_id = :id'],
@@ -52,9 +50,6 @@ function linkedDeleteReferenceQueries(string $resource): array
             ['label' => 'tasks', 'sql' => 'SELECT count(*) FROM tasks WHERE organization_id = :id'],
             ['label' => 'task_updates', 'sql' => 'SELECT count(*) FROM task_updates WHERE organization_id = :id'],
             ['label' => 'settings', 'sql' => 'SELECT count(*) FROM settings WHERE organization_id = :id'],
-        ],
-        'customer-groups' => [
-            ['label' => 'customers', 'sql' => 'SELECT count(*) FROM customers WHERE group_id = :id'],
         ],
         'states' => [
             ['label' => 'cities', 'sql' => 'SELECT count(*) FROM cities WHERE state_id = :id'],
@@ -141,7 +136,6 @@ function buildFullAccessViews(bool $includeOrganizations = true): string
     $views = [
         '/masters/organizations',
         '/masters/customers',
-        '/masters/customer-groups',
         '/masters/states',
         '/masters/cities',
         '/masters/product-categories',

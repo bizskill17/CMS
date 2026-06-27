@@ -24,29 +24,15 @@ final class MasterRegistry
                     ['columns' => ['organization_name'], 'label' => 'Organization Name', 'display_column' => 'organization_name'],
                 ],
                 'organization_owned' => false,
-            ],
-            'customer-groups' => [
-                'table' => 'customer_groups',
-                'select' => 'cg.id, cg.group_name, cg.notes, cg.created_at',
-                'from' => 'customer_groups cg',
-                'order_by' => 'cg.group_name asc',
-                'search_columns' => ['cg.group_name', 'cg.notes'],
-                'write_columns' => ['group_name', 'notes'],
-                'required' => ['group_name'],
-                'nullable' => ['notes'],
-                'duplicate_keys' => [
-                    ['columns' => ['group_name'], 'label' => 'Group Name', 'display_column' => 'group_name'],
-                ],
-                'organization_scope_column' => 'cg.organization_id',
+                'file_columns' => ['logo'],
             ],
             'customers' => [
                 'table' => 'customers',
-                'select' => 'c.id, c.group_id, c.full_name, c.mobile, c.alternate_mobile, c.email, c.city, c.state, c.gstin, c.notes, c.is_active, c.created_at, cg.group_name',
-                'from' => 'customers c left join customer_groups cg on cg.id = c.group_id',
+                'select' => 'c.id, c.full_name, c.mobile, c.alternate_mobile, c.email, c.city, c.state, c.gstin, c.notes, c.is_active, c.created_at',
+                'from' => 'customers c',
                 'order_by' => 'c.id desc',
-                'search_columns' => ['c.full_name', 'cg.group_name', 'c.mobile', 'c.email', 'c.city', 'c.state', 'c.gstin'],
+                'search_columns' => ['c.full_name', 'c.mobile', 'c.email', 'c.city', 'c.state', 'c.gstin'],
                 'write_columns' => [
-                    'group_id',
                     'full_name',
                     'mobile',
                     'alternate_mobile',
@@ -66,7 +52,7 @@ final class MasterRegistry
                     'is_active',
                     'notes'
                 ],
-                'required' => ['group_id', 'full_name'],
+                'required' => ['full_name'],
                 'nullable' => [
                     'alternate_mobile',
                     'email',

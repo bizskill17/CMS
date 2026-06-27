@@ -12,15 +12,16 @@ export const masterConfigs = {
       { key: 'organization_name', label: 'Organization Name' },
       { key: 'gst', label: 'GST' },
       { key: 'address', label: 'Address' },
-      { key: 'logo', label: 'Logo' },
+      { key: 'logo', label: 'Logo', type: 'image' },
       { key: 'is_active', label: 'Active', type: 'boolean' }
     ],
+    hideDataTools: true,
     fields: [
       { name: 'organization_code', label: 'Organization Code', type: 'text', required: true },
       { name: 'organization_name', label: 'Organization Name', type: 'text', required: true },
       { name: 'gst', label: 'GST', type: 'text' },
       { name: 'address', label: 'Address', type: 'textarea' },
-      { name: 'logo', label: 'Logo URL / Path', type: 'text' },
+      { name: 'logo', label: 'Logo Upload', type: 'file' },
       { name: 'is_active', label: 'Active', type: 'checkbox' }
     ]
   },
@@ -29,14 +30,12 @@ export const masterConfigs = {
     resource: "customers",
     tableColumns: [
       { key: "full_name", label: "Customer Name" },
-      { key: "group_name", label: "Group" },
       { key: "mobile", label: "Mobile" },
       { key: "city", label: "City" },
       { key: "state", label: "State" },
       { key: "is_active", label: "Active", type: "boolean" }
     ],
     fields: [
-      { name: "group_id", label: "Customer Group", templateLabel: "Group Name", importAliases: ["Group Name", "Customer Group Name"], type: "select", optionsFrom: "customer-groups", required: true },
       { name: "full_name", label: "Customer Name", type: "text", required: true },
       { name: "mobile", label: "Mobile", type: "text", validation: mobileFieldValidation },
       {
@@ -68,18 +67,6 @@ export const masterConfigs = {
       },
       { name: "notes", label: "Notes", type: "textarea" },
       { name: "is_active", label: "Active", type: "checkbox" }
-    ]
-  },
-  "customer-groups": {
-    title: "Customer Groups",
-    resource: "customer-groups",
-    tableColumns: [
-      { key: "group_name", label: "Group Name" },
-      { key: "notes", label: "Notes" }
-    ],
-    fields: [
-      { name: "group_name", label: "Group Name", type: "text", required: true },
-      { name: "notes", label: "Notes", type: "textarea" }
     ]
   },
   states: {

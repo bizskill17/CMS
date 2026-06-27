@@ -45,23 +45,10 @@ create table users (
     foreign key (organization_id) references organizations(id)
 );
 
-create table customer_groups (
-  id bigint unsigned auto_increment primary key,
-  organization_id bigint unsigned not null,
-  group_name varchar(150) not null,
-  notes text,
-  created_at datetime not null default current_timestamp,
-  unique key uk_customer_groups_org_group_name (organization_id, group_name),
-  key idx_customer_groups_organization (organization_id),
-  constraint fk_customer_groups_organization
-    foreign key (organization_id) references organizations(id)
-);
-
 create table customers (
   id bigint unsigned auto_increment primary key,
   organization_id bigint unsigned not null,
   customer_code varchar(30) not null,
-  group_id bigint unsigned null,
   full_name varchar(150) not null,
   mobile varchar(20),
   alternate_mobile varchar(20),
@@ -84,11 +71,8 @@ create table customers (
   updated_at datetime not null default current_timestamp on update current_timestamp,
   unique key uk_customers_org_customer_code (organization_id, customer_code),
   key idx_customers_organization (organization_id),
-  key idx_customers_group (group_id),
   constraint fk_customers_organization
-    foreign key (organization_id) references organizations(id),
-  constraint fk_customers_group
-    foreign key (group_id) references customer_groups(id)
+    foreign key (organization_id) references organizations(id)
 );
 
 create table states (

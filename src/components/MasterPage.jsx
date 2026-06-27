@@ -56,7 +56,6 @@ function emptyState(config) {
 }
 
 function getOptionLabel(resource, item) {
-  if (resource === "customer-groups") return item.group_name;
   if (resource === "states") return item.state_name;
   if (resource === "cities") return item.city_name;
   if (resource === "product-categories") return item.category_name;
@@ -308,6 +307,7 @@ export default function MasterPage({
 }) {
   const config = masterConfigs[resourceKey];
   const isSettingsView = resourceKey === "settings";
+  const hideDataTools = Boolean(config.hideDataTools);
   const [records, setRecords] = useState([]);
   const [optionsMap, setOptionsMap] = useState({});
   const [formState, setFormState] = useState(() => emptyState(config));
@@ -699,7 +699,7 @@ export default function MasterPage({
   };
 
   const handleDelete = async (record) => {
-    const label = record.name || record.full_name || record.company_name || record.group_name || record.id;
+    const label = record.name || record.full_name || record.company_name || record.id;
     const confirmed = window.confirm(`Delete "${label}"?`);
 
     if (!confirmed) {
@@ -1328,7 +1328,7 @@ export default function MasterPage({
 	                    />
 	                  </div>
 
-	                  {filterConfigs.length > 0 ? (
+	                  {!hideDataTools && filterConfigs.length > 0 ? (
 	                    <ActionIconDisplay
 	                      icon="filter"
 	                      label="Filters"
@@ -1338,6 +1338,8 @@ export default function MasterPage({
 	                    />
 	                  ) : null}
 
+                  {!hideDataTools ? (
+                    <>
 	                  <ActionIconDisplay
 	                    icon="excel"
 	                    label="Excel"
@@ -1400,6 +1402,8 @@ export default function MasterPage({
 	                  >
 	                    Upload
 	                  </button>
+                    </>
+                  ) : null}
                   </>
                 )}
               <button
@@ -1423,7 +1427,7 @@ export default function MasterPage({
             </div>
           ) : (
             <>
-	              {isFiltersOpen && !isSettingsView ? (
+	              {isFiltersOpen && !isSettingsView && !hideDataTools ? (
                 <div className="data-toolbar">
                   <div className="data-toolbar__filters">
                     {filterConfigs.map((filter) => (
@@ -1441,7 +1445,7 @@ export default function MasterPage({
                       />
                     ))}
 
-                    {filterConfigs.length > 0 ? (
+                    {!hideDataTools && filterConfigs.length > 0 ? (
                       <div className="data-toolbar__clear">
                         <button
                           type="button"

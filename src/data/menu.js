@@ -6,7 +6,6 @@ export const menuSections = [
     items: [
       { label: "Organizations", path: "/masters/organizations", countKey: "organizations" },
       { label: "Customers", path: "/masters/customers", countKey: "customers" },
-      { label: "Customer Groups", path: "/masters/customer-groups", countKey: "customer-groups" },
       { label: "States", path: "/masters/states", countKey: "states" },
       { label: "Cities", path: "/masters/cities", countKey: "cities" },
       { label: "Categories", path: "/masters/product-categories", countKey: "product-categories" },
