@@ -2899,3 +2899,40 @@ button {
   justify-content: center;
   overflow: hidden;
 }
+.master-table {
+  table-layout: fixed;
+}
+
+.master-table th,
+.master-table td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
+}
+
+.master-table__action-header,
+.master-table__action-cell {
+  white-space: nowrap;
+}
+
+.master-table__action-cell {
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+  overflow: hidden;
+}
+
+.master-table__action-cell .table-actions {
+  flex-wrap: nowrap;
+  gap: 6px;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.master-table__action-cell .icon-action-button {
+  flex: 0 0 38px;
+}
+
+.master-table__action-cell .icon-action-button__label {
+  display: none;
+}
