@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --sidebar-bg: #edf2f8;
   --panel-bg: #ffffff;
   --blue-card: #4a80e6;
@@ -2752,4 +2752,29 @@ button {
   border-color: #2d57d7;
   box-shadow: 0 12px 24px rgba(45, 87, 215, 0.12);
   transform: translateY(-1px);
+}
+
+.brand-panel {
+  background: #2d57d7;
+  color: #ffffff;
+  border-bottom-color: #2449b8;
+}
+
+.brand-copy h1,
+.brand-panel .brand-copy h1 {
+  color: #ffffff;
+}
+
+.form-field input[readonly],
+.form-field textarea[readonly],
+.form-field select:disabled,
+.form-field input:disabled,
+.form-field textarea:disabled,
+.searchable-select--disabled .searchable-select__trigger,
+.searchable-select__trigger:disabled {
+  background: #e5e7eb !important;
+  border-color: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
+  box-shadow: none;
 }

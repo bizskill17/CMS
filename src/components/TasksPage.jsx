@@ -445,7 +445,8 @@ export default function TasksPage({ viewPath }) {
   const handleUpdateFormChange = (field, value) => {
     setUpdateForm((current) => ({
       ...current,
-      [field]: value
+      [field]: value,
+      ...(field === "status" && value !== "Follow Up Again" ? { next_follow_up_date: "" } : {})
     }));
   };
 
@@ -867,16 +868,17 @@ export default function TasksPage({ viewPath }) {
                     ))}
                   </SearchableSelect>
                 </label>
-
-                <label className="form-field">
-                  <FormLabel required={updateForm.status === "Follow Up Again"}>Next Follow Up Date</FormLabel>
-                  <input
-                    type="date"
-                    required={updateForm.status === "Follow Up Again"}
-                    value={updateForm.next_follow_up_date}
-                    onChange={(event) => handleUpdateFormChange("next_follow_up_date", event.target.value)}
-                  />
-                </label>
+                {updateForm.status === "Follow Up Again" ? (
+                  <label className="form-field">
+                    <FormLabel required>Next Follow Up Date</FormLabel>
+                    <input
+                      type="date"
+                      required
+                      value={updateForm.next_follow_up_date}
+                      onChange={(event) => handleUpdateFormChange("next_follow_up_date", event.target.value)}
+                    />
+                  </label>
+                ) : null}
 
                 <label className="form-field">
                   <FormLabel required={updateForm.status !== "Success"}>Remarks</FormLabel>
