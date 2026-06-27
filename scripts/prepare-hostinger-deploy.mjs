@@ -50,6 +50,42 @@ RewriteRule . /index.html [L]
   await fs.writeFile(path.join(deployDir, ".htaccess"), contents, "utf8");
 }
 
+function readOptionalEnv(name) {
+  const value = process.env[name];
+  return value && value.trim() ? value.trim() : "";
+}
+
+
+async function writeAppConfig() {
+  const organizationId = readOptionalEnv("APP_SUPER_ADMIN_ORGANIZATION_ID");
+  const loginId = readOptionalEnv("APP_SUPER_ADMIN_LOGIN_ID");
+  const password = readOptionalEnv("APP_SUPER_ADMIN_PASSWORD");
+  const fullName = readOptionalEnv("APP_SUPER_ADMIN_FULL_NAME") || "Bizskill Admin";
+
+  if (!organizationId || !loginId || !password) {
+    return;
+  }
+
+  const configDir = path.join(deployDir, "api", "config");
+  await fs.mkdir(configDir, { recursive: true });
+
+  const config = `<?php
+
+declare(strict_types=1);
+
+return [
+    'super_admin' => [
+        'organization_id' => '${phpString(organizationId)}',
+        'login_id' => '${phpString(loginId)}',
+        'password' => '${phpString(password)}',
+        'full_name' => '${phpString(fullName)}',
+    ],
+];
+`;
+
+  await fs.writeFile(path.join(configDir, "app.php"), config, "utf8");
+}
+
 async function writeDatabaseConfig() {
   const configDir = path.join(deployDir, "api", "config");
   await fs.mkdir(configDir, { recursive: true });
@@ -79,9 +115,10 @@ await resetDir(deployDir);
 await fs.cp(distDir, deployDir, { recursive: true });
 await fs.cp(apiDir, path.join(deployDir, "api"), {
   recursive: true,
-  filter: (source) => !source.endsWith(path.join("api", "config", "database.php"))
+  filter: (source) => !source.endsWith(path.join("api", "config", "database.php")) && !source.endsWith(path.join("api", "config", "app.php"))
 });
 await writeRootHtaccess();
 await writeDatabaseConfig();
+await writeAppConfig();
 
 console.log("Hostinger deploy package prepared at ./deploy");

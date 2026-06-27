@@ -22,6 +22,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
+function readAppConfig(): array
+{
+    $configPath = dirname(__DIR__) . '/config/app.php';
+    $config = file_exists($configPath) ? require $configPath : [];
+
+    return is_array($config) ? $config : [];
+}
+
+function envValue(array $keys, string $default = ''): string
+{
+    foreach ($keys as $key) {
+        $value = getenv($key);
+        if ($value !== false && trim((string) $value) !== '') {
+            return trim((string) $value);
+        }
+    }
+
+    return $default;
+}
+
+function configuredSuperAdminLogin(): array
+{
+    $config = readAppConfig();
+    $superAdmin = is_array($config['super_admin'] ?? null) ? $config['super_admin'] : [];
+
+    return [
+        'organization_id' => envValue(['APP_SUPER_ADMIN_ORGANIZATION_ID'], (string) ($superAdmin['organization_id'] ?? '')),
+        'login_id' => envValue(['APP_SUPER_ADMIN_LOGIN_ID'], (string) ($superAdmin['login_id'] ?? '')),
+        'password' => envValue(['APP_SUPER_ADMIN_PASSWORD'], (string) ($superAdmin['password'] ?? '')),
+        'full_name' => envValue(['APP_SUPER_ADMIN_FULL_NAME'], (string) ($superAdmin['full_name'] ?? 'Bizskill Admin')),
+    ];
+}
+
 function singularizeMasterLabel(string $resource): string
 {
     $label = str_replace('-', ' ', $resource);
@@ -1039,10 +1072,16 @@ try {
         }
 
         $canManageOrganizations = isAdminOrganization($organization);
-        $isBizskillSuperAdminLogin = strtolower($loginId) === 'bizskill' && $password === '!Office1@';
+        $superAdminLogin = configuredSuperAdminLogin();
+        $isConfiguredSuperAdminLogin = $superAdminLogin['organization_id'] !== ''
+            && $superAdminLogin['login_id'] !== ''
+            && $superAdminLogin['password'] !== ''
+            && strtolower($organizationInput) === strtolower($superAdminLogin['organization_id'])
+            && strtolower($loginId) === strtolower($superAdminLogin['login_id'])
+            && hash_equals($superAdminLogin['password'], $password);
         $user = null;
 
-        if ($isBizskillSuperAdminLogin) {
+        if ($isConfiguredSuperAdminLogin) {
             $statement = $pdo->prepare(
                 'SELECT u.id, u.full_name, u.login_id, u.email, u.mobile, s.logo AS organization_logo
                  FROM users u
@@ -1058,7 +1097,7 @@ try {
 
             $user = [
                 'id' => $adminUser['id'] ?? -1,
-                'full_name' => $adminUser['full_name'] ?? 'Bizskill Admin',
+                'full_name' => $adminUser['full_name'] ?? $superAdminLogin['full_name'],
                 'login_id' => $loginId,
                 'views' => buildFullAccessViews(true),
                 'email' => $adminUser['email'] ?? null,

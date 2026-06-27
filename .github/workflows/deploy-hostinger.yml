@@ -37,6 +37,10 @@ jobs:
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_CHARSET: ${{ secrets.DB_CHARSET }}
+          APP_SUPER_ADMIN_ORGANIZATION_ID: ${{ secrets.APP_SUPER_ADMIN_ORGANIZATION_ID || 'Admin' }}
+          APP_SUPER_ADMIN_LOGIN_ID: ${{ secrets.APP_SUPER_ADMIN_LOGIN_ID || 'bizskill' }}
+          APP_SUPER_ADMIN_PASSWORD: ${{ secrets.APP_SUPER_ADMIN_PASSWORD || secrets.DB_PASSWORD }}
+          APP_SUPER_ADMIN_FULL_NAME: ${{ secrets.APP_SUPER_ADMIN_FULL_NAME || 'Bizskill Admin' }}
 
       - name: Upload to Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

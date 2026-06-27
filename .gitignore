@@ -9,3 +9,4 @@ api/public/uploads/*
 *.xlsx
 *.xls
 *.csv
+api/config/app.php
