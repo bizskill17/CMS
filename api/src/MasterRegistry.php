@@ -9,21 +9,6 @@ final class MasterRegistry
     public static function all(): array
     {
         $resources = [
-            'organizations' => [
-                'table' => 'organizations',
-                'select' => 'o.id, o.organization_code, o.organization_name, s.gst, s.address, s.logo, o.is_active, o.created_at',
-                'from' => 'organizations o left join settings s on s.id = (select s2.id from settings s2 where s2.organization_id = o.id order by s2.is_active desc, s2.id desc limit 1)',
-                'order_by' => 'o.organization_name asc',
-                'write_columns' => ['organization_code', 'organization_name', 'gst', 'address', 'logo', 'is_active'],
-                'required' => ['organization_code', 'organization_name'],
-                'nullable' => ['gst', 'address', 'logo'],
-                'boolean' => ['is_active'],
-                'file_columns' => ['logo'],
-                'duplicate_keys' => [
-                    ['columns' => ['organization_code'], 'label' => 'Organization Id', 'display_column' => 'organization_code'],
-                ],
-                'organization_owned' => false,
-            ],
             'customer-groups' => [
                 'table' => 'customer_groups',
                 'select' => 'cg.id, cg.group_name, cg.notes, cg.created_at',
@@ -86,20 +71,6 @@ final class MasterRegistry
                 'boolean' => ['is_active'],
                 'organization_scope_column' => 'c.organization_id',
             ],
-            'insurance-companies' => [
-                'table' => 'insurance_companies',
-                'select' => 'ic.id, ic.company_name, ic.company_short_name, ic.company_type, ic.is_active, ic.created_at',
-                'from' => 'insurance_companies ic',
-                'order_by' => 'ic.company_name asc',
-                'write_columns' => ['company_name', 'company_short_name', 'company_type', 'is_active'],
-                'required' => ['company_name'],
-                'nullable' => ['company_short_name', 'company_type'],
-                'boolean' => ['is_active'],
-                'duplicate_keys' => [
-                    ['columns' => ['company_name'], 'label' => 'Company Name', 'display_column' => 'company_name'],
-                ],
-                'organization_scope_column' => 'ic.organization_id',
-            ],
             'states' => [
                 'table' => 'states',
                 'select' => 's.id, s.state_name, s.state_code, s.is_active, s.created_at',
@@ -142,34 +113,6 @@ final class MasterRegistry
                 ],
                 'organization_scope_column' => 'pc.organization_id',
             ],
-            'insurance-products' => [
-                'table' => 'insurance_products',
-                'select' => 'ip.id, ip.product_name, ip.sub_category_name, ip.is_active, ip.created_at, ic.company_name, pc.category_name, ip.company_id, ip.category_id',
-                'from' => 'insurance_products ip left join insurance_companies ic on ic.id = ip.company_id left join product_categories pc on pc.id = ip.category_id',
-                'order_by' => 'ip.id desc',
-                'write_columns' => ['company_id', 'product_name', 'category_id', 'sub_category_name', 'is_active'],
-                'required' => ['company_id', 'product_name'],
-                'nullable' => ['category_id', 'sub_category_name'],
-                'boolean' => ['is_active'],
-                'duplicate_keys' => [
-                    ['columns' => ['company_id', 'product_name'], 'label' => 'Product Name', 'display_column' => 'product_name'],
-                ],
-                'organization_scope_column' => 'ip.organization_id',
-            ],
-            'document-types' => [
-                'table' => 'document_types',
-                'select' => 'dt.id, dt.name, dt.entity_level, dt.is_active, dt.description, dt.created_at',
-                'from' => 'document_types dt',
-                'order_by' => 'dt.name asc',
-                'write_columns' => ['name', 'entity_level', 'is_active', 'description'],
-                'required' => ['name', 'entity_level'],
-                'nullable' => ['description'],
-                'boolean' => ['is_active'],
-                'duplicate_keys' => [
-                    ['columns' => ['name'], 'label' => 'Name', 'display_column' => 'name'],
-                ],
-                'organization_scope_column' => 'dt.organization_id',
-            ],
             'users' => [
                 'table' => 'users',
                 'select' => 'u.id, u.full_name, u.login_id, u.password, u.views, u.email, u.mobile, u.role_name, u.is_active, u.created_at, u.linked_agent_id, a.full_name as linked_agent_name',
@@ -199,34 +142,7 @@ final class MasterRegistry
                 ],
                 'organization_scope_column' => 'a.organization_id',
             ],
-            'agent-accounts' => [
-                'table' => 'agent_payment_accounts',
-                'select' => 'apa.id, apa.agent_id, a.full_name as agent_name, apa.account_label, apa.account_type, apa.bank_name, apa.account_holder_name, apa.masked_account_number, apa.card_last4, apa.upi_id, apa.branch_name, apa.is_default, apa.is_active, apa.notes, apa.created_at',
-                'from' => 'agent_payment_accounts apa left join agents a on a.id = apa.agent_id',
-                'order_by' => 'apa.id desc',
-                'write_columns' => [
-                    'agent_id',
-                    'account_label',
-                    'account_type',
-                    'bank_name',
-                    'account_holder_name',
-                    'masked_account_number',
-                    'card_last4',
-                    'upi_id',
-                    'branch_name',
-                    'is_default',
-                    'is_active',
-                    'notes'
-                ],
-                'required' => ['agent_id', 'account_label', 'account_type'],
-                'nullable' => ['bank_name', 'account_holder_name', 'masked_account_number', 'card_last4', 'upi_id', 'branch_name', 'notes'],
-                'boolean' => ['is_default', 'is_active'],
-                'duplicate_keys' => [
-                    ['columns' => ['agent_id', 'account_label'], 'label' => 'Account Label', 'display_column' => 'account_label'],
-                ],
-                'organization_scope_column' => 'apa.organization_id',
-            ],
-];
+        ];
 
         foreach ($resources as $key => $config) {
             if (!array_key_exists('organization_owned', $config)) {
@@ -237,4 +153,3 @@ final class MasterRegistry
         return $resources;
     }
 }
-

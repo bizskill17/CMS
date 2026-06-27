@@ -29,16 +29,11 @@ function singularizeMasterLabel(string $resource): string
     return match ($resource) {
         'customer-groups' => 'customer group',
         'customers' => 'customer',
-        'insurance-companies' => 'insurance company',
         'states' => 'state',
         'cities' => 'city',
         'product-categories' => 'product category',
-        'insurance-products' => 'insurance product',
-        'document-types' => 'document type',
         'users' => 'user',
         'agents' => 'agent',
-        'agent-accounts' => 'agent account',
-        'policies' => 'policy',
         default => rtrim($label, 's'),
     };
 }
@@ -49,53 +44,27 @@ function linkedDeleteReferenceQueries(string $resource): array
         'organizations' => [
             ['label' => 'users', 'sql' => 'SELECT count(*) FROM users WHERE organization_id = :id'],
             ['label' => 'agents', 'sql' => 'SELECT count(*) FROM agents WHERE organization_id = :id'],
-            ['label' => 'agent_payment_accounts', 'sql' => 'SELECT count(*) FROM agent_payment_accounts WHERE organization_id = :id'],
             ['label' => 'customer_groups', 'sql' => 'SELECT count(*) FROM customer_groups WHERE organization_id = :id'],
             ['label' => 'customers', 'sql' => 'SELECT count(*) FROM customers WHERE organization_id = :id'],
-            ['label' => 'insurance_companies', 'sql' => 'SELECT count(*) FROM insurance_companies WHERE organization_id = :id'],
             ['label' => 'states', 'sql' => 'SELECT count(*) FROM states WHERE organization_id = :id'],
             ['label' => 'cities', 'sql' => 'SELECT count(*) FROM cities WHERE organization_id = :id'],
             ['label' => 'product_categories', 'sql' => 'SELECT count(*) FROM product_categories WHERE organization_id = :id'],
-            ['label' => 'insurance_products', 'sql' => 'SELECT count(*) FROM insurance_products WHERE organization_id = :id'],
-            ['label' => 'document_types', 'sql' => 'SELECT count(*) FROM document_types WHERE organization_id = :id'],
-            ['label' => 'policy_families', 'sql' => 'SELECT count(*) FROM policy_families WHERE organization_id = :id'],
-            ['label' => 'policies', 'sql' => 'SELECT count(*) FROM policies WHERE organization_id = :id'],
-            ['label' => 'follow_ups', 'sql' => 'SELECT count(*) FROM follow_ups WHERE organization_id = :id'],
             ['label' => 'leads', 'sql' => 'SELECT count(*) FROM leads WHERE organization_id = :id'],
             ['label' => 'lead_updates', 'sql' => 'SELECT count(*) FROM lead_updates WHERE organization_id = :id'],
             ['label' => 'tasks', 'sql' => 'SELECT count(*) FROM tasks WHERE organization_id = :id'],
             ['label' => 'task_updates', 'sql' => 'SELECT count(*) FROM task_updates WHERE organization_id = :id'],
-            ['label' => 'client_payments', 'sql' => 'SELECT count(*) FROM client_payments WHERE organization_id = :id'],
-            ['label' => 'documents', 'sql' => 'SELECT count(*) FROM documents WHERE organization_id = :id'],
-            ['label' => 'policy_status_history', 'sql' => 'SELECT count(*) FROM policy_status_history WHERE organization_id = :id'],
             ['label' => 'settings', 'sql' => 'SELECT count(*) FROM settings WHERE organization_id = :id'],
         ],
         'customer-groups' => [
             ['label' => 'customers', 'sql' => 'SELECT count(*) FROM customers WHERE group_id = :id'],
-        ],
-        'customers' => [
-            ['label' => 'policy_families', 'sql' => 'SELECT count(*) FROM policy_families WHERE customer_id = :id'],
-            ['label' => 'policies', 'sql' => 'SELECT count(*) FROM policies WHERE customer_id = :id'],
-            ['label' => 'documents', 'sql' => 'SELECT count(*) FROM documents WHERE customer_id = :id'],
-        ],
-        'insurance-companies' => [
-            ['label' => 'insurance_products', 'sql' => 'SELECT count(*) FROM insurance_products WHERE company_id = :id'],
-            ['label' => 'policies', 'sql' => 'SELECT count(*) FROM policies WHERE :id IN (company_id, previous_insurer_id, target_insurer_id)'],
         ],
         'states' => [
             ['label' => 'cities', 'sql' => 'SELECT count(*) FROM cities WHERE state_id = :id'],
         ],
         'product-categories' => [
             ['label' => 'product_categories', 'sql' => 'SELECT count(*) FROM product_categories WHERE parent_category_id = :id'],
-            ['label' => 'insurance_products', 'sql' => 'SELECT count(*) FROM insurance_products WHERE category_id = :id'],
             ['label' => 'leads', 'sql' => 'SELECT count(*) FROM leads WHERE :id IN (category_id, sub_category_id)'],
             ['label' => 'tasks', 'sql' => 'SELECT count(*) FROM tasks WHERE :id IN (category_id, sub_category_id)'],
-        ],
-        'insurance-products' => [
-            ['label' => 'policies', 'sql' => 'SELECT count(*) FROM policies WHERE product_id = :id'],
-        ],
-        'document-types' => [
-            ['label' => 'documents', 'sql' => 'SELECT count(*) FROM documents WHERE document_type_id = :id'],
         ],
         'users' => [
             ['label' => 'leads', 'sql' => 'SELECT count(*) FROM leads WHERE assigned_to_user_id = :id'],
@@ -105,23 +74,6 @@ function linkedDeleteReferenceQueries(string $resource): array
         ],
         'agents' => [
             ['label' => 'users', 'sql' => 'SELECT count(*) FROM users WHERE linked_agent_id = :id'],
-            ['label' => 'agent_payment_accounts', 'sql' => 'SELECT count(*) FROM agent_payment_accounts WHERE agent_id = :id'],
-            ['label' => 'policies', 'sql' => 'SELECT count(*) FROM policies WHERE :id IN (issued_by_agent_id, assigned_agent_id)'],
-            ['label' => 'follow_ups', 'sql' => 'SELECT count(*) FROM follow_ups WHERE done_by_agent_id = :id'],
-            ['label' => 'client_payments', 'sql' => 'SELECT count(*) FROM client_payments WHERE received_by_agent_id = :id'],
-            ['label' => 'documents', 'sql' => 'SELECT count(*) FROM documents WHERE uploaded_by_agent_id = :id'],
-            ['label' => 'policy_status_history', 'sql' => 'SELECT count(*) FROM policy_status_history WHERE changed_by_agent_id = :id'],
-        ],
-        'agent-accounts' => [
-            ['label' => 'policies', 'sql' => 'SELECT count(*) FROM policies WHERE agent_payment_account_id = :id'],
-            ['label' => 'client_payments', 'sql' => 'SELECT count(*) FROM client_payments WHERE agent_payment_account_id = :id'],
-        ],
-        'policies' => [
-            ['label' => 'renewed policies', 'sql' => 'SELECT count(*) FROM policies WHERE previous_policy_id = :id'],
-            ['label' => 'follow ups', 'sql' => 'SELECT count(*) FROM follow_ups WHERE policy_id = :id'],
-            ['label' => 'client payments', 'sql' => 'SELECT count(*) FROM client_payments WHERE policy_id = :id'],
-            ['label' => 'documents', 'sql' => 'SELECT count(*) FROM documents WHERE policy_id = :id'],
-            ['label' => 'policy status history', 'sql' => 'SELECT count(*) FROM policy_status_history WHERE policy_id = :id'],
         ],
         default => [],
     };
@@ -815,18 +767,6 @@ try {
         $counts['tasks-canceled-today'] = $scopedCount('SELECT count(*) FROM tasks WHERE organization_id = :organization_id AND task_status = "Canceled" AND latest_update_date = curdate()');
         $counts['tasks-activity-log'] = $scopedCount('SELECT count(*) FROM task_updates WHERE organization_id = :organization_id');
 
-        $counts['all-policies'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id');
-        $counts['renew-policy'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND coalesce(renewal_status, "") <> "Renewed" AND coalesce(policy_status, "") <> "Inactive" AND coalesce(inactive_reason, "") = ""');
-        $counts['renew-policy-upcoming-45-days'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND risk_end_date >= curdate() AND risk_end_date <= date_add(curdate(), interval 45 day) AND coalesce(renewal_status, "") <> "Renewed" AND coalesce(policy_status, "") <> "Inactive" AND coalesce(inactive_reason, "") = ""');
-        $counts['renew-policy-overdue'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date IS NOT NULL AND risk_end_date < curdate() AND coalesce(renewal_status, "") <> "Renewed" AND coalesce(policy_status, "") <> "Inactive" AND coalesce(inactive_reason, "") = ""');
-        $counts['renew-policy-today'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND risk_end_date = curdate() AND coalesce(renewal_status, "") <> "Renewed" AND coalesce(policy_status, "") <> "Inactive" AND coalesce(inactive_reason, "") = ""');
-        $counts['inactivated-policies'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND coalesce(policy_status, "") = "Inactive" AND coalesce(inactive_reason, "") <> ""');
-        $counts['attach-documents'] = $scopedCount('SELECT count(*) FROM (SELECT p.id FROM policies p LEFT JOIN documents d ON d.policy_id = p.id AND d.deleted_at IS NULL AND d.is_active = 1 WHERE p.organization_id = :organization_id GROUP BY p.id HAVING count(d.id) = 0) pending_docs');
-        $counts['pending-payments'] = $scopedCount('SELECT count(*) FROM policies WHERE organization_id = :organization_id AND paid_by_type = "Agent" AND coalesce(payment_pending_amount, 0) > 0');
-        $counts['policies-added'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND date(p.created_at) = curdate()');
-        $counts['policies-this-week'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND yearweek(p.created_at, 1) = yearweek(curdate(), 1)');
-        $counts['policies-this-month'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND year(p.created_at) = year(curdate()) AND month(p.created_at) = month(curdate())');
-        $counts['expiry-reports'] = $scopedCount('SELECT count(*) FROM policies p WHERE p.organization_id = :organization_id AND p.risk_end_date IS NOT NULL');
 
         Response::json([
             'status' => 'ok',
