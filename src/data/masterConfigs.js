@@ -102,12 +102,10 @@ export const masterConfigs = {
     resource: "product-categories",
     tableColumns: [
       { key: "category_name", label: "Category" },
-      { key: "parent_category_name", label: "Parent Category" },
       { key: "is_active", label: "Active", type: "boolean" }
     ],
     fields: [
       { name: "category_name", label: "Category Name", type: "text", required: true },
-      { name: "parent_category_id", label: "Parent Category", type: "select", optionsFrom: "product-categories" },
       { name: "is_active", label: "Active", type: "checkbox" }
     ]
   },

@@ -103,12 +103,11 @@ final class MasterRegistry
             ],
             'product-categories' => [
                 'table' => 'product_categories',
-                'select' => 'pc.id, pc.category_name, pc.parent_category_id, parent.category_name as parent_category_name, pc.is_active, pc.created_at',
-                'from' => 'product_categories pc left join product_categories parent on parent.id = pc.parent_category_id',
+                'select' => 'pc.id, pc.category_name, pc.is_active, pc.created_at',
+                'from' => 'product_categories pc',
                 'order_by' => 'pc.category_name asc',
-                'write_columns' => ['category_name', 'parent_category_id', 'is_active'],
+                'write_columns' => ['category_name', 'is_active'],
                 'required' => ['category_name'],
-                'nullable' => ['parent_category_id'],
                 'boolean' => ['is_active'],
                 'duplicate_keys' => [
                     ['columns' => ['category_name'], 'label' => 'Category Name', 'display_column' => 'category_name'],

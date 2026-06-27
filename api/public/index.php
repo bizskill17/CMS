@@ -55,9 +55,8 @@ function linkedDeleteReferenceQueries(string $resource): array
             ['label' => 'cities', 'sql' => 'SELECT count(*) FROM cities WHERE state_id = :id'],
         ],
         'product-categories' => [
-            ['label' => 'product_categories', 'sql' => 'SELECT count(*) FROM product_categories WHERE parent_category_id = :id'],
-            ['label' => 'leads', 'sql' => 'SELECT count(*) FROM leads WHERE :id IN (category_id, sub_category_id)'],
-            ['label' => 'tasks', 'sql' => 'SELECT count(*) FROM tasks WHERE :id IN (category_id, sub_category_id)'],
+            ['label' => 'leads', 'sql' => 'SELECT count(*) FROM leads WHERE category_id = :id'],
+            ['label' => 'tasks', 'sql' => 'SELECT count(*) FROM tasks WHERE category_id = :id'],
         ],
         'users' => [
             ['label' => 'leads', 'sql' => 'SELECT count(*) FROM leads WHERE assigned_to_user_id = :id'],
@@ -967,15 +966,13 @@ try {
                 l.priority,
                 l.assigned_to_user_id,
                 l.category_id,
-                l.sub_category_id,
                 l.notes,
                 l.lead_status,
                 l.latest_update_date,
                 l.next_follow_up_date,
                 u.full_name AS assigned_to_name,
                 uu.full_name AS update_by_name,
-                c.category_name,
-                sc.category_name AS sub_category_name
+                c.category_name
              FROM leads l
              LEFT JOIN users u ON u.id = l.assigned_to_user_id
              LEFT JOIN lead_updates lu ON lu.id = (
@@ -987,7 +984,6 @@ try {
              )
              LEFT JOIN users uu ON uu.id = lu.update_by_user_id
              LEFT JOIN product_categories c ON c.id = l.category_id
-             LEFT JOIN product_categories sc ON sc.id = l.sub_category_id
              $whereClause
              ORDER BY l.id DESC"
         );
@@ -1159,6 +1155,8 @@ try {
              FROM (
                 SELECT
                     concat("task-", t.id) AS activity_key,
+                    t.id AS task_id,
+                    null AS update_id,
                     "Task Created" AS activity_type,
                     t.client_name,
                     t.task_status,
@@ -1177,6 +1175,8 @@ try {
 
                 SELECT
                     concat("task-update-", tu.id) AS activity_key,
+                    t.id AS task_id,
+                    tu.id AS update_id,
                     "Task Follow Up" AS activity_type,
                     t.client_name,
                     t.task_status,
@@ -1230,15 +1230,13 @@ try {
                 t.priority,
                 t.assigned_to_user_id,
                 t.category_id,
-                t.sub_category_id,
                 t.notes,
                 t.task_status,
                 t.latest_update_date,
                 t.next_follow_up_date,
                 u.full_name AS assigned_to_name,
                 uu.full_name AS update_by_name,
-                c.category_name,
-                sc.category_name AS sub_category_name
+                c.category_name
              FROM tasks t
              LEFT JOIN users u ON u.id = t.assigned_to_user_id
              LEFT JOIN task_updates tu ON tu.id = (
@@ -1250,7 +1248,6 @@ try {
              )
              LEFT JOIN users uu ON uu.id = tu.update_by_user_id
              LEFT JOIN product_categories c ON c.id = t.category_id
-             LEFT JOIN product_categories sc ON sc.id = t.sub_category_id
              $whereClause
              ORDER BY t.id DESC"
         );
@@ -1277,7 +1274,7 @@ try {
             exit;
         }
 
-        foreach (['lead_date', 'client_name', 'description', 'due_date', 'priority', 'category_id', 'sub_category_id'] as $requiredField) {
+        foreach (['lead_date', 'client_name', 'description', 'due_date', 'priority', 'category_id'] as $requiredField) {
             if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
                 Response::json([
                     'status' => 'error',
@@ -1293,9 +1290,6 @@ try {
         $categoryId = trim((string) ($payload['category_id'] ?? '')) !== ''
             ? (int) $payload['category_id']
             : null;
-        $subCategoryId = trim((string) ($payload['sub_category_id'] ?? '')) !== ''
-            ? (int) $payload['sub_category_id']
-            : null;
         $leadStatus = deriveLeadStatusFromAssignment($assignedToUserId, false);
 
         $statement = $pdo->prepare(
@@ -1308,7 +1302,6 @@ try {
                 priority,
                 assigned_to_user_id,
                 category_id,
-                sub_category_id,
                 notes,
                 lead_status
              ) VALUES (
@@ -1320,7 +1313,6 @@ try {
                 :priority,
                 :assigned_to_user_id,
                 :category_id,
-                :sub_category_id,
                 :notes,
                 :lead_status
              )'
@@ -1333,7 +1325,6 @@ try {
         $statement->bindValue(':priority', trim((string) ($payload['priority'] ?? '')) !== '' ? $payload['priority'] : 'Medium');
         $statement->bindValue(':assigned_to_user_id', $assignedToUserId, $assignedToUserId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         $statement->bindValue(':category_id', $categoryId, $categoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
-        $statement->bindValue(':sub_category_id', $subCategoryId, $subCategoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         $statement->bindValue(':notes', trim((string) ($payload['notes'] ?? '')) !== '' ? $payload['notes'] : null);
         $statement->bindValue(':lead_status', $leadStatus);
         $statement->execute();
@@ -1360,7 +1351,7 @@ try {
             exit;
         }
 
-        foreach (['task_date', 'client_name', 'description', 'due_date', 'priority', 'category_id', 'sub_category_id'] as $requiredField) {
+        foreach (['task_date', 'client_name', 'description', 'due_date', 'priority', 'category_id'] as $requiredField) {
             if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
                 Response::json([
                     'status' => 'error',
@@ -1376,9 +1367,6 @@ try {
         $categoryId = trim((string) ($payload['category_id'] ?? '')) !== ''
             ? (int) $payload['category_id']
             : null;
-        $subCategoryId = trim((string) ($payload['sub_category_id'] ?? '')) !== ''
-            ? (int) $payload['sub_category_id']
-            : null;
         $taskStatus = deriveTaskStatusFromAssignment($assignedToUserId, false);
 
         $statement = $pdo->prepare(
@@ -1391,7 +1379,6 @@ try {
                 priority,
                 assigned_to_user_id,
                 category_id,
-                sub_category_id,
                 notes,
                 task_status
              ) VALUES (
@@ -1403,7 +1390,6 @@ try {
                 :priority,
                 :assigned_to_user_id,
                 :category_id,
-                :sub_category_id,
                 :notes,
                 :task_status
              )'
@@ -1416,7 +1402,6 @@ try {
         $statement->bindValue(':priority', trim((string) ($payload['priority'] ?? '')) !== '' ? $payload['priority'] : 'Medium');
         $statement->bindValue(':assigned_to_user_id', $assignedToUserId, $assignedToUserId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         $statement->bindValue(':category_id', $categoryId, $categoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
-        $statement->bindValue(':sub_category_id', $subCategoryId, $subCategoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         $statement->bindValue(':notes', trim((string) ($payload['notes'] ?? '')) !== '' ? $payload['notes'] : null);
         $statement->bindValue(':task_status', $taskStatus);
         $statement->execute();
@@ -1464,7 +1449,7 @@ try {
             exit;
         }
 
-        foreach (['lead_date', 'client_name', 'description', 'due_date', 'priority', 'category_id', 'sub_category_id'] as $requiredField) {
+        foreach (['lead_date', 'client_name', 'description', 'due_date', 'priority', 'category_id'] as $requiredField) {
             if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
                 Response::json([
                     'status' => 'error',
@@ -1488,9 +1473,6 @@ try {
         $categoryId = trim((string) ($payload['category_id'] ?? '')) !== ''
             ? (int) $payload['category_id']
             : null;
-        $subCategoryId = trim((string) ($payload['sub_category_id'] ?? '')) !== ''
-            ? (int) $payload['sub_category_id']
-            : null;
         $leadStatus = deriveLeadStatusFromAssignment($assignedToUserId, $hasUpdates, (string) $existingLead['lead_status']);
 
         $statement = $pdo->prepare(
@@ -1502,7 +1484,6 @@ try {
                  priority = :priority,
                  assigned_to_user_id = :assigned_to_user_id,
                  category_id = :category_id,
-                 sub_category_id = :sub_category_id,
                  notes = :notes,
                  lead_status = :lead_status
              WHERE id = :id
@@ -1516,7 +1497,6 @@ try {
         $statement->bindValue(':priority', trim((string) ($payload['priority'] ?? '')) !== '' ? $payload['priority'] : 'Medium');
         $statement->bindValue(':assigned_to_user_id', $assignedToUserId, $assignedToUserId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         $statement->bindValue(':category_id', $categoryId, $categoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
-        $statement->bindValue(':sub_category_id', $subCategoryId, $subCategoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         $statement->bindValue(':notes', trim((string) ($payload['notes'] ?? '')) !== '' ? $payload['notes'] : null);
         $statement->bindValue(':lead_status', $leadStatus);
         $statement->bindValue(':id', $leadId, PDO::PARAM_INT);
@@ -1565,7 +1545,7 @@ try {
             exit;
         }
 
-        foreach (['task_date', 'client_name', 'description', 'due_date', 'priority', 'category_id', 'sub_category_id'] as $requiredField) {
+        foreach (['task_date', 'client_name', 'description', 'due_date', 'priority', 'category_id'] as $requiredField) {
             if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
                 Response::json([
                     'status' => 'error',
@@ -1589,9 +1569,6 @@ try {
         $categoryId = trim((string) ($payload['category_id'] ?? '')) !== ''
             ? (int) $payload['category_id']
             : null;
-        $subCategoryId = trim((string) ($payload['sub_category_id'] ?? '')) !== ''
-            ? (int) $payload['sub_category_id']
-            : null;
         $taskStatus = deriveTaskStatusFromAssignment($assignedToUserId, $hasUpdates, (string) $existingTask['task_status']);
 
         $statement = $pdo->prepare(
@@ -1603,7 +1580,6 @@ try {
                  priority = :priority,
                  assigned_to_user_id = :assigned_to_user_id,
                  category_id = :category_id,
-                 sub_category_id = :sub_category_id,
                  notes = :notes,
                  task_status = :task_status
              WHERE id = :id
@@ -1617,7 +1593,6 @@ try {
         $statement->bindValue(':priority', trim((string) ($payload['priority'] ?? '')) !== '' ? $payload['priority'] : 'Medium');
         $statement->bindValue(':assigned_to_user_id', $assignedToUserId, $assignedToUserId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         $statement->bindValue(':category_id', $categoryId, $categoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
-        $statement->bindValue(':sub_category_id', $subCategoryId, $subCategoryId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         $statement->bindValue(':notes', trim((string) ($payload['notes'] ?? '')) !== '' ? $payload['notes'] : null);
         $statement->bindValue(':task_status', $taskStatus);
         $statement->bindValue(':id', $taskId, PDO::PARAM_INT);
@@ -1719,6 +1694,30 @@ try {
         }
     }
 
+    if (preg_match('#^/api/tasks/updates/(\d+)$#', $path, $matches) === 1 && $method === 'DELETE') {
+        $pdo = Database::connection();
+        $organizationId = requireOrganizationId();
+        $updateId = (int) $matches[1];
+
+        $statement = $pdo->prepare('DELETE FROM task_updates WHERE id = :id AND organization_id = :organization_id');
+        $statement->bindValue(':id', $updateId, PDO::PARAM_INT);
+        bindOrganizationId($statement, $organizationId);
+        $statement->execute();
+
+        if ($statement->rowCount() === 0) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Task log not found.'
+            ], 404);
+            exit;
+        }
+
+        Response::json([
+            'status' => 'ok',
+            'message' => 'Task log deleted successfully.'
+        ]);
+        exit;
+    }
     if (preg_match('#^/api/leads/(\d+)/updates$#', $path, $matches) === 1 && $method === 'GET') {
         $pdo = Database::connection();
         $organizationId = requireOrganizationId();
@@ -3351,11 +3350,10 @@ try {
         );
 
         $policyTypes = $fetchScoped(
-            'SELECT id, category_name, parent_category_id
+            'SELECT id, category_name
              FROM product_categories
              WHERE organization_id = :organization_id
                AND is_active = 1
-               AND parent_category_id IS NOT NULL
              ORDER BY category_name ASC'
         );
 

@@ -67,7 +67,6 @@ const leadColumns = [
   { key: "priority", label: "Priority" },
   { key: "assigned_to_name", label: "Assigned To", width: "160px" },
   { key: "category_name", label: "Category", width: "160px" },
-  { key: "sub_category_name", label: "Sub - Category", width: "170px" },
   { key: "lead_status", label: "Status", width: "170px" },
   { key: "next_follow_up_date", label: "Next Follow Up Date", width: "140px" },
   { key: "update_by_name", label: "Update By", width: "160px" }
@@ -81,7 +80,6 @@ const pendingAssigningColumns = [
   { key: "priority", label: "Priority" },
   { key: "assigned_to_name", label: "Assigned To", width: "160px" },
   { key: "category_name", label: "Category", width: "160px" },
-  { key: "sub_category_name", label: "Sub - Category", width: "170px" },
   { key: "lead_status", label: "Status", width: "170px" },
   { key: "update_by_name", label: "Update By", width: "160px" }
 ];
@@ -119,7 +117,6 @@ function emptyLeadForm() {
     priority: "Medium",
     assigned_to_user_id: "",
     category_id: "",
-    sub_category_id: "",
     notes: ""
   };
 }
@@ -171,7 +168,6 @@ function normalizeLeadToForm(lead) {
     priority: lead.priority || "Medium",
     assigned_to_user_id: lead.assigned_to_user_id ? String(lead.assigned_to_user_id) : "",
     category_id: lead.category_id ? String(lead.category_id) : "",
-    sub_category_id: lead.sub_category_id ? String(lead.sub_category_id) : "",
     notes: lead.notes || ""
   };
 }
@@ -281,18 +277,7 @@ export default function LeadsPage({ viewPath }) {
     }
   }, [viewConfig.autoOpenAdd, viewPath]);
 
-  const topLevelCategories = useMemo(
-    () => categories.filter((category) => !category.parent_category_id),
-    [categories]
-  );
 
-  const subCategories = useMemo(
-    () =>
-      categories.filter(
-        (category) => String(category.parent_category_id || "") === String(leadForm.category_id || "")
-      ),
-    [categories, leadForm.category_id]
-  );
 
   const filterConfigs = useMemo(() => {
     if (isActivityLog) {
@@ -387,7 +372,6 @@ export default function LeadsPage({ viewPath }) {
   const handleLeadFormChange = (field, value) => {
     setLeadForm((current) => ({
       ...current,
-      ...(field === "category_id" ? { sub_category_id: "" } : {}),
       [field]: value
     }));
   };
@@ -538,7 +522,6 @@ export default function LeadsPage({ viewPath }) {
         "assigned_to_name",
         "update_by_name",
         "category_name",
-        "sub_category_name",
         "lead_status",
         "notes"
       ];
@@ -665,24 +648,7 @@ export default function LeadsPage({ viewPath }) {
                         onChange={(event) => handleLeadFormChange("category_id", event.target.value)}
                       >
                         <option value="">Select Category</option>
-                        {topLevelCategories.map((category) => (
-                          <option key={category.id} value={category.id}>
-                            {category.category_name}
-                          </option>
-                        ))}
-                      </SearchableSelect>
-                    </label>
-
-                    <label className="form-field">
-                      <FormLabel required>Sub - Category</FormLabel>
-                      <SearchableSelect
-                        required
-                        value={leadForm.sub_category_id}
-                        onChange={(event) => handleLeadFormChange("sub_category_id", event.target.value)}
-                        disabled={!leadForm.category_id}
-                      >
-                        <option value="">Select Sub - Category</option>
-                        {subCategories.map((category) => (
+                        {categories.map((category) => (
                           <option key={category.id} value={category.id}>
                             {category.category_name}
                           </option>

@@ -418,29 +418,11 @@ if ($path === '/api/policies/renew-import' && $method === 'POST') {
             return $matches[0];
         }
 
-        $parentMatches = $findMatches(
-            'SELECT id, category_name FROM product_categories WHERE organization_id = :organization_id AND lower(trim(category_name)) = :lookup_value LIMIT 1',
-            [':lookup_value' => normalizeLookupValue('Imported Policy Types')]
-        );
-
-        if ($parentMatches === []) {
-            $parentInsert = $pdo->prepare(
-                'INSERT INTO product_categories (organization_id, category_name, parent_category_id, is_active) VALUES (:organization_id, :category_name, null, 1)'
-            );
-            bindOrganizationId($parentInsert, $organizationId);
-            $parentInsert->bindValue(':category_name', 'Imported Policy Types');
-            $parentInsert->execute();
-            $parentId = (int) $pdo->lastInsertId();
-        } else {
-            $parentId = (int) $parentMatches[0]['id'];
-        }
-
         $insert = $pdo->prepare(
-            'INSERT INTO product_categories (organization_id, category_name, parent_category_id, is_active) VALUES (:organization_id, :category_name, :parent_category_id, 1)'
+            'INSERT INTO product_categories (organization_id, category_name, is_active) VALUES (:organization_id, :category_name, 1)'
         );
         bindOrganizationId($insert, $organizationId);
         $insert->bindValue(':category_name', $policyTypeLabel);
-        $insert->bindValue(':parent_category_id', $parentId, \PDO::PARAM_INT);
         $insert->execute();
 
         return ['id' => (int) $pdo->lastInsertId(), 'category_name' => $policyTypeLabel];

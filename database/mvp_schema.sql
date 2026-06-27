@@ -109,16 +109,12 @@ create table product_categories (
   id bigint unsigned auto_increment primary key,
   organization_id bigint unsigned not null,
   category_name varchar(100) not null,
-  parent_category_id bigint unsigned null,
   is_active tinyint(1) not null default 1,
   created_at datetime not null default current_timestamp,
   unique key uk_product_categories_org_category_name (organization_id, category_name),
   key idx_product_categories_organization (organization_id),
-  key idx_product_categories_parent (parent_category_id),
   constraint fk_product_categories_organization
-    foreign key (organization_id) references organizations(id),
-  constraint fk_product_categories_parent
-    foreign key (parent_category_id) references product_categories(id)
+    foreign key (organization_id) references organizations(id)
 );
 
 create table leads (
@@ -131,7 +127,6 @@ create table leads (
   priority varchar(20) not null default 'Medium',
   assigned_to_user_id bigint unsigned null,
   category_id bigint unsigned null,
-  sub_category_id bigint unsigned null,
   notes text,
   lead_status varchar(40) not null default 'Pending Assigning',
   latest_update_date date,
@@ -143,15 +138,12 @@ create table leads (
   key idx_leads_due_date (due_date),
   key idx_leads_assigned_user (assigned_to_user_id),
   key idx_leads_category (category_id),
-  key idx_leads_sub_category (sub_category_id),
   constraint fk_leads_organization
     foreign key (organization_id) references organizations(id),
   constraint fk_leads_assigned_user
     foreign key (assigned_to_user_id) references users(id),
   constraint fk_leads_category
-    foreign key (category_id) references product_categories(id),
-  constraint fk_leads_sub_category
-    foreign key (sub_category_id) references product_categories(id)
+    foreign key (category_id) references product_categories(id)
 );
 
 create table lead_updates (
@@ -186,7 +178,6 @@ create table tasks (
   priority varchar(20) not null default 'Medium',
   assigned_to_user_id bigint unsigned null,
   category_id bigint unsigned null,
-  sub_category_id bigint unsigned null,
   notes text,
   task_status varchar(40) not null default 'Pending',
   latest_update_date date,
@@ -198,15 +189,12 @@ create table tasks (
   key idx_tasks_due_date (due_date),
   key idx_tasks_assigned_user (assigned_to_user_id),
   key idx_tasks_category (category_id),
-  key idx_tasks_sub_category (sub_category_id),
   constraint fk_tasks_organization
     foreign key (organization_id) references organizations(id),
   constraint fk_tasks_assigned_user
     foreign key (assigned_to_user_id) references users(id),
   constraint fk_tasks_category
-    foreign key (category_id) references product_categories(id),
-  constraint fk_tasks_sub_category
-    foreign key (sub_category_id) references product_categories(id)
+    foreign key (category_id) references product_categories(id)
 );
 
 create table task_updates (

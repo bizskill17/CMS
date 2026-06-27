@@ -53,7 +53,6 @@ const taskColumns = [
   { key: "priority", label: "Priority" },
   { key: "assigned_to_name", label: "Assigned To", width: "160px" },
   { key: "category_name", label: "Category", width: "160px" },
-  { key: "sub_category_name", label: "Sub - Category", width: "170px" },
   { key: "task_status", label: "Status", width: "170px" },
   { key: "next_follow_up_date", label: "Next Follow Up Date", width: "140px" },
   { key: "update_by_name", label: "Update By", width: "160px" }
@@ -92,7 +91,6 @@ function emptyTaskForm() {
     priority: "Medium",
     assigned_to_user_id: "",
     category_id: "",
-    sub_category_id: "",
     notes: ""
   };
 }
@@ -144,7 +142,6 @@ function normalizeTaskToForm(task) {
     priority: task.priority || "Medium",
     assigned_to_user_id: task.assigned_to_user_id ? String(task.assigned_to_user_id) : "",
     category_id: task.category_id ? String(task.category_id) : "",
-    sub_category_id: task.sub_category_id ? String(task.sub_category_id) : "",
     notes: task.notes || ""
   };
 }
@@ -295,18 +292,7 @@ export default function TasksPage({ viewPath }) {
     };
   }, [isCustomerDropdownOpen]);
 
-  const topLevelCategories = useMemo(
-    () => categories.filter((category) => !category.parent_category_id),
-    [categories]
-  );
 
-  const subCategories = useMemo(
-    () =>
-      categories.filter(
-        (category) => String(category.parent_category_id || "") === String(taskForm.category_id || "")
-      ),
-    [categories, taskForm.category_id]
-  );
 
   const filteredCustomers = useMemo(() => {
     const query = customerQuery.trim().toLowerCase();
@@ -424,7 +410,6 @@ export default function TasksPage({ viewPath }) {
   const handleTaskFormChange = (field, value) => {
     setTaskForm((current) => ({
       ...current,
-      ...(field === "category_id" ? { sub_category_id: "" } : {}),
       [field]: value
     }));
   };
@@ -564,6 +549,34 @@ export default function TasksPage({ viewPath }) {
     }
   };
 
+  const deleteTaskActivity = async (activity) => {
+    const isUpdate = Boolean(activity.update_id);
+    const label = isUpdate ? "task log" : "task";
+
+    if (!window.confirm(`Are you sure you want to delete this ${label}?`)) {
+      return;
+    }
+
+    try {
+      const endpoint = isUpdate
+        ? `${API_BASE}/tasks/updates/${activity.update_id}`
+        : `${API_BASE}/tasks/${activity.task_id}`;
+      const response = await fetch(endpoint, {
+        method: "DELETE"
+      });
+      const json = await readApiJson(response);
+
+      if (!response.ok) {
+        throw new Error(json.message || `Failed to delete ${label}.`);
+      }
+
+      window.dispatchEvent(new Event("refresh-counts"));
+      await loadRecords();
+    } catch (deleteError) {
+      alert(deleteError.message);
+    }
+  };
+
   const renderTaskActions = (task) => {
     const isUnassigned = !task.assigned_to_user_id;
     const canFollowUp = !finalTaskStatuses.includes(String(task.task_status || ""));
@@ -582,6 +595,12 @@ export default function TasksPage({ viewPath }) {
     );
   };
 
+  const renderActivityActions = (activity) => (
+    <div className="table-actions">
+      <ActionIconButton icon="delete" label="Delete" tone="danger" onClick={() => deleteTaskActivity(activity)} />
+    </div>
+  );
+
   const currentColumns = isActivityLog ? activityColumns : taskColumns;
   const currentSearchKeys = isActivityLog
     ? ["activity_type", "client_name", "task_status", "update_status", "assigned_to_name", "update_by_name", "remarks"]
@@ -592,7 +611,6 @@ export default function TasksPage({ viewPath }) {
         "assigned_to_name",
         "update_by_name",
         "category_name",
-        "sub_category_name",
         "task_status",
         "notes"
       ];
@@ -614,7 +632,7 @@ export default function TasksPage({ viewPath }) {
           emptyMessage={viewConfig.emptyMessage}
           searchKeys={currentSearchKeys}
           filterConfigs={filterConfigs}
-          renderActions={isActivityLog ? null : renderTaskActions}
+          renderActions={isActivityLog ? renderActivityActions : renderTaskActions}
           rowKey={isActivityLog ? "activity_key" : "id"}
           headerExtras={
             !isActivityLog ? (
@@ -747,24 +765,7 @@ export default function TasksPage({ viewPath }) {
                         onChange={(event) => handleTaskFormChange("category_id", event.target.value)}
                       >
                         <option value="">Select Category</option>
-                        {topLevelCategories.map((category) => (
-                          <option key={category.id} value={category.id}>
-                            {category.category_name}
-                          </option>
-                        ))}
-                      </SearchableSelect>
-                    </label>
-
-                    <label className="form-field">
-                      <FormLabel required>Sub - Category</FormLabel>
-                      <SearchableSelect
-                        required
-                        value={taskForm.sub_category_id}
-                        onChange={(event) => handleTaskFormChange("sub_category_id", event.target.value)}
-                        disabled={!taskForm.category_id}
-                      >
-                        <option value="">Select Sub - Category</option>
-                        {subCategories.map((category) => (
+                        {categories.map((category) => (
                           <option key={category.id} value={category.id}>
                             {category.category_name}
                           </option>
