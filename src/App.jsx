@@ -1,4 +1,4 @@
-﻿import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
 import DashboardPage from "./components/DashboardPage";
@@ -12,20 +12,20 @@ import { clearStoredAuthUser, getStoredAuthUser, setStoredAuthUser } from "./uti
 
 const DEFAULT_PATH = "/dashboard";
 
-function buildRoutes(items) {
+function buildRoutes(items, allowedViews = []) {
   return items.map((item) => (
     <Route
       key={item.path}
       path={item.path}
       element={
         item.section === "Dashboard" ? (
-          <DashboardPage />
+          <DashboardPage allowedViews={allowedViews} />
         ) : item.section === "Leads" ? (
           <LeadsPage viewPath={item.path} />
         ) : item.section === "Tasks" ? (
           <TasksPage viewPath={item.path} />
         ) : item.section === "Masters" && masterConfigs[item.resourceKey] ? (
-          <MasterPage resourceKey={item.resourceKey} />
+          <MasterPage resourceKey={item.resourceKey} allowedViews={allowedViews} />
         ) : (
           <Navigate to={DEFAULT_PATH} replace />
         )
@@ -106,7 +106,7 @@ export default function App() {
         }
       >
         <Route index element={<Navigate to={defaultPath} replace />} />
-        {buildRoutes(allowedRoutes)}
+        {buildRoutes(allowedRoutes, effectiveViews)}
       </Route>
       <Route path="*" element={<Navigate to={hasValidAuth ? defaultPath : "/login"} replace />} />
     </Routes>

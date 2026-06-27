@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config/api";
 
@@ -40,9 +40,19 @@ const groups = [
   }
 ];
 
-export default function DashboardPage() {
+export default function DashboardPage({ allowedViews = [] }) {
   const navigate = useNavigate();
   const [counts, setCounts] = useState({});
+  const visibleGroups = useMemo(() => {
+    const allowedSet = new Set(allowedViews);
+
+    return groups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => allowedSet.has(item.path))
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [allowedViews]);
 
   useEffect(() => {
     let isActive = true;
@@ -64,7 +74,7 @@ export default function DashboardPage() {
   return (
     <div className="dashboard-page">
       <div className="dashboard-grid">
-        {groups.map((group) => (
+        {visibleGroups.map((group) => (
           <section className={`master-card dashboard-card dashboard-card--${group.tone}`} key={group.title}>
             <div className="master-card__header">
               <h3>{group.title}</h3>

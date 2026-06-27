@@ -303,7 +303,8 @@ export default function MasterPage({
   embeddedFormOnly = false,
   autoOpenForm = false,
   onFormSaved,
-  onFormCancel
+  onFormCancel,
+  allowedViews = []
 }) {
   const config = masterConfigs[resourceKey];
   const isSettingsView = resourceKey === "settings";
@@ -335,6 +336,7 @@ export default function MasterPage({
     errors: []
   });
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const allowedViewSet = useMemo(() => new Set(allowedViews), [allowedViews]);
 
 
   const closeForm = ({ notifyCancel = true } = {}) => {
@@ -1092,10 +1094,12 @@ export default function MasterPage({
             {config.fields.map((field) => {
               if (field.type === "checklist") {
                 const checklistOptions = (field.optionGroups || []).flatMap((group) =>
-                  (group.options || []).map((option) => ({
-                    ...option,
-                    groupLabel: group.label
-                  }))
+                  (group.options || [])
+                    .filter((option) => resourceKey !== "users" || field.name !== "views" || allowedViewSet.has(option.value))
+                    .map((option) => ({
+                      ...option,
+                      groupLabel: group.label
+                    }))
                 );
                 const checklistValues = Array.isArray(formState[field.name]) ? formState[field.name] : [];
                 const allChecklistValues = checklistOptions.map((option) => option.value);
