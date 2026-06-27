@@ -2882,3 +2882,20 @@ button {
 .dashboard-card--tasks .dashboard-tile__content {
   color: #c2410c;
 }
+.master-table .icon-action-button {
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  padding: 0;
+  gap: 0;
+}
+
+.master-table .icon-action-button__label {
+  display: none;
+}
+
+.master-table .table-actions {
+  gap: 6px;
+  justify-content: center;
+  overflow: hidden;
+}

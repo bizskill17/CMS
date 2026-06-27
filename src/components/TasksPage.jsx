@@ -459,6 +459,11 @@ export default function TasksPage({ viewPath }) {
       return;
     }
 
+    if (!taskForm.assigned_to_user_id) {
+      setError("Please select Assigned To.");
+      return;
+    }
+
     setSavingTask(true);
 
     try {
@@ -579,7 +584,6 @@ export default function TasksPage({ viewPath }) {
 
   const renderTaskActions = (task) => (
     <div className="table-actions">
-      <ActionIconButton icon="user" label="Assign" onClick={() => openAssignTask(task)} />
       <ActionIconButton icon="pencil" label="Edit" onClick={() => openEditTask(task)} />
       <ActionIconButton icon="tick" label="Update" tone="primary" onClick={() => openUpdateTask(task)} />
       <ActionIconButton icon="delete" label="Delete" tone="danger" onClick={() => deleteTask(task)} />
@@ -804,8 +808,9 @@ export default function TasksPage({ viewPath }) {
                 )}
 
                 <label className="form-field">
-                  <FormLabel>Assigned To</FormLabel>
+                  <FormLabel required>Assigned To</FormLabel>
                   <SearchableSelect
+                    required
                     value={taskForm.assigned_to_user_id}
                     onChange={(event) => handleTaskFormChange("assigned_to_user_id", event.target.value)}
                   >

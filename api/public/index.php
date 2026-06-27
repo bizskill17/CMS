@@ -1351,7 +1351,7 @@ try {
             exit;
         }
 
-        foreach (['task_date', 'client_name', 'description', 'due_date', 'priority', 'category_id'] as $requiredField) {
+        foreach (['task_date', 'client_name', 'description', 'due_date', 'priority', 'assigned_to_user_id', 'category_id'] as $requiredField) {
             if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
                 Response::json([
                     'status' => 'error',
@@ -1545,7 +1545,7 @@ try {
             exit;
         }
 
-        foreach (['task_date', 'client_name', 'description', 'due_date', 'priority', 'category_id'] as $requiredField) {
+        foreach (['task_date', 'client_name', 'description', 'due_date', 'priority', 'assigned_to_user_id', 'category_id'] as $requiredField) {
             if (!array_key_exists($requiredField, $payload) || trim((string) $payload[$requiredField]) === '') {
                 Response::json([
                     'status' => 'error',

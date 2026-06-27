@@ -295,7 +295,7 @@ export default function ResponsiveDataView({
                   <col key={col.key} style={getColumnWidthStyle(col)} />
                 ))}
                 {renderActions ? (
-                  <col style={{ width: "280px", minWidth: "280px", maxWidth: "280px" }} />
+                  <col style={{ width: "176px", minWidth: "176px", maxWidth: "176px" }} />
                 ) : null}
               </colgroup>
               <thead>
@@ -314,7 +314,7 @@ export default function ResponsiveDataView({
                     </th>
                   ))}
                   {renderActions ? (
-                    <th style={{ width: "280px", minWidth: "280px", maxWidth: "280px" }}>Action</th>
+                    <th style={{ width: "176px", minWidth: "176px", maxWidth: "176px" }}>Action</th>
                   ) : null}
                 </tr>
               </thead>
@@ -358,7 +358,7 @@ export default function ResponsiveDataView({
                       })}
                       {renderActions ? (
                         <td
-                          style={{ width: "280px", minWidth: "280px", maxWidth: "280px" }}
+                          style={{ width: "176px", minWidth: "176px", maxWidth: "176px" }}
                           onClick={(event) => event.stopPropagation()}
                         >
                           <div className="table-actions">{renderActions(record)}</div>
