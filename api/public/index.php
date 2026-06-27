@@ -31,7 +31,7 @@ function singularizeMasterLabel(string $resource): string
         'customers' => 'customer',
         'states' => 'state',
         'cities' => 'city',
-        'product-categories' => 'product category',
+        'product-categories' => 'category',
         'users' => 'user',
         'agents' => 'agent',
         default => rtrim($label, 's'),

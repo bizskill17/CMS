@@ -109,7 +109,7 @@ export const masterConfigs = {
     ]
   },
   "product-categories": {
-    title: "Product Categories",
+    title: "Categories",
     resource: "product-categories",
     tableColumns: [
       { key: "category_name", label: "Category" },
