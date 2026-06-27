@@ -22,15 +22,15 @@ final class Database
         /** @var array<string, mixed> $config */
         $config = file_exists($configPath) ? require $configPath : [];
 
-        $host = self::env(['HOSTINGER_DB_HOST', 'DB_HOST'], (string) ($config['host'] ?? 'localhost'));
-        $port = (int) self::env(['HOSTINGER_DB_PORT', 'DB_PORT'], (string) ($config['port'] ?? 3306));
-        $database = self::env(['HOSTINGER_DB_NAME', 'HOSTINGER_DB_DATABASE', 'DB_NAME', 'DB_DATABASE'], (string) ($config['database'] ?? ''));
-        $username = self::env(['HOSTINGER_DB_USER', 'HOSTINGER_DB_USERNAME', 'DB_USER', 'DB_USERNAME'], (string) ($config['username'] ?? ''));
-        $password = self::env(['HOSTINGER_DB_PASSWORD', 'DB_PASSWORD'], (string) ($config['password'] ?? ''));
-        $charset = self::env(['HOSTINGER_DB_CHARSET', 'DB_CHARSET'], (string) ($config['charset'] ?? 'utf8mb4'));
+        $host = self::env(['DB_HOST'], (string) ($config['host'] ?? 'localhost'));
+        $port = (int) self::env(['DB_PORT'], (string) ($config['port'] ?? 3306));
+        $database = self::env(['DB_NAME', 'DB_DATABASE'], (string) ($config['database'] ?? ''));
+        $username = self::env(['DB_USER', 'DB_USERNAME'], (string) ($config['username'] ?? ''));
+        $password = self::env(['DB_PASSWORD'], (string) ($config['password'] ?? ''));
+        $charset = self::env(['DB_CHARSET'], (string) ($config['charset'] ?? 'utf8mb4'));
 
         if ($database === '' || $username === '') {
-            throw new RuntimeException('Database settings are incomplete. Set api/config/database.php or Hostinger DB environment variables.');
+            throw new RuntimeException('Database settings are incomplete. Set api/config/database.php or DB_* environment variables.');
         }
 
         $hostsToTry = array_values(array_unique(array_filter([
@@ -88,3 +88,4 @@ final class Database
         return $default;
     }
 }
+

@@ -9,36 +9,6 @@ function getIsMobileViewport() {
 }
 
 function getCurrentViewName(pathname) {
-  const monthLabels = {
-    "1": "January",
-    "2": "February",
-    "3": "March",
-    "4": "April",
-    "5": "May",
-    "6": "June",
-    "7": "July",
-    "8": "August",
-    "9": "September",
-    "10": "October",
-    "11": "November",
-    "12": "December"
-  };
-
-  const dayLabels = {
-    today: "Today",
-    tomorrow: "Tomorrow",
-    "day-after-tomorrow": "Day after Tomorrow"
-  };
-
-  const weekLabels = {
-    "7-days": "Next 7 Days"
-  };
-
-  const yearLabels = {
-    current: "Current Financial Years",
-    future: "Future Financial Years"
-  };
-
   for (const section of menuSections) {
     if (section.standalone && section.path === pathname) {
       return section.label;
@@ -48,34 +18,6 @@ function getCurrentViewName(pathname) {
     if (matchedItem) {
       return matchedItem.label;
     }
-  }
-
-  const monthMatch = pathname.match(/^\/reports\/expiry-reports\/month\/(\d{1,2})$/);
-  if (monthMatch) {
-    const monthLabel = monthLabels[monthMatch[1]];
-    return monthLabel ? `${monthLabel} Expiry Report` : "Monthly Expiry Report";
-  }
-
-  const dayMatch = pathname.match(/^\/reports\/expiry-reports\/day\/([a-z-]+)$/);
-  if (dayMatch) {
-    const dayLabel = dayLabels[dayMatch[1]];
-    return dayLabel ? `${dayLabel} Expiry Report` : "Daily Expiry Report";
-  }
-
-  const weekMatch = pathname.match(/^\/reports\/expiry-reports\/week\/([a-z0-9-]+)$/);
-  if (weekMatch) {
-    const weekLabel = weekLabels[weekMatch[1]];
-    return weekLabel ? `${weekLabel} Expiry Report` : "Weekly Expiry Report";
-  }
-
-  const yearMatch = pathname.match(/^\/reports\/expiry-reports\/year\/([a-z-]+)$/);
-  if (yearMatch) {
-    const yearLabel = yearLabels[yearMatch[1]];
-    return yearLabel ? `${yearLabel} Expiry Report` : "Yearly Expiry Report";
-  }
-
-  if (pathname === "/reports/payments-received") {
-    return "Payments Received";
   }
 
   return "";
@@ -98,9 +40,6 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
 
     return (item.matchPrefixes || []).some((prefix) => location.pathname.startsWith(prefix));
   });
-  const isLegacyAliasAllowed =
-    location.pathname === "/reports/payments-received" &&
-    allowedRoutes.some((item) => item.path === "/payments/received");
 
   useEffect(() => {
     const handleResize = () => {
@@ -138,7 +77,7 @@ export default function AppLayout({ currentUser, allowedMenuSections, allowedRou
     setIsSidebarOpen((current) => !current);
   };
 
-  if (!isAllowedPath && !isLegacyAliasAllowed) {
+  if (!isAllowedPath) {
     return <Navigate to={fallbackPath} replace />;
   }
 

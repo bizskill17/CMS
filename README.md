@@ -1,12 +1,12 @@
 # Insurance Policy Management System
 
-This workspace now contains the first application shell for `insurance.bizskilledu.com`.
+This workspace contains a React frontend and PHP API for the insurance policy management system.
 
 ## Structure
 
 - `src/` React frontend app
-- `api/` PHP API starter for Hostinger shared hosting
-- `database/mvp_schema.sql` starter MySQL schema for `u380752258_insurance`
+- `api/` PHP API starter
+- `database/mvp_schema.sql` starter MySQL schema
 - `policy-menu-prototype/` original static sidebar prototype
 
 ## Frontend
@@ -25,10 +25,10 @@ npm install
 npm run dev
 ```
 
-If you want the local React app to use the live Hostinger PHP backend, create `.env.local` in the project root:
+To point the local React app at a backend API, create `.env.local` in the project root:
 
 ```bash
-VITE_API_BASE=https://insurance.bizskilledu.com/api
+VITE_API_BASE=http://localhost/api
 ```
 
 ### Build
@@ -37,28 +37,13 @@ VITE_API_BASE=https://insurance.bizskilledu.com/api
 npm run build
 ```
 
-Upload the generated `dist/` files to your Hostinger public web root when you are ready.
-
-### Build Hostinger deploy package
-
-```bash
-npm run build:hostinger
-```
-
-This creates a `deploy/` folder containing:
-- built React frontend files at the root
-- `api/` PHP backend folder
-- root `.htaccess` for React route fallback
+The generated production frontend files are written to `dist/`.
 
 ## PHP API
 
 The API starter is under `api/`.
 
-### Suggested Hostinger structure
-
-- frontend build files in your main public folder
-- PHP API files in `api/`
-- keep real DB credentials in a private config file based on `api/config/database.example.php`
+Keep real DB credentials in a private config file based on `api/config/database.example.php`, or provide generic `DB_*` environment variables.
 
 Current starter endpoint:
 
@@ -67,38 +52,7 @@ Current starter endpoint:
 
 ## Database
 
-Use `database/mvp_schema.sql` against:
-
-- `u380752258_insurance`
-
-## GitHub To Hostinger Deployment
-
-Workflow file:
-
-- [.github/workflows/deploy-hostinger.yml](/D:/Insurance%20Policy%20Management%20System/.github/workflows/deploy-hostinger.yml)
-
-Add these GitHub repository secrets before using the workflow:
-
-- `HOSTINGER_FTP_SERVER`
-- `HOSTINGER_FTP_USERNAME`
-- `HOSTINGER_FTP_PASSWORD`
-- `HOSTINGER_TARGET_DIR`
-- `HOSTINGER_DB_HOST`
-- `HOSTINGER_DB_NAME`
-- `HOSTINGER_DB_USER`
-- `HOSTINGER_DB_PASSWORD`
-
-For your current DB, likely values will be:
-
-- `HOSTINGER_DB_HOST = srv2057.hstgr.io`
-- `HOSTINGER_DB_NAME = u380752258_insurance`
-- `HOSTINGER_DB_USER = u380752258_insurance`
-
-`HOSTINGER_TARGET_DIR` should be the actual publish folder for `insurance.bizskilledu.com`, for example something like:
-
-- `/public_html/insurance.bizskilledu.com/`
-
-Please confirm the exact folder path inside Hostinger before the first deploy.
+Use `database/mvp_schema.sql` to create the starter schema.
 
 ## Next recommended steps
 

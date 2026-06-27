@@ -192,19 +192,13 @@ function isAdminOrganization(array $organization): bool
 function buildFullAccessViews(bool $includeOrganizations = true): string
 {
     $views = [
-        '/dashboard',
-        '/masters/organizations',
         '/masters/customers',
         '/masters/customer-groups',
-        '/masters/insurance-companies',
         '/masters/states',
         '/masters/cities',
         '/masters/product-categories',
-        '/masters/insurance-products',
-        '/masters/document-types',
         '/masters/users',
         '/masters/agents',
-        '/masters/agent-accounts',
         '/leads/all',
         '/leads/add',
         '/leads/pending-assigning',
@@ -220,22 +214,6 @@ function buildFullAccessViews(bool $includeOrganizations = true): string
         '/tasks/completed',
         '/tasks/canceled',
         '/tasks/action-log',
-        '/policies/all',
-        '/policies/issue',
-        '/policies/renew',
-        '/policies/inactivated',
-        '/policies/attach-documents',
-        '/payments/pending',
-        '/payments/received',
-        '/reports/policies-added',
-        '/reports/policies-this-week',
-        '/reports/policies-this-month',
-        '/reports/pending-payments',
-        '/reports/pending-document-uploads',
-        '/reports/expiry-reports/section/monthly',
-        '/reports/expiry-reports/section/daily',
-        '/reports/expiry-reports/section/weekly',
-        '/reports/expiry-reports/section/yearly',
     ];
 
     if (!$includeOrganizations) {
